@@ -333,6 +333,20 @@ function UI:Refresh()
             ("   quest log should be at %d|r"):format(step.logCount))
     end
 
+    -- The level the route expects you to be at here. Deliberately NOT
+    -- minLevel: minLevel hides a step, so tagging every step with the route's
+    -- pacing would make an under-levelled character silently skip the route.
+    if step.atLevel and ns.Data then
+        local level = ns.Data:PlayerLevel()
+        if level < step.atLevel then
+            table.insert(lines, Theme.hex.warn ..
+                ("   route expects level %d, you're %d - grind the gap|r"):format(step.atLevel, level))
+        else
+            table.insert(lines, Theme.hex.faint ..
+                ("   route pace: level %d|r"):format(step.atLevel))
+        end
+    end
+
     if step.note then
         table.insert(lines, "")
         table.insert(lines, Theme.hex.warn .. "NOTE: |r" ..

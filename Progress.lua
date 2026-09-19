@@ -260,7 +260,10 @@ function Progress:RenderRows()
 end
 
 function Progress:Refresh()
-    if not win then return end
+    -- RouteStats and BuildList both walk the whole route, which is thousands
+    -- of steps now. Reconcile calls this on every quest event, so a closed
+    -- window has to cost nothing - existing-but-hidden is not good enough.
+    if not win or not win:IsShown() then return end
 
     local done, total, qDone, qTotal = self:RouteStats()
     local lifetime = self:TotalCompletedQuests()

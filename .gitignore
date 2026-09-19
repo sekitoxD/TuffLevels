@@ -23,3 +23,7 @@ __pycache__/
 # WoW SavedVariables (per-user, generated at runtime, not addon source)
 *.lua.bak
 SavedVariables/
+
+# Claude Code personal settings/hooks (not shared with the team)
+.claude/settings.local.json
+.claude/hooks/

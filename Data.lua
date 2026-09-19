@@ -157,8 +157,9 @@ function Data:ValidateRoute(route)
         if step.y and (step.y < 0 or step.y > 100) then
             table.insert(problems, label .. ": y should be 0-100")
         end
-        if (step.x or step.y) and not step.map then
-            table.insert(problems, label .. ": has coords but no map (uiMapID)")
+        if (step.x or step.y) and not self:StepMap(step) then
+            table.insert(problems,
+                label .. ": has coords but no map - needs a zone name this client knows, or a uiMapID")
         end
     end
 
@@ -169,11 +170,25 @@ end
 -- Waypoints
 --------------------------------------------------------------------------
 
+-- The uiMapID for a step on THIS client. Route files carry a zone name
+-- because the numbers differ per flavor; step.map stays supported for
+-- hand-authored steps that pin a specific map.
+function Data:StepMap(step)
+    if not step then return nil end
+
+    if step.zone then
+        local id = Compat:MapID(step.zone)
+        if id then return id end
+    end
+    return step.map
+end
+
 function Data:SetWaypoint(step)
-    if not step.map or not step.x or not step.y then return false end
+    local mapID = self:StepMap(step)
+    if not mapID or not step.x or not step.y then return false end
 
     if _G.TomTom and _G.TomTom.AddWaypoint then
-        _G.TomTom:AddWaypoint(step.map, step.x / 100, step.y / 100, {
+        _G.TomTom:AddWaypoint(mapID, step.x / 100, step.y / 100, {
             title = step.note or step.name or "TuFFlevels",
             crazy = true,
             persistent = false,
@@ -183,7 +198,7 @@ function Data:SetWaypoint(step)
 
     -- No TomTom: drop a native map pin instead.
     if C_Map and C_Map.SetUserWaypoint and UiMapPoint then
-        local point = UiMapPoint.CreateFromCoordinates(step.map, step.x / 100, step.y / 100)
+        local point = UiMapPoint.CreateFromCoordinates(mapID, step.x / 100, step.y / 100)
         C_Map.SetUserWaypoint(point)
         if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
             C_SuperTrack.SetSuperTrackedUserWaypoint(true)

@@ -30,7 +30,8 @@ local function Bearing(step)
     if not mapID then return nil end
 
     -- Only meaningful if the step is on the map we're standing in.
-    if step.map and step.map ~= mapID then return nil, nil, true end
+    local stepMap = ns.Data and ns.Data:StepMap(step) or step.map
+    if stepMap and stepMap ~= mapID then return nil, nil, true end
 
     local pos = Compat:Guard(C_Map.GetPlayerMapPosition, mapID, "player")
     if not pos or not pos.GetXY then return nil end
