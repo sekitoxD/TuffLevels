@@ -1,0 +1,295 @@
+-- TuFFlevels / Marker.lua
+--
+-- Puts an icon over the head of the NPC your current step needs.
+--
+-- Works by attaching a texture to that unit's nameplate. Nameplates only
+-- exist for units the client is currently showing, so this lights up when
+-- the NPC is on screen and in range - the waypoint handles getting you there.
+
+local ADDON, ns = ...
+local Compat = ns.Compat
+
+local Marker = {}
+ns.Marker = Marker
+
+Marker.enabled = true
+Marker.markMobs = true
+
+local ICON = {
+    accept   = "Interface\\GossipFrame\\AvailableQuestIcon",
+    turnin   = "Interface\\GossipFrame\\ActiveQuestIcon",
+    complete = "Interface\\GossipFrame\\ActiveQuestIcon",
+    mob      = "Interface\\Minimap\\ObjectIcons",
+    default  = "Interface\\GossipFrame\\AvailableQuestIcon",
+}
+
+-- Quest givers get the familiar yellow marks. Objective mobs get a purple
+-- diamond so the two never read as the same thing.
+local TINT = {
+    mob = { 0.66, 0.42, 0.95 },
+}
+
+local active = {}     -- [nameplateFrame] = markerTexture
+
+--------------------------------------------------------------------------
+-- Objective mobs
+--------------------------------------------------------------------------
+
+-- Your quest log already names what you need to kill: "Mottled Boar slain:
+-- 3/10". Parse the name out of that and we can mark those nameplates too,
+-- with no quest database involved at all.
+local function ObjectiveNames(questID)
+    local names = {}
+    if not (C_QuestLog and C_QuestLog.GetQuestObjectives) then return names end
+
+    local objectives = Compat:Guard(C_QuestLog.GetQuestObjectives, questID)
+    if type(objectives) ~= "table" then return names end
+
+    for _, obj in ipairs(objectives) do
+        local text = obj.text
+        if type(text) == "string" and obj.finished ~= true then
+            -- strip the trailing counter and any verb the locale appends
+            local name = text:match("^(.-):%s*%d+%s*/%s*%d+%s*$") or text
+            name = name:gsub("%s+slain$", "")
+                       :gsub("%s+killed$", "")
+                       :gsub("%s+destroyed$", "")
+                       :match("^%s*(.-)%s*$")
+            if name and #name > 2 then
+                names[name:lower()] = true
+            end
+        end
+    end
+    return names
+end
+
+-- Every mob the current step wants dead, across quests in your log.
+function Marker:WantedMobs()
+    if not self.enabled or not self.markMobs then return nil end
+
+    local step = ns.Core and ns.Core:CurrentStep()
+    if not step then return nil end
+
+    -- A "complete" step points at one quest. Otherwise mark objectives for
+    -- everything in the log, which is what you actually want while grinding.
+    if step.quest and step.type == "complete" then
+        return ObjectiveNames(step.quest)
+    end
+
+    local all = {}
+    for i = 1, Compat:NumQuestLogEntries() do
+        local info = Compat:GetQuestLogInfo(i)
+        if info and not info.isHeader and info.questID then
+            for name in pairs(ObjectiveNames(info.questID)) do
+                all[name] = true
+            end
+        end
+    end
+    return all
+end
+
+--------------------------------------------------------------------------
+-- Which NPC does the current step want?
+--------------------------------------------------------------------------
+
+function Marker:WantedNPC()
+    if not self.enabled then return nil end
+
+    local step = ns.Core and ns.Core:CurrentStep()
+    if not step or not step.npc then return nil end
+
+    return step.npc, step.type
+end
+
+--------------------------------------------------------------------------
+-- Marker creation
+--------------------------------------------------------------------------
+
+local function CreateMarker(plate)
+    local holder = CreateFrame("Frame", nil, plate)
+    holder:SetSize(32, 32)
+    holder:SetFrameStrata("HIGH")
+
+    -- Anchor above the plate. UnitFrame is the standard child on modern
+    -- clients; fall back to the plate itself if the layout differs.
+    local anchor = plate.UnitFrame or plate
+    holder:SetPoint("BOTTOM", anchor, "TOP", 0, 6)
+
+    local tex = holder:CreateTexture(nil, "OVERLAY")
+    tex:SetAllPoints()
+    holder.icon = tex
+
+    -- Gentle bob so it reads as "this one" without being obnoxious.
+    local ag = holder:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local up = ag:CreateAnimation("Translation")
+    up:SetOffset(0, 6)
+    up:SetDuration(0.7)
+    up:SetSmoothing("IN_OUT")
+    holder.anim = ag
+
+    return holder
+end
+
+local function ShowMarkerOn(plate, stepType)
+    local marker = active[plate]
+    if not marker then
+        marker = CreateMarker(plate)
+        active[plate] = marker
+    end
+
+    marker.icon:SetTexture(ICON[stepType] or ICON.default)
+
+    if stepType == "mob" then
+        marker.icon:SetTexCoord(0.5, 0.75, 0, 0.25)
+        marker.icon:SetVertexColor(unpack(TINT.mob))
+        marker:SetSize(22, 22)
+    else
+        marker.icon:SetTexCoord(0, 1, 0, 1)
+        marker.icon:SetVertexColor(1, 1, 1)
+        marker:SetSize(32, 32)
+    end
+
+    marker:Show()
+    if marker.anim and not marker.anim:IsPlaying() then
+        marker.anim:Play()
+    end
+end
+
+local function HideMarkerOn(plate)
+    local marker = active[plate]
+    if marker then
+        if marker.anim then marker.anim:Stop() end
+        marker:Hide()
+    end
+end
+
+--------------------------------------------------------------------------
+-- Nameplate handling
+--------------------------------------------------------------------------
+
+local function CheckUnit(unit)
+    if not unit then return end
+
+    local name = Compat:Guard(UnitName, unit)
+    if not name then return end
+
+    local plate = Compat:Guard(C_NamePlate.GetNamePlateForUnit, unit)
+    if not plate then return end
+
+    -- 1. Is this the quest giver the step wants?
+    local wanted, stepType = Marker:WantedNPC()
+    if wanted then
+        local lname, lwant = name:lower(), wanted:lower()
+        if lname == lwant or lname:find(lwant, 1, true) then
+            ShowMarkerOn(plate, stepType)
+            return
+        end
+    end
+
+    -- 2. Is it something an active objective needs dead?
+    local mobs = Marker:WantedMobs()
+    if mobs and mobs[name:lower()] then
+        ShowMarkerOn(plate, "mob")
+        return
+    end
+
+    HideMarkerOn(plate)
+end
+
+-- The wanted NPC changes whenever the step advances, so re-scan every
+-- visible nameplate rather than waiting for one to spawn.
+function Marker:RescanAll()
+    for plate in pairs(active) do
+        HideMarkerOn(plate)
+    end
+
+    if not (C_NamePlate and C_NamePlate.GetNamePlates) then return end
+    local plates = Compat:Guard(C_NamePlate.GetNamePlates)
+    if not plates then return end
+
+    for _, plate in ipairs(plates) do
+        local unit = plate.namePlateUnitToken
+        if unit then CheckUnit(unit) end
+    end
+end
+
+--------------------------------------------------------------------------
+-- Target fallback
+--------------------------------------------------------------------------
+
+-- If nameplates are off entirely, at least confirm on target change.
+local function CheckTarget()
+    local wanted = Marker:WantedNPC()
+    if not wanted then return end
+    local name = Compat:Guard(UnitName, "target")
+    if name and name:lower() == wanted:lower() then
+        ns.Print("|cff00ff00Correct NPC targeted:|r " .. name)
+    end
+end
+
+--------------------------------------------------------------------------
+-- Nameplate visibility
+--------------------------------------------------------------------------
+
+-- Friendly NPC nameplates are off by default for most people, which would
+-- make the whole feature invisible. Offer it rather than forcing it.
+function Marker:EnableFriendlyPlates()
+    local ok = Compat:Guard(SetCVar, "nameplateShowFriends", 1)
+    local ok2 = Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 1)
+    if ok ~= nil or ok2 ~= nil then
+        ns.Print("Friendly nameplates on. NPC markers will show now.")
+    else
+        ns.Print("Could not change nameplate settings on this client.")
+    end
+    self:RescanAll()
+end
+
+function Marker:DisableFriendlyPlates()
+    Compat:Guard(SetCVar, "nameplateShowFriends", 0)
+    Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 0)
+    ns.Print("Friendly nameplates disabled.")
+end
+
+function Marker:ToggleMobs()
+    self.markMobs = not self.markMobs
+    self:RescanAll()
+    ns.Print("Objective mob markers " .. (self.markMobs and "on" or "off"))
+end
+
+function Marker:Toggle()
+    self.enabled = not self.enabled
+    if not self.enabled then
+        for plate in pairs(active) do HideMarkerOn(plate) end
+    else
+        self:RescanAll()
+    end
+    ns.Print("NPC markers " .. (self.enabled and "|cff00ff00on|r" or "|cffff5555off|r"))
+end
+
+--------------------------------------------------------------------------
+-- Events
+--------------------------------------------------------------------------
+
+local mf = CreateFrame("Frame")
+
+Compat:RegisterEvents(mf, {
+    "NAME_PLATE_UNIT_ADDED",
+    "NAME_PLATE_UNIT_REMOVED",
+    "PLAYER_TARGET_CHANGED",
+})
+
+mf:SetScript("OnEvent", function(self, event, unit)
+    if event == "NAME_PLATE_UNIT_ADDED" then
+        CheckUnit(unit)
+
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        local plate = unit and Compat:Guard(C_NamePlate.GetNamePlateForUnit, unit)
+        if plate then
+            HideMarkerOn(plate)
+            active[plate] = nil
+        end
+
+    elseif event == "PLAYER_TARGET_CHANGED" then
+        CheckTarget()
+    end
+end)
