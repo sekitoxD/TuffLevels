@@ -82,6 +82,18 @@ end
 
 Recorder.CheckZoneChange = CheckZoneChange
 
+-- SavedVariables never make it back on Forever, so the only way to keep a
+-- recording is to export it while the session is still alive. Nudge every
+-- 25 steps instead of waiting for the player to remember on their own.
+local NUDGE_EVERY = 25
+
+local function MaybeNudgeExport()
+    if not Compat:SavedVarsAreBroken() then return end
+    if #Recorder.log == 0 or #Recorder.log % NUDGE_EVERY ~= 0 then return end
+    ns.Print(("|cffffff00%d steps recorded.|r Export before you log out - " ..
+        "this client won't restore them next login. Menu > Save this as a route."):format(#Recorder.log))
+end
+
 local function Record(entry)
     if not Recorder.active then return end
     CheckZoneChange()
@@ -101,6 +113,7 @@ local function Record(entry)
     table.insert(Recorder.log, entry)
     Recorder:Persist()
     if ns.Panel then ns.Panel:Refresh() end
+    MaybeNudgeExport()
 end
 
 function Recorder:Start()
@@ -137,6 +150,10 @@ function Recorder:Restore()
     self.active = db.recording or false
     if self.active then
         ns.Print(("|cff00ff00Recording resumed.|r %d steps so far."):format(#self.log))
+    elseif Compat:SavedVarsAreBroken() then
+        ns.Print("|cffffff00Recording state was reset on login - this client doesn't restore " ..
+            "SavedVariables.|r If you were recording, click Start recording again (Menu > Recording). " ..
+            "A recording lost this way can still be pulled from disk with tools/extract_recording.py.")
     end
 end
 
@@ -344,6 +361,7 @@ Compat:RegisterEvents(rf, {
     "QUEST_COMPLETE",
     "GOSSIP_SHOW",
     "ZONE_CHANGED_NEW_AREA",
+    "PLAYER_LEAVING_WORLD",
 })
 
 rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
@@ -355,6 +373,14 @@ rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
     if event == "QUEST_DETAIL" or event == "QUEST_PROGRESS"
        or event == "QUEST_COMPLETE" or event == "GOSSIP_SHOW" then
         CaptureNPC()
+        return
+    end
+
+    if event == "PLAYER_LEAVING_WORLD" then
+        if Recorder.active and Compat:SavedVarsAreBroken() and #Recorder.log > 0 then
+            ns.Print(("|cffffff00%d steps recorded, not yet exported.|r Export now if you're logging out - " ..
+                "this client won't restore them next login."):format(#Recorder.log))
+        end
         return
     end
 

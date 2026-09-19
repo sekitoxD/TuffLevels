@@ -284,6 +284,9 @@ function UI:Refresh()
     end
     if Core.pinned then
         frame.previous:SetText(Theme.hex.warn .. "Paused here. Next or click here to Resume.|r")
+    elseif ns.Recorder and ns.Recorder.active and ns.Compat:SavedVarsAreBroken() then
+        frame.previous:SetText(Theme.hex.warn ..
+            ("%d steps recorded. Export before you log out.|r"):format(#ns.Recorder.log))
     elseif prevStep then
         local label = StepLabel(prevStep)
         if #label > 42 then label = label:sub(1, 40) .. "..." end

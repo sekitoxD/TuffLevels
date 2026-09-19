@@ -304,6 +304,26 @@ between sessions. If your progress resets when you log back in, that's the
 client, not you. The tracker shows your step number — note it before you log
 out and use Back/Next to get there. Blizzard will likely fix this.
 
+**If you were recording when this happened**, the same bug can make it look
+like your recording vanished. It didn't — the client still *writes* your
+SavedVariables file on exit, it just never reads it back in. Two ways to get
+it back:
+
+- If it was mid-session (you `/reload`ed, didn't fully exit the game), just
+  click **Start recording** again — the addon keeps its own copy for exactly
+  this case and picks up where you left off.
+- If you fully logged out or exited the client first, run
+  `python tools/extract_recording.py "<path to>/WTF/Account/<ACCOUNT>/SavedVariables/TuFFlevels.lua"`
+  from the addon folder. It reads the file straight off disk and prints the
+  same route text the export window would have — redirect it into a file
+  under `Routes/` to use it. Fill in the faction/race/level placeholders it
+  leaves at the top; those aren't in the recording, only in your character.
+
+Either way, the cheapest fix is prevention: while recording, the tracker and
+chat will nudge you to export every 25 steps and again as you log out, on any
+Forever client. Export early and often rather than trusting the SavedVariables
+to still be there next time.
+
 For anything else, `/tuff client` prints what the addon thinks is going on. That
 one's worth copying to me if you hit a problem.
 
