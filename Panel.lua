@@ -339,9 +339,9 @@ end
 -- Color picker
 --------------------------------------------------------------------------
 
--- Palette changes apply on the next /reload rather than live, since most
--- windows bake their colors into a one-time SetBackdropColor/texture-color
--- call at Build() and only Arrow.lua re-reads Theme.color every tick.
+-- Palette changes apply immediately: Theme:ApplyPalette() updates the live
+-- color tables and Theme:ReapplyAll() repaints every already-built frame
+-- Skin()/SkinButton() touched, instead of waiting for the next /reload.
 function Panel:ShowColorPicker()
     if self.colorPicker then self.colorPicker:Hide() end
 
@@ -369,7 +369,9 @@ function Panel:ShowColorPicker()
         b:SetScript("OnClick", function()
             local db = Compat:InitSavedVar("TuFFlevelsDB")
             db.customTheme = ns.Theme.presets[name]
-            ns.Print(("Palette set to %s. /reload to apply."):format(name))
+            ns.Theme:ApplyPalette(db.customTheme)
+            ns.Theme:ReapplyAll()
+            ns.Print(("Palette set to %s."):format(name))
         end)
         y = y - 26
     end
@@ -411,8 +413,10 @@ function Panel:ShowColorPicker()
         for key, hex in pairs(updates) do
             db.customTheme[key] = hex
         end
+        ns.Theme:ApplyPalette(updates)
+        ns.Theme:ReapplyAll()
         self:SetText("")
-        ns.Print("Custom colors saved. /reload to apply.")
+        ns.Print("Custom colors applied.")
     end)
 
     local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")

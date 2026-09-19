@@ -149,6 +149,9 @@ Rogue.upgrades = {
     { level = 45, item = "Thrash Blade",
       how = "Corruption of Earth and Seed, Maraudon",
       note = "Extra-attack proc. Excellent while levelling." },
+    { level = 51, item = "Krol Blade",
+      how = "World drop, Bind on Equip - watch the Auction House",
+      note = "Fills the gap between Thrash Blade and Dal'Rend's. Not guaranteed like a quest reward, but worth grabbing if one turns up." },
     { level = 58, item = "Dal'Rend's Sacred Charge",
       how = "Upper Blackrock Spire",
       note = "Carries into raiding. Worth chasing near 60." },
@@ -393,11 +396,14 @@ end
 
 local rf = CreateFrame("Frame")
 
-Compat:RegisterEvents(rf, {
+local _, missingEvents = Compat:RegisterEvents(rf, {
     "LEARNED_SPELL_IN_TAB",
     "PLAYER_LEVEL_UP",
     "CHAT_MSG_SYSTEM",
 })
+if ns.Core and ns.Core.missingEvents then
+    for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
+end
 
 rf:SetScript("OnEvent", Compat:Wrap("Rogue", function(self, event, ...)
     if not Rogue:IsRogue() then return end

@@ -288,11 +288,14 @@ end
 
 local mf = CreateFrame("Frame")
 
-Compat:RegisterEvents(mf, {
+local _, missingEvents = Compat:RegisterEvents(mf, {
     "NAME_PLATE_UNIT_ADDED",
     "NAME_PLATE_UNIT_REMOVED",
     "PLAYER_TARGET_CHANGED",
 })
+if ns.Core and ns.Core.missingEvents then
+    for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
+end
 
 mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
     if event == "NAME_PLATE_UNIT_ADDED" then

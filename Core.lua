@@ -217,14 +217,20 @@ function Core:Reconcile()
         end
     end
 
+    -- Live objective text (e.g. "6/10 Mottled Boars slain") changes without
+    -- the step index moving, so these two have to refresh every reconcile
+    -- pass, not just on step-advance. Both are cheap/self-guarding already:
+    -- Progress:Refresh() no-ops while its window is hidden, UI:Refresh() is
+    -- a handful of SetText calls.
+    if ns.UI then ns.UI:Refresh() end
+    if ns.Progress then ns.Progress:Refresh() end
+
     if moved then
         self:Save()
-        if ns.UI then ns.UI:Refresh() end
         local step = self:CurrentStep()
         if step then Data:SetWaypoint(step) end
         if ns.Marker then ns.Marker:RescanAll() end
         if ns.Panel then ns.Panel:Refresh() end
-        if ns.Progress then ns.Progress:Refresh() end
     end
 end
 

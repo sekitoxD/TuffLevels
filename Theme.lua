@@ -53,6 +53,11 @@ local function unpackc(c, a)
     return c[1], c[2], c[3], a or 1
 end
 
+-- Frames/buttons Skin()/SkinButton() have painted, so a palette change can
+-- repaint them live instead of waiting for the next Build(). Weak-keyed so
+-- closed/destroyed frames don't keep this table growing forever.
+Theme._skinned = setmetatable({}, { __mode = "k" })
+
 --------------------------------------------------------------------------
 -- Presets and custom import
 --------------------------------------------------------------------------
@@ -140,6 +145,39 @@ function Theme:LoadSaved()
     end
 end
 
+-- Repaints every already-built frame/button Skin()/SkinButton() has touched,
+-- using the current Theme.color/Theme.hex - so a palette change made mid
+-- session shows up immediately instead of only on the next Build(). Mirrors
+-- the exact color choices Skin()/SkinButton() make with no custom opts,
+-- which is all any call site in this addon ever passes.
+function Theme:ReapplyAll()
+    for obj, kind in pairs(self._skinned) do
+        if kind == "button" then
+            if obj._bg then obj._bg:SetColorTexture(unpackc(self.color.raised, 0.95)) end
+            if obj._edge then obj._edge:SetColorTexture(unpackc(self.color.violet, 0.7)) end
+            local fs = obj.GetFontString and obj:GetFontString()
+            if fs then fs:SetTextColor(unpackc(self.color.text)) end
+        else
+            if obj._bgTex then
+                obj._bgTex:SetColorTexture(unpackc(self.color.bg, 0.96))
+            elseif obj.SetBackdropColor then
+                obj:SetBackdropColor(unpackc(self.color.bg, 0.96))
+                obj:SetBackdropBorderColor(unpackc(self.color.blood, 1))
+            end
+            if obj._accentLine then
+                obj._accentLine:SetColorTexture(unpackc(self.color.violet, 0.9))
+            end
+            if obj._fade then
+                obj._fade:SetGradient("VERTICAL",
+                    CreateColor and CreateColor(0, 0, 0, 0.55) or nil,
+                    CreateColor and CreateColor(self.color.blood[1] * 0.5,
+                                                self.color.blood[2] * 0.5,
+                                                self.color.blood[3] * 0.5, 0.18) or nil)
+            end
+        end
+    end
+end
+
 --------------------------------------------------------------------------
 -- Frame skinning
 --------------------------------------------------------------------------
@@ -193,6 +231,7 @@ function Theme:Skin(frame, opts)
         frame._fade = f
     end
 
+    self._skinned[frame] = "frame"
     return frame
 end
 
@@ -224,6 +263,7 @@ function Theme:SkinButton(button)
     edge:SetPoint("BOTTOMRIGHT")
     edge:SetHeight(1)
     edge:SetColorTexture(unpackc(self.color.violet, 0.7))
+    button._edge = edge
 
     local fs = button:GetFontString()
     if fs then fs:SetTextColor(unpackc(self.color.text)) end
@@ -239,6 +279,7 @@ function Theme:SkinButton(button)
         if t then t:SetTextColor(unpackc(Theme.color.text)) end
     end)
 
+    self._skinned[button] = "button"
     return button
 end
 

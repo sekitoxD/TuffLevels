@@ -349,7 +349,7 @@ end
 
 local rf = CreateFrame("Frame")
 
-Compat:RegisterEvents(rf, {
+local _, missingEvents = Compat:RegisterEvents(rf, {
     "PLAYER_LOGIN",
     "QUEST_ACCEPTED",
     "QUEST_TURNED_IN",
@@ -363,6 +363,9 @@ Compat:RegisterEvents(rf, {
     "ZONE_CHANGED_NEW_AREA",
     "PLAYER_LEAVING_WORLD",
 })
+if ns.Core and ns.Core.missingEvents then
+    for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
+end
 
 rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
