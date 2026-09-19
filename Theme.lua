@@ -29,7 +29,7 @@ Theme.color = {
     lilac    = { 0.80, 0.65, 1.00 },
 
     -- text
-    text     = { 0.94, 0.88, 0.90 },
+    text     = { 1.00, 0.97, 0.98 },
     dim      = { 0.55, 0.45, 0.50 },
     faint    = { 0.35, 0.28, 0.32 },
 
@@ -42,7 +42,7 @@ Theme.hex = {
     accent  = "|cffa96bf2",
     bright  = "|cffcca6ff",
     ember   = "|cffb31f26",
-    text    = "|cfff0e0e6",
+    text    = "|cfffff7fa",
     dim     = "|cff8c7380",
     faint   = "|cff594753",
     done    = "|cff73cc8c",
@@ -51,6 +51,93 @@ Theme.hex = {
 
 local function unpackc(c, a)
     return c[1], c[2], c[3], a or 1
+end
+
+--------------------------------------------------------------------------
+-- Presets and custom import
+--------------------------------------------------------------------------
+
+-- Each preset is a flat {key = "RRGGBB"} table covering every key in both
+-- Theme.color and Theme.hex. "Default" is the palette above, spelled out
+-- as hex so all presets share one format.
+Theme.presets = {
+    Default = {
+        void = "0a0303", bg = "140505", panel = "1f080a", raised = "2b0d0f",
+        blood = "731017", ember = "b31f26",
+        violet = "7a3dc7", orchid = "a96bf2", lilac = "ccaaff",
+        text = "fff7fa", dim = "8c7380", faint = "594753",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    Azure = {
+        void = "03060a", bg = "050a14", panel = "081120", raised = "0d182b",
+        blood = "17406b", ember = "1f66a3",
+        violet = "3d7ac7", orchid = "6ba9f2", lilac = "aaccff",
+        text = "f7fbff", dim = "7380a0", faint = "475159",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    Verdant = {
+        void = "030a04", bg = "05140a", panel = "08200f", raised = "0d2b16",
+        blood = "17732b", ember = "1fa33f",
+        violet = "3dc768", orchid = "6bf29a", lilac = "aaffcc",
+        text = "f7fff9", dim = "76a082", faint = "475950",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    Amber = {
+        void = "0a0703", bg = "140d05", panel = "201608", raised = "2b1e0d",
+        blood = "734a17", ember = "a3711f",
+        violet = "c78e3d", orchid = "f2b06b", lilac = "ffd9aa",
+        text = "fffaf7", dim = "a08f73", faint = "594e47",
+        done = "73cc8c", warn = "f2bf59",
+    },
+}
+
+local function hexToRGB(hex)
+    hex = hex:gsub("^|cff", ""):gsub("^#", "")
+    if not hex:match("^%x%x%x%x%x%x$") then return nil end
+    return tonumber(hex:sub(1, 2), 16) / 255,
+           tonumber(hex:sub(3, 4), 16) / 255,
+           tonumber(hex:sub(5, 6), 16) / 255
+end
+
+-- Overwrites the existing color/hex tables' keys IN PLACE (never replaces
+-- the table objects) so any code holding a reference to one of the inner
+-- {r,g,b} triplets still sees the update.
+function Theme:ApplyPalette(flat)
+    for key, hex in pairs(flat) do
+        local r, g, b = hexToRGB(hex)
+        if r then
+            local c = self.color[key]
+            if c then
+                c[1], c[2], c[3] = r, g, b
+            end
+            if self.hex[key] then
+                self.hex[key] = ("|cff%s"):format(hex:gsub("^|cff", ""):gsub("^#", ""))
+            end
+        end
+    end
+
+    -- Theme.hex.accent/bright have no matching Theme.color key of the same
+    -- name - they're the inline-text hex forms of the orchid/lilac accent
+    -- colors. Derive them from a preset's orchid/lilac unless the caller
+    -- set accent/bright directly (handled by the loop above already).
+    if flat.orchid and not flat.accent then
+        self.hex.accent = ("|cff%s"):format(flat.orchid:gsub("^|cff", ""):gsub("^#", ""))
+    end
+    if flat.lilac and not flat.bright then
+        self.hex.bright = ("|cff%s"):format(flat.lilac:gsub("^|cff", ""):gsub("^#", ""))
+    end
+end
+
+-- Reads TuFFlevelsDB.customTheme (saved by Panel's color picker) and
+-- applies it. Runs on PLAYER_LOGIN, before any frame's first Build() this
+-- session, so a saved palette is in effect by the time anything draws.
+function Theme:LoadSaved()
+    local Compat = ns.Compat
+    if not Compat then return end
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    if db.customTheme then
+        self:ApplyPalette(db.customTheme)
+    end
 end
 
 --------------------------------------------------------------------------

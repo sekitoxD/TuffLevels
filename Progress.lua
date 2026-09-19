@@ -9,12 +9,30 @@ local Compat = ns.Compat
 local Progress = {}
 ns.Progress = Progress
 
-local ROWS = 16
 local ROW_H = 18
+local ROW_TOP = 92     -- offset from the top where the row list starts
+local ROW_BOTTOM = 52  -- offset reserved at the bottom for the slider/buttons
 
-local win, rows, slider
+local win, rows, slider, EnsureRow
+local visibleRows = 16
 local offset = 0
 local filter = "all"      -- all | done | todo
+
+-- Recomputes how many rows fit in the window's current height, growing the
+-- row-button pool as needed (rows are never destroyed, only hidden) and
+-- hiding any pooled rows beyond what currently fits.
+local function RecomputeRows()
+    if not win then return end
+    local avail = win:GetHeight() - ROW_TOP - ROW_BOTTOM
+    visibleRows = math.max(1, math.floor(avail / ROW_H))
+    for i = 1, visibleRows do EnsureRow(i) end
+    for i, r in pairs(rows) do
+        if i > visibleRows then
+            r:Hide()
+            r.stepIndex = nil
+        end
+    end
+end
 
 --------------------------------------------------------------------------
 -- Completed quest totals
@@ -133,6 +151,14 @@ function Progress:Build()
     win:SetScript("OnDragStop", win.StopMovingOrSizing)
     win:Hide()
 
+    win:SetResizable(true)
+    Compat:SetResizeBounds(win, 320, 220, 900, 900)
+
+    local pdb = Compat:InitSavedVar("TuFFlevelsDB")
+    if pdb.progressSize then
+        win:SetSize(unpack(pdb.progressSize))
+    end
+
     ns.Theme:Skin(win)
 
     local t = win:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -159,12 +185,16 @@ function Progress:Build()
     win.fDone = FilterButton("Done", "done", 92)
     win.fTodo = FilterButton("To do", "todo", 166)
 
-    -- rows
+    -- rows - pooled lazily by EnsureRow/RecomputeRows so the list can grow
+    -- or shrink with the window's height instead of a fixed count of 16.
     rows = {}
-    for i = 1, ROWS do
+    EnsureRow = function(i)
+        if rows[i] then return rows[i] end
+
         local r = CreateFrame("Button", nil, win)
-        r:SetSize(400, ROW_H)
-        r:SetPoint("TOPLEFT", 18, -92 - (i - 1) * ROW_H)
+        r:SetHeight(ROW_H)
+        r:SetPoint("TOPLEFT", 18, -ROW_TOP - (i - 1) * ROW_H)
+        r:SetPoint("TOPRIGHT", -34, -ROW_TOP - (i - 1) * ROW_H)
 
         r.icon = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         r.icon:SetPoint("LEFT", 0, 0)
@@ -187,7 +217,9 @@ function Progress:Build()
         hl:SetColorTexture(1, 1, 1, 0.08)
 
         rows[i] = r
+        return r
     end
+    RecomputeRows()
 
     slider = CreateFrame("Slider", nil, win, "UIPanelScrollBarTemplate")
     slider:SetPoint("TOPRIGHT", -14, -100)
@@ -225,12 +257,29 @@ function Progress:Build()
     close:SetPoint("BOTTOMRIGHT", -18, 16)
     close:SetText("Close")
     close:SetScript("OnClick", function() win:Hide() end)
+
+    -- resize grip, hanging just outside the corner so it doesn't overlap
+    -- the "Close" button sitting at the window's own bottom-right edge
+    local grip = CreateFrame("Button", nil, win)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", 10, -10)
+    local gripTex = grip:CreateTexture(nil, "OVERLAY")
+    gripTex:SetAllPoints()
+    gripTex:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetScript("OnMouseDown", function() win:StartSizing("BOTTOMRIGHT") end)
+    grip:SetScript("OnMouseUp", function()
+        win:StopMovingOrSizing()
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
+        db.progressSize = { win:GetWidth(), win:GetHeight() }
+        RecomputeRows()
+        Progress:Refresh()
+    end)
 end
 
 function Progress:RenderRows()
     local list = BuildList()
 
-    for i = 1, ROWS do
+    for i = 1, visibleRows do
         local r = rows[i]
         local e = list[i + offset]
 
@@ -254,7 +303,7 @@ function Progress:RenderRows()
         end
     end
 
-    local maxOffset = math.max(0, #list - ROWS)
+    local maxOffset = math.max(0, #list - visibleRows)
     slider:SetMinMaxValues(0, maxOffset)
     if offset > maxOffset then offset = maxOffset end
 end

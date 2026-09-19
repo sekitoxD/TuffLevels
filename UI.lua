@@ -102,6 +102,9 @@ function UI:Build()
         local p, _, rp, x, y = self:GetPoint()
         db.pos = { p, rp, x, y }
     end)
+
+    frame:SetResizable(true)
+    ns.Compat:SetResizeBounds(frame, 260, 180, 600, 700)
     Theme:Skin(frame)
 
     local db = ns.Compat:InitSavedVar("TuFFlevelsDB")
@@ -109,6 +112,9 @@ function UI:Build()
         local p, rp, x, y = unpack(db.pos)
         frame:ClearAllPoints()
         frame:SetPoint(p, UIParent, rp, x, y)
+    end
+    if db.size then
+        frame:SetSize(unpack(db.size))
     end
 
     -- "Step: 01-16" strip along the top
@@ -182,20 +188,25 @@ function UI:Build()
         if ns.Core.pinned then ns.Core:Resume() end
     end)
 
-    -- current step body
-    frame.current = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    frame.current:SetPoint("TOPLEFT", 12, -70)
-    frame.current:SetPoint("TOPRIGHT", -12, -70)
-    frame.current:SetJustifyH("LEFT")
-    frame.current:SetJustifyV("TOP")
-    frame.current:SetSpacing(2)
-
-    -- what's next
+    -- what's next (built first so the current-step body below can anchor
+    -- its bottom edge to this one's top, instead of floating unanchored)
     frame.upcoming = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     frame.upcoming:SetPoint("BOTTOMLEFT", 12, 34)
     frame.upcoming:SetPoint("BOTTOMRIGHT", -12, 34)
     frame.upcoming:SetJustifyH("LEFT")
     frame.upcoming:SetSpacing(2)
+
+    -- current step body - the middle region between the header and
+    -- "upcoming", so it grows/shrinks with the frame instead of overlapping
+    -- "upcoming" when the tracker is resized.
+    frame.current = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    frame.current:SetPoint("TOPLEFT", 12, -70)
+    frame.current:SetPoint("TOPRIGHT", -12, -70)
+    frame.current:SetPoint("BOTTOMLEFT", frame.upcoming, "TOPLEFT", 0, 4)
+    frame.current:SetPoint("BOTTOMRIGHT", frame.upcoming, "TOPRIGHT", 0, 4)
+    frame.current:SetJustifyH("LEFT")
+    frame.current:SetJustifyV("TOP")
+    frame.current:SetSpacing(2)
 
     local function Btn(label, width, point, x, onClick)
         local b = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
@@ -217,6 +228,21 @@ function UI:Build()
         if step then ns.Data:SetWaypoint(step) end
     end)
     Btn("Next", 56, "BOTTOMRIGHT", -8, function() ns.Core:Advance() end)
+
+    -- resize grip, hanging just outside the corner so it doesn't overlap
+    -- the "Next" button sitting at the frame's own bottom-right edge
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", 10, -10)
+    local gripTex = grip:CreateTexture(nil, "OVERLAY")
+    gripTex:SetAllPoints()
+    gripTex:SetTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetScript("OnMouseDown", function() frame:StartSizing("BOTTOMRIGHT") end)
+    grip:SetScript("OnMouseUp", function()
+        frame:StopMovingOrSizing()
+        local db = ns.Compat:InitSavedVar("TuFFlevelsDB")
+        db.size = { frame:GetWidth(), frame:GetHeight() }
+    end)
 end
 
 --------------------------------------------------------------------------

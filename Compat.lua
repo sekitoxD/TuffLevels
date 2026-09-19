@@ -192,6 +192,17 @@ function Compat:GetSpellBookName(index)
     return nil
 end
 
+-- SetResizeBounds is the modern min/max-size call; older clients only have
+-- the SetMinResize/SetMaxResize pair it replaced. Try the new one first.
+function Compat:SetResizeBounds(frame, minW, minH, maxW, maxH)
+    if frame.SetResizeBounds then
+        local ok = pcall(frame.SetResizeBounds, frame, minW, minH, maxW, maxH)
+        if ok then return end
+    end
+    if frame.SetMinResize then pcall(frame.SetMinResize, frame, minW, minH) end
+    if frame.SetMaxResize then pcall(frame.SetMaxResize, frame, maxW, maxH) end
+end
+
 --------------------------------------------------------------------------
 -- Zone name -> uiMapID
 --------------------------------------------------------------------------

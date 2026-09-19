@@ -60,12 +60,16 @@ end
 -- Build
 --------------------------------------------------------------------------
 
+-- Adjustable via mouse wheel over the arrow; clamped so it can't be
+-- scrolled into being invisible or absurdly large.
+local SCALE_MIN, SCALE_MAX, SCALE_STEP = 0.5, 2.5, 0.1
+
 function Arrow:Build()
     if frame then return end
 
     frame = CreateFrame("Frame", "TuFFlevelsArrow", UIParent)
     frame:SetSize(84, 104)
-    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 180)
+    frame:SetPoint("TOP", UIParent, "TOP", 0, -80)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
@@ -75,6 +79,15 @@ function Arrow:Build()
         local db = Compat:InitSavedVar("TuFFlevelsDB")
         local p, _, rp, x, y = self:GetPoint()
         db.arrowPos = { p, rp, x, y }
+    end)
+
+    frame:EnableMouseWheel(true)
+    frame:SetScript("OnMouseWheel", function(self, delta)
+        local scale = self:GetScale() + delta * SCALE_STEP
+        scale = math.max(SCALE_MIN, math.min(SCALE_MAX, scale))
+        self:SetScale(scale)
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
+        db.arrowScale = scale
     end)
 
     tex = frame:CreateTexture(nil, "OVERLAY")
@@ -107,6 +120,9 @@ function Arrow:Build()
         frame:ClearAllPoints()
         frame:SetPoint(p, UIParent, rp, x, y)
     end
+    if db.arrowScale then
+        frame:SetScale(db.arrowScale)
+    end
 
     local guardedUpdate = Compat:Wrap("Arrow", function() Arrow:Update() end, function()
         frame:Hide()
@@ -132,6 +148,22 @@ function Arrow:Update()
 
     local step = ns.Core and ns.Core:CurrentStep()
     if not step then frame:Hide() return end
+
+    -- note/manual/trainer/death/hearth steps (and any accept/turnin step an
+    -- author didn't give coords) legitimately have no x/y. Rather than just
+    -- vanishing - indistinguishable from "disabled" - point at the next
+    -- upcoming step in the route that does have coordinates.
+    local usingNext = false
+    if not (step.x and step.y) and ns.Core and ns.Core.active then
+        local steps = ns.Core.active.steps
+        for i = ns.Core.index + 1, #steps do
+            if steps[i].x and steps[i].y then
+                step = steps[i]
+                usingNext = true
+                break
+            end
+        end
+    end
 
     local angle, dist, wrongMap = Bearing(step)
 
@@ -165,7 +197,7 @@ function Arrow:Update()
 
     local label = step.npc or step.name or ""
     if #label > 28 then label = label:sub(1, 26) .. "..." end
-    titleText:SetText(label)
+    titleText:SetText(usingNext and ("Next: " .. label) or label)
 end
 
 function Arrow:Toggle()
@@ -174,4 +206,18 @@ function Arrow:Toggle()
         if self.enabled then frame:Show() else frame:Hide() end
     end
     ns.Print("Arrow " .. (self.enabled and "on" or "off"))
+end
+
+-- Undoes drag-reposition and mouse-wheel-resize, since those have no other
+-- undo path once you've scrolled the arrow down to a size you didn't want.
+function Arrow:ResetPosition()
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    db.arrowPos = nil
+    db.arrowScale = nil
+    if frame then
+        frame:SetScale(1.0)
+        frame:ClearAllPoints()
+        frame:SetPoint("TOP", UIParent, "TOP", 0, -80)
+    end
+    ns.Print("Arrow reset to default position and size.")
 end

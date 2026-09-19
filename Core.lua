@@ -391,6 +391,7 @@ end
 
 f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
+        if ns.Theme then ns.Theme:LoadSaved() end
         Data:DetectProvider()
         Compat:LoadNameCache()
         Core:Load()
@@ -454,8 +455,14 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "sheet" then
         ns.SheetImport:Show()
 
+    elseif cmd == "arrow" and arg:lower() == "reset" then
+        ns.Arrow:ResetPosition()
+
     elseif cmd == "arrow" then
         ns.Arrow:Toggle()
+
+    elseif cmd == "colors" then
+        ns.Panel:ShowColorPicker()
 
     elseif cmd == "mobs" then
         ns.Marker:ToggleMobs()

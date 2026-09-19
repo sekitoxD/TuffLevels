@@ -96,7 +96,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 456)
+    panel:SetSize(240, 550)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -156,31 +156,39 @@ function Panel:Build()
         Panel:Refresh()
     end)
 
-    panel.arrowBtn = MakeButton(panel, "Arrow", -272, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -316, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -298, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -342, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -324, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -368, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -350, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -394, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
     end)
 
-    panel.routeBtn = MakeButton(panel, "Choose route", -376, function()
+    panel.routeBtn = MakeButton(panel, "Choose route", -420, function()
         Panel:ShowRoutePicker()
     end)
 
-    MakeButton(panel, "Close", -410, function() panel:Hide() end)
+    MakeButton(panel, "Colors", -446, function()
+        Panel:ShowColorPicker()
+    end)
+
+    MakeButton(panel, "Reset arrow position", -472, function()
+        ns.Arrow:ResetPosition()
+    end)
+
+    MakeButton(panel, "Close", -504, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -264,7 +272,7 @@ function Panel:ShowRoutePicker()
     if self.picker then self.picker:Hide() end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(300, 260)
+    f:SetSize(320, 260)
     f:SetPoint("CENTER")
     f:SetFrameStrata("FULLSCREEN_DIALOG")
     f:EnableMouse(true)
@@ -277,13 +285,32 @@ function Panel:ShowRoutePicker()
     local y = -42
     local count = 0
     for name, route in pairs(ns.Core.routes) do
-        local label = ("%s  (%s-%s)"):format(name,
+        local suffix = ("  (%s-%s)"):format(
             route.levels and route.levels[1] or "?",
             route.levels and route.levels[2] or "?")
         local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-        b:SetSize(260, 22)
+        b:SetSize(280, 22)
         b:SetPoint("TOP", 0, y)
-        b:SetText(label)
+
+        local fs = b:GetFontString()
+        if fs then
+            local fontFile, _, fontFlags = fs:GetFont()
+            fs:SetFont(fontFile, 11, fontFlags)
+        end
+
+        b:SetText(name .. suffix)
+
+        -- Last resort if it still overflows at the smaller size: trim the
+        -- route name (never the level range) with an ellipsis.
+        if fs then
+            local avail = b:GetWidth() - 20
+            local trimmed = name
+            while fs:GetStringWidth() > avail and #trimmed > 4 do
+                trimmed = trimmed:sub(1, #trimmed - 1)
+                b:SetText(trimmed .. "..." .. suffix)
+            end
+        end
+
         b:SetScript("OnClick", function()
             ns.Core:LoadRoute(name)
             f:Hide()
@@ -305,5 +332,95 @@ function Panel:ShowRoutePicker()
     close:SetScript("OnClick", function() f:Hide() end)
 
     self.picker = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Color picker
+--------------------------------------------------------------------------
+
+-- Palette changes apply on the next /reload rather than live, since most
+-- windows bake their colors into a one-time SetBackdropColor/texture-color
+-- call at Build() and only Arrow.lua re-reads Theme.color every tick.
+function Panel:ShowColorPicker()
+    if self.colorPicker then self.colorPicker:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(340, 330)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Colors")
+
+    local presetNames = {}
+    for name in pairs(ns.Theme.presets) do table.insert(presetNames, name) end
+    table.sort(presetNames)
+
+    local y = -42
+    for _, name in ipairs(presetNames) do
+        local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        b:SetSize(200, 22)
+        b:SetPoint("TOP", 0, y)
+        b:SetText(name)
+        b:SetScript("OnClick", function()
+            local db = Compat:InitSavedVar("TuFFlevelsDB")
+            db.customTheme = ns.Theme.presets[name]
+            ns.Print(("Palette set to %s. /reload to apply."):format(name))
+        end)
+        y = y - 26
+    end
+
+    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    hint:SetPoint("TOPLEFT", 18, y - 10)
+    hint:SetPoint("TOPRIGHT", -18, y - 10)
+    hint:SetJustifyH("LEFT")
+    hint:SetText("Custom import - comma-separated key=RRGGBB pairs\n" ..
+        "(e.g. orchid=3399ff,text=ffffff):")
+
+    local eb = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    eb:SetSize(280, 24)
+    eb:SetPoint("TOP", hint, "BOTTOM", 0, -28)
+    eb:SetAutoFocus(false)
+    eb:SetScript("OnEnterPressed", function(self)
+        local text = self:GetText()
+        self:ClearFocus()
+        if text == "" then return end
+
+        local updates, bad = {}, {}
+        for pair in text:gmatch("[^,]+") do
+            local key, hex = pair:match("^%s*(%a+)%s*=%s*(%x%x%x%x%x%x)%s*$")
+            if key then
+                updates[key:lower()] = hex:lower()
+            else
+                table.insert(bad, pair)
+            end
+        end
+
+        if #bad > 0 then
+            ns.Print("|cffff5555Rejected, malformed entr" ..
+                (#bad == 1 and "y: " or "ies: ") .. table.concat(bad, ", ") .. "|r")
+            return
+        end
+
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
+        db.customTheme = db.customTheme or {}
+        for key, hex in pairs(updates) do
+            db.customTheme[key] = hex
+        end
+        self:SetText("")
+        ns.Print("Custom colors saved. /reload to apply.")
+    end)
+
+    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    close:SetSize(100, 22)
+    close:SetPoint("BOTTOM", 0, 14)
+    close:SetText("Close")
+    close:SetScript("OnClick", function() f:Hide() end)
+
+    self.colorPicker = f
     f:Show()
 end
