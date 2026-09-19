@@ -116,6 +116,8 @@ Steps filter by `races`, `class`, and `minLevel`, so one file can serve Orc and 
 
 ## Licensing
 
+TuFFlevels itself is **MIT**-licensed (see `LICENSE`).
+
 QuestieDB is **GPL-3.0**.
 
 - Reading it at runtime as an optional dependency — you license TuFFlevels however you want.
