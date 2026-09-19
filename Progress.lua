@@ -222,12 +222,40 @@ function Progress:Build()
     end
     RecomputeRows()
 
-    slider = CreateFrame("Slider", nil, win, "UIPanelScrollBarTemplate")
+    -- A bare, template-free slider. UIPanelScrollBarTemplate resolves to
+    -- Blizzard's secure-snippet-based scrollbar (SecureScrollTemplates.lua)
+    -- on this client, and Compat.lua already documents that secure
+    -- snippets/WrapScript throw on Forever - every SetValue() call,
+    -- including the engine's own call when the user drags the thumb,
+    -- errored. A hand-built Slider needs nothing beyond the base Slider
+    -- API (SetOrientation/SetThumbTexture), unchanged across all three
+    -- clients, so it sidesteps the broken template entirely.
+    slider = CreateFrame("Slider", nil, win)
+    slider:SetOrientation("VERTICAL")
     slider:SetPoint("TOPRIGHT", -14, -100)
     slider:SetPoint("BOTTOMRIGHT", -14, 52)
+    slider:SetWidth(16)
+    slider:EnableMouse(true)
     slider:SetMinMaxValues(0, 1)
     slider:SetValueStep(1)
     slider:SetObeyStepOnDrag(true)
+
+    local sliderTrack = slider:CreateTexture(nil, "BACKGROUND")
+    sliderTrack:SetPoint("TOP", 0, -2)
+    sliderTrack:SetPoint("BOTTOM", 0, 2)
+    sliderTrack:SetWidth(4)
+
+    local sliderThumb = slider:CreateTexture(nil, "OVERLAY")
+    sliderThumb:SetSize(16, 28)
+    slider:SetThumbTexture(sliderThumb)
+
+    local function paintSlider()
+        sliderTrack:SetColorTexture(unpack(ns.Theme.color.faint))
+        sliderThumb:SetColorTexture(unpack(ns.Theme.color.violet))
+    end
+    paintSlider()
+    ns.Theme._skinned[slider] = paintSlider
+
     slider:SetValue(0)
     ns.Theme:SkinChildren(win)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
