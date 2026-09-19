@@ -1,0 +1,25 @@
+# Editor / tooling
+.obsidian/
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python (tools/extract_recording.py)
+__pycache__/
+*.pyc
+
+# Editor backup/swap files
+*.bak
+*.tmp
+*.swp
+*~
+
+# WoW SavedVariables (per-user, generated at runtime, not addon source)
+*.lua.bak
+SavedVariables/
