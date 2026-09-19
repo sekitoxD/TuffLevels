@@ -55,7 +55,10 @@ end
 
 -- Frames/buttons Skin()/SkinButton() have painted, so a palette change can
 -- repaint them live instead of waiting for the next Build(). Weak-keyed so
--- closed/destroyed frames don't keep this table growing forever.
+-- closed/destroyed frames don't keep this table growing forever. The value
+-- is "frame" or "button" for Skin()/SkinButton()'s own elements, or a
+-- function(obj) for a one-off decorative element outside that shape (e.g.
+-- UI.lua's section header bar) that needs its own repaint logic.
 Theme._skinned = setmetatable({}, { __mode = "k" })
 
 --------------------------------------------------------------------------
@@ -93,6 +96,33 @@ Theme.presets = {
         violet = "c78e3d", orchid = "f2b06b", lilac = "ffd9aa",
         text = "fffaf7", dim = "a08f73", faint = "594e47",
         done = "73cc8c", warn = "f2bf59",
+    },
+    -- Same dark-background shape as the four above, just neutralized to
+    -- true black/gray instead of a color family - low risk, no other
+    -- theme-consuming code needs to change for this one.
+    Dark = {
+        void = "050505", bg = "0d0d0d", panel = "161616", raised = "212121",
+        blood = "3d3d47", ember = "5a5a68",
+        violet = "7a3dc7", orchid = "a96bf2", lilac = "ccaaff",
+        text = "f7f7fa", dim = "8c8c94", faint = "4a4a52",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    -- Light and LightPurple invert to dark-text-on-pale-background, so
+    -- done/warn are re-darkened here for contrast (the pastel values
+    -- above would nearly vanish on a white/lavender background).
+    Light = {
+        void = "e8e8ea", bg = "f4f4f6", panel = "ffffff", raised = "eceaf0",
+        blood = "5a3d7a", ember = "9a4a1f",
+        violet = "5a2fa3", orchid = "7a45c7", lilac = "8c5fd6",
+        text = "201a26", dim = "5a5460", faint = "8c8690",
+        done = "1f8c4a", warn = "a3701f",
+    },
+    LightPurple = {
+        void = "e6e0f0", bg = "f0ecf8", panel = "faf7ff", raised = "e9e0f5",
+        blood = "6b3fa0", ember = "9a4a1f",
+        violet = "6b3fa0", orchid = "8c5fd6", lilac = "a980e6",
+        text = "241a33", dim = "6b5f7a", faint = "a696b8",
+        done = "1f8c4a", warn = "a3701f",
     },
 }
 
@@ -145,6 +175,15 @@ function Theme:LoadSaved()
     end
 end
 
+-- The window-bottom fade's dark stop tracks the palette's own darkest
+-- background (void) instead of a hardcoded black, so it stays a subtle
+-- vignette on a light preset instead of muddying it toward gray.
+local function fadeColors(self)
+    local void, blood = self.color.void, self.color.blood
+    return CreateColor and CreateColor(void[1], void[2], void[3], 0.55) or nil,
+           CreateColor and CreateColor(blood[1] * 0.5, blood[2] * 0.5, blood[3] * 0.5, 0.18) or nil
+end
+
 -- Repaints every already-built frame/button Skin()/SkinButton() has touched,
 -- using the current Theme.color/Theme.hex - so a palette change made mid
 -- session shows up immediately instead of only on the next Build(). Mirrors
@@ -152,7 +191,9 @@ end
 -- which is all any call site in this addon ever passes.
 function Theme:ReapplyAll()
     for obj, kind in pairs(self._skinned) do
-        if kind == "button" then
+        if type(kind) == "function" then
+            kind(obj)
+        elseif kind == "button" then
             if obj._bg then obj._bg:SetColorTexture(unpackc(self.color.raised, 0.95)) end
             if obj._edge then obj._edge:SetColorTexture(unpackc(self.color.violet, 0.7)) end
             local fs = obj.GetFontString and obj:GetFontString()
@@ -168,11 +209,7 @@ function Theme:ReapplyAll()
                 obj._accentLine:SetColorTexture(unpackc(self.color.violet, 0.9))
             end
             if obj._fade then
-                obj._fade:SetGradient("VERTICAL",
-                    CreateColor and CreateColor(0, 0, 0, 0.55) or nil,
-                    CreateColor and CreateColor(self.color.blood[1] * 0.5,
-                                                self.color.blood[2] * 0.5,
-                                                self.color.blood[3] * 0.5, 0.18) or nil)
+                obj._fade:SetGradient("VERTICAL", fadeColors(self))
             end
         end
     end
@@ -223,11 +260,7 @@ function Theme:Skin(frame, opts)
         f:SetPoint("TOPLEFT", 1, -3)
         f:SetPoint("BOTTOMRIGHT", -1, 1)
         f:SetColorTexture(1, 1, 1, 1)
-        f:SetGradient("VERTICAL",
-            CreateColor and CreateColor(0, 0, 0, 0.55) or nil,
-            CreateColor and CreateColor(self.color.blood[1] * 0.5,
-                                        self.color.blood[2] * 0.5,
-                                        self.color.blood[3] * 0.5, 0.18) or nil)
+        f:SetGradient("VERTICAL", fadeColors(self))
         frame._fade = f
     end
 

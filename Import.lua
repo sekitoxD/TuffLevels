@@ -174,6 +174,7 @@ function Import:Show()
 
         win.status = win:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         win.status:SetPoint("TOP", 0, -34)
+        win.status:SetTextColor(unpack(ns.Theme.color.text))
 
         local scroll = CreateFrame("ScrollFrame", "TuFFlevelsImportScroll", win,
                                    "UIPanelScrollFrameTemplate")

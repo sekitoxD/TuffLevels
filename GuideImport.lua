@@ -209,6 +209,7 @@ function GuideImport:Show()
         local help = win:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         help:SetPoint("TOP", 0, -32)
         help:SetWidth(580)
+        help:SetTextColor(unpack(ns.Theme.color.dim))
         help:SetText("Paste a guide in Guidelime format below, then Convert. " ..
                      "Use only guides you're allowed to use, and credit the author.")
 
@@ -230,6 +231,7 @@ function GuideImport:Show()
         win.status:SetPoint("BOTTOMLEFT", 18, 46)
         win.status:SetPoint("BOTTOMRIGHT", -18, 46)
         win.status:SetJustifyH("LEFT")
+        win.status:SetTextColor(unpack(ns.Theme.color.text))
 
         local convert = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
         convert:SetSize(140, 22)

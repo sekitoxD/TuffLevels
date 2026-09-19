@@ -32,16 +32,20 @@ local VERB = {
     section  = "",
 }
 
-local VERB_COLOR = {
-    accept   = Theme.hex.done,
-    turnin   = Theme.hex.bright,
-    complete = Theme.hex.accent,
-    grind    = Theme.hex.ember,
-    travel   = Theme.hex.dim,
-    hearth   = Theme.hex.accent,
-    trainer  = Theme.hex.warn,
-    death    = Theme.hex.ember,
-    note     = Theme.hex.warn,
+-- Keys into Theme.hex, not snapshotted hex strings - Theme.hex[key] gets
+-- replaced wholesale (not mutated) by ApplyPalette, so caching the string
+-- here would freeze these colors at whatever preset was active on login
+-- and miss a live palette switch.
+local VERB_COLOR_KEY = {
+    accept   = "done",
+    turnin   = "bright",
+    complete = "accent",
+    grind    = "ember",
+    travel   = "dim",
+    hearth   = "accent",
+    trainer  = "warn",
+    death    = "ember",
+    note     = "warn",
 }
 
 -- The quest or task name, preferring the database where we have one.
@@ -140,11 +144,16 @@ function UI:Build()
     header:SetHeight(26)
     local hbg = header:CreateTexture(nil, "BACKGROUND")
     hbg:SetAllPoints()
-    hbg:SetColorTexture(0.17, 0.05, 0.06, 0.9)
     local hline = header:CreateTexture(nil, "BORDER")
     hline:SetPoint("BOTTOMLEFT") ; hline:SetPoint("BOTTOMRIGHT")
     hline:SetHeight(1)
-    hline:SetColorTexture(0.48, 0.24, 0.78, 0.8)
+
+    local function paintHeader()
+        hbg:SetColorTexture(Theme.color.raised[1], Theme.color.raised[2], Theme.color.raised[3], 0.9)
+        hline:SetColorTexture(Theme.color.violet[1], Theme.color.violet[2], Theme.color.violet[3], 0.8)
+    end
+    paintHeader()
+    Theme._skinned[header] = paintHeader
 
     frame.sectionText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     frame.sectionText:SetPoint("LEFT", 30, 0)
@@ -337,7 +346,7 @@ function UI:Refresh()
             Theme.hex.text .. (step.name or "") .. "|r")
     else
         local verb = VERB[step.type] or step.type
-        local colour = VERB_COLOR[step.type] or Theme.hex.text
+        local colour = Theme.hex[VERB_COLOR_KEY[step.type]] or Theme.hex.text
         table.insert(lines, ("%s%s:|r %s%s|r")
             :format(colour, verb, Theme.hex.bright, StepLabel(step)))
     end

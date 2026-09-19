@@ -334,6 +334,7 @@ function SheetImport:Show()
         local help = win:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         help:SetPoint("TOP", 0, -32)
         help:SetWidth(600)
+        help:SetTextColor(unpack(Theme.color.dim))
         help:SetText("In Sheets: File > Download > Comma-separated values. Open the file, " ..
                      "copy everything, paste below. Or select the cells in the browser and paste directly.")
 
@@ -361,11 +362,13 @@ function SheetImport:Show()
         local nameLabel = win:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         nameLabel:SetPoint("BOTTOMLEFT", 22, 74)
         nameLabel:SetText("Route name")
+        nameLabel:SetTextColor(unpack(Theme.color.dim))
 
         win.status = win:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         win.status:SetPoint("BOTTOMLEFT", 300, 46)
         win.status:SetPoint("BOTTOMRIGHT", -18, 46)
         win.status:SetJustifyH("LEFT")
+        win.status:SetTextColor(unpack(Theme.color.text))
 
         local convert = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
         convert:SetSize(140, 22)
@@ -525,6 +528,7 @@ function SheetImport:ShowRouteFile(route, name)
 
         local help = fileWin:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         help:SetPoint("TOP", 0, -32)
+        help:SetTextColor(unpack(Theme.color.dim))
         help:SetText("Ctrl+C, paste into Notepad, save in TuFFlevels/Routes as a .lua file")
 
         local scroll = CreateFrame("ScrollFrame", "TuFFlevelsSheetFileScroll", fileWin,

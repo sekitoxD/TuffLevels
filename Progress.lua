@@ -169,6 +169,7 @@ function Progress:Build()
     win.summary:SetPoint("TOPLEFT", 18, -34)
     win.summary:SetPoint("TOPRIGHT", -18, -34)
     win.summary:SetJustifyH("LEFT")
+    win.summary:SetTextColor(unpack(ns.Theme.color.text))
 
     -- filter buttons
     local function FilterButton(label, mode, x)
@@ -284,13 +285,14 @@ function Progress:RenderRows()
         local e = list[i + offset]
 
         if e then
+            local Hex = ns.Theme.hex
             local mark, color
             if e.current then
-                mark, color = "|cffffd100>|r", "|cffffd100"
+                mark, color = Hex.warn .. ">|r", Hex.warn
             elseif e.done then
-                mark, color = "|cff00ff00v|r", "|cff808080"
+                mark, color = Hex.done .. "v|r", Hex.dim
             else
-                mark, color = "|cff505050-|r", "|cffffffff"
+                mark, color = Hex.faint .. "-|r", Hex.text
             end
 
             r.icon:SetText(mark)

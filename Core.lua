@@ -255,6 +255,53 @@ function Core:Resume()
     self:Reconcile()
 end
 
+-- Read-only: scans from step 1 (not from self.index) for the furthest step
+-- whose quest flags already say it's done, for players who completed
+-- quests out of the addon's tracked order (resumed without the addon, or
+-- skipped ahead in-game). Reuses Reconcile's exact StepApplies/IsStepDone
+-- check so a manual-only step type (trainer/death/manual/travel/hearth/
+-- note, which never reports done) still halts the scan - it can't be
+-- leapfrogged just because steps beyond it happen to be satisfied.
+function Core:PreviewCatchUp()
+    if not self.active then return nil end
+    local steps = self.active.steps
+    local furthest = 1
+    for i = 1, #steps do
+        local step = steps[i]
+        if not StepApplies(step) or IsStepDone(step) then
+            furthest = i + 1
+        else
+            break
+        end
+    end
+    return math.min(furthest, #steps + 1)
+end
+
+-- Applies the catch-up scan. Without `confirmed`, only previews the jump
+-- so a big route (routes run to ~3000 steps) can't get silently
+-- teleported out from under the player - call again with confirmed=true
+-- to actually move. Never moves the index backward (a reset/abandoned
+-- quest could otherwise look like regress).
+function Core:CatchUp(confirmed)
+    if not self.active then return end
+    local furthest = self:PreviewCatchUp()
+    if not furthest or furthest <= self.index then
+        Print("Already caught up - nothing ahead looks done.")
+        return
+    end
+
+    if not confirmed then
+        Print(("Catch-up would jump from step %d to step %d of %d. Type /tuff catchup confirm to apply."):format(
+            self.index, furthest, #self.active.steps))
+        return
+    end
+
+    self.pinned = false
+    self:SetIndex(furthest)
+    self:Reconcile()
+    Print("Caught up to step " .. self.index .. ".")
+end
+
 --------------------------------------------------------------------------
 -- Route selection
 --------------------------------------------------------------------------
@@ -591,6 +638,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Core:Resume()
         Print("Resumed. Step " .. Core.index)
 
+    elseif cmd == "catchup" then
+        Core:CatchUp(arg:lower() == "confirm")
+
     elseif cmd == "client" then
         Print(("Flavor: %s  |  Interface: %d  |  Mainline: %s"):format(
             Compat.flavor, Compat.tocVersion, tostring(Compat.isMainline)))
@@ -623,7 +673,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Print("Reset to step 1.")
 
     else
-        Print("Commands: show | next | back | resume | where | goto <n> | routes | load <name>")
+        Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
         Print("          verify | capture | client | errors | reset")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")

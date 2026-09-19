@@ -191,6 +191,7 @@ function Zones:Show()
         win.text:SetWidth(390)
         win.text:SetJustifyH("LEFT")
         win.text:SetSpacing(3)
+        win.text:SetTextColor(unpack(ns.Theme.color.text))
         win.body = body
 
         local close = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")

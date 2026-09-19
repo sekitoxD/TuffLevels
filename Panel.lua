@@ -55,12 +55,14 @@ function Panel:ShowWelcome()
     local t = w:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     t:SetPoint("TOP", 0, -18)
     t:SetText("TuFFlevels is ready")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
 
     local body = w:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", 24, -52)
     body:SetPoint("TOPRIGHT", -24, -52)
     body:SetJustifyH("LEFT")
     body:SetSpacing(4)
+    body:SetTextColor(unpack(ns.Theme.color.text))
     body:SetText(
         "Everything is switched on already. You don't need to type anything.\n\n" ..
         "|cffffd100Just play.|r Level however you think is fastest. The addon is " ..
@@ -96,7 +98,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 550)
+    panel:SetSize(240, 576)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -118,6 +120,7 @@ function Panel:Build()
 
     panel.status = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     panel.status:SetPoint("TOP", 0, -64)
+    panel.status:SetTextColor(unpack(ns.Theme.color.dim))
 
     MakeButton(panel, "Progress / completed", -82, function()
         ns.Progress:Toggle()
@@ -188,7 +191,11 @@ function Panel:Build()
         ns.Arrow:ResetPosition()
     end)
 
-    MakeButton(panel, "Close", -504, function() panel:Hide() end)
+    MakeButton(panel, "Catch up on quests", -498, function()
+        Panel:ShowCatchUpDialog()
+    end)
+
+    MakeButton(panel, "Close", -530, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -239,6 +246,7 @@ function Panel:PromptNote()
         local lbl = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         lbl:SetPoint("TOP", 0, -16)
         lbl:SetText("Note for the last step:")
+        lbl:SetTextColor(unpack(ns.Theme.color.text))
 
         local eb = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
         eb:SetSize(330, 24)
@@ -256,6 +264,7 @@ function Panel:PromptNote()
         local hint = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         hint:SetPoint("BOTTOM", 0, 14)
         hint:SetText("Enter to save, Escape to cancel")
+        hint:SetTextColor(unpack(ns.Theme.color.dim))
 
         self.noteBox = f
     end
@@ -281,6 +290,7 @@ function Panel:ShowRoutePicker()
     local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     t:SetPoint("TOP", 0, -14)
     t:SetText("Choose a route")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
 
     local y = -42
     local count = 0
@@ -323,6 +333,7 @@ function Panel:ShowRoutePicker()
         local none = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         none:SetPoint("CENTER")
         none:SetText("No routes installed yet.\nPlay, then Save this as a route.")
+        none:SetTextColor(unpack(ns.Theme.color.dim))
     end
 
     local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -332,6 +343,76 @@ function Panel:ShowRoutePicker()
     close:SetScript("OnClick", function() f:Hide() end)
 
     self.picker = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Catch-up dialog
+--------------------------------------------------------------------------
+
+-- Confirms before jumping, since a route can run to ~3000 steps and
+-- Core:CatchUp(true) would otherwise silently teleport the tracked step.
+function Panel:ShowCatchUpDialog()
+    if self.catchUpBox then self.catchUpBox:Hide() end
+
+    local Core = ns.Core
+    if not Core.active then
+        ns.Print("No route loaded.")
+        return
+    end
+
+    local furthest = Core:PreviewCatchUp()
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(360, 150)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Catch up on quests")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOPLEFT", 20, -46)
+    body:SetPoint("TOPRIGHT", -20, -46)
+    body:SetJustifyH("LEFT")
+    body:SetSpacing(4)
+    body:SetTextColor(unpack(ns.Theme.color.text))
+
+    local canJump = furthest and furthest > Core.index
+    if canJump then
+        body:SetText(("Jump from step %d to step %d of %d?\nScans forward for quests already done."):format(
+            Core.index, furthest, #Core.active.steps))
+    else
+        body:SetText("Already caught up - nothing ahead looks done.")
+    end
+
+    local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    confirm:SetSize(100, 22)
+
+    if canJump then
+        confirm:SetPoint("BOTTOM", -55, 16)
+        confirm:SetText("Confirm")
+        confirm:SetScript("OnClick", function()
+            Core:CatchUp(true)
+            f:Hide()
+            Panel:Refresh()
+        end)
+
+        local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        cancel:SetSize(100, 22)
+        cancel:SetPoint("BOTTOM", 55, 16)
+        cancel:SetText("Cancel")
+        cancel:SetScript("OnClick", function() f:Hide() end)
+    else
+        confirm:SetPoint("BOTTOM", 0, 16)
+        confirm:SetText("Close")
+        confirm:SetScript("OnClick", function() f:Hide() end)
+    end
+
+    self.catchUpBox = f
     f:Show()
 end
 
@@ -346,7 +427,7 @@ function Panel:ShowColorPicker()
     if self.colorPicker then self.colorPicker:Hide() end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(340, 330)
+    f:SetSize(340, 440)
     f:SetPoint("CENTER")
     f:SetFrameStrata("FULLSCREEN_DIALOG")
     f:EnableMouse(true)
@@ -355,6 +436,7 @@ function Panel:ShowColorPicker()
     local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     t:SetPoint("TOP", 0, -14)
     t:SetText("Colors")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
 
     local presetNames = {}
     for name in pairs(ns.Theme.presets) do table.insert(presetNames, name) end
@@ -380,8 +462,11 @@ function Panel:ShowColorPicker()
     hint:SetPoint("TOPLEFT", 18, y - 10)
     hint:SetPoint("TOPRIGHT", -18, y - 10)
     hint:SetJustifyH("LEFT")
-    hint:SetText("Custom import - comma-separated key=RRGGBB pairs\n" ..
-        "(e.g. orchid=3399ff,text=ffffff):")
+    hint:SetTextColor(unpack(ns.Theme.color.dim))
+    hint:SetText("You can create your own custom color palette: paste comma-separated\n" ..
+        "key=RRGGBB pairs below (e.g. orchid=3399ff,text=ffffff).\n" ..
+        "Keys: void, bg, panel, raised, blood, ember, violet, orchid, lilac,\n" ..
+        "text, dim, faint, done, warn")
 
     local eb = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
     eb:SetSize(280, 24)

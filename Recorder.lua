@@ -301,9 +301,11 @@ function Recorder:ShowExport(routeName)
         local title = exportFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         title:SetPoint("TOP", 0, -14)
         title:SetText("Route Export")
+        title:SetTextColor(unpack(ns.Theme.color.lilac))
 
         local help = exportFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         help:SetPoint("TOP", 0, -32)
+        help:SetTextColor(unpack(ns.Theme.color.dim))
         help:SetText("Press Ctrl+C, then paste into Notepad and save in your Routes folder")
 
         local scroll = CreateFrame("ScrollFrame", "TuFFlevelsExportScroll", exportFrame,

@@ -374,6 +374,7 @@ function Rogue:Show()
         content:SetWidth(430)
         content:SetJustifyH("LEFT")
         content:SetSpacing(3)
+        content:SetTextColor(unpack(Theme.color.text))
 
         local close = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
         close:SetSize(100, 22)
