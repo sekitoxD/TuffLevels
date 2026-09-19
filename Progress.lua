@@ -100,7 +100,7 @@ local function BuildList()
             if step.type == "section" then
                 table.insert(list, {
                     index = i, step = step, isSection = true,
-                    done = (i < ns.Core.index), current = false,
+                    done = (i < ns.Core.index), current = isCurrent,
                 })
             elseif include then
                 table.insert(list, {
@@ -131,6 +131,33 @@ local function RowLabel(entry)
     local line = (verb ~= "" and (verb .. ": ") or "") .. what
     if s.npc then line = line .. " |cff808080(" .. s.npc .. ")|r" end
     return line
+end
+
+-- Scrolls to the live current step regardless of the active filter. A
+-- non-"all" filter can exclude the current step from the list entirely
+-- (e.g. filter "done" while the current step isn't done yet), which would
+-- otherwise leave "Jump to current" with nothing to find and silently do
+-- nothing - fall back to "all" so the jump always succeeds.
+local function ScrollToCurrent()
+    local list = BuildList()
+    for i, e in ipairs(list) do
+        if e.current then
+            slider:SetValue(math.max(0, i - 3))
+            return
+        end
+    end
+
+    if filter ~= "all" then
+        filter = "all"
+        Progress:Refresh()
+        list = BuildList()
+        for i, e in ipairs(list) do
+            if e.current then
+                slider:SetValue(math.max(0, i - 3))
+                return
+            end
+        end
+    end
 end
 
 --------------------------------------------------------------------------
@@ -274,12 +301,7 @@ function Progress:Build()
     jump:SetSize(140, 22)
     jump:SetPoint("BOTTOMLEFT", 18, 16)
     jump:SetText("Jump to current")
-    jump:SetScript("OnClick", function()
-        local list = BuildList()
-        for i, e in ipairs(list) do
-            if e.current then slider:SetValue(math.max(0, i - 3)) break end
-        end
-    end)
+    jump:SetScript("OnClick", ScrollToCurrent)
 
     local close = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
     close:SetSize(100, 22)
@@ -374,9 +396,6 @@ function Progress:Toggle()
         offset = 0
         self:Refresh()
         -- open on the current step rather than the top
-        local list = BuildList()
-        for i, e in ipairs(list) do
-            if e.current then slider:SetValue(math.max(0, i - 3)) break end
-        end
+        ScrollToCurrent()
     end
 end
