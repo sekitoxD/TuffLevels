@@ -65,3 +65,39 @@ gear rewards exist on any of the Druid class quests.**
 - Exact drop rate for Manual Crowd Pummeler.
 - Verify levels for Cat/Travel/Dire Bear form quests.
 - No 40-60 non-crafted weapon upgrades beyond drops were captured.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+**Class quests.** The DB holds Druid-only quests (class mask 1024) for exactly three of the six rows in the table:
+- **Bear Form:** a level 10 chain, one copy per race (Night Elf mask 8, Tauren mask 32): Moonglade, Heeding the
+  Call, Great Bear Spirit, Body and Heart, then Back to Darnassus / Back to Thunder Bluff.
+- **Cure Poison:** a level 14 chain (Lessons Anew, The Principal Source, Gathering the Cure, Curing the Sick,
+  Power over Poison, which grants the spell). Night Elf and Tauren copies.
+- **Aquatic Form:** level 16 (A Lesson to Learn, Trial of the Lake, Trial of the Sea Lion, Aquatic Form). Night
+  Elf and Tauren copies.
+- **Cat Form, Travel Form and Dire Bear Form have no quest in the DB.** The Druid-only quests jump from level 16
+  to level 50, so all three are trainer spells here. This settles the "verify levels" open item for 1.12.1 (the
+  quests named in the table do not exist) and agrees with the README's guess. Confirm in game on Era.
+- **CONFLICT with "No gear rewards exist on any of the Druid class quests":** Aquatic Form (31 Tauren, 5061 Night
+  Elf) rewards the **Aquarius Belt (16608, leather waist)** and Curing the Sick (6124 / 6129) rewards the
+  **Veildust Medicine Bag (15866, off-hand held item)**, both uncommon. Minor gear, but not "no gear".
+
+**Conflicts with the notes**
+- **Triprunner Dungarees (9624)** come from two quests, one per faction: **Rig Wars (2841, Horde)** and **The
+  Grand Betrayal (2929, Alliance)**, both min 25, each offering items 9623 / 9624 / 9625. The table lists only
+  The Grand Betrayal.
+- The ring is spelled **Masons Fraternity Ring** (9533, no apostrophe) and is confirmed as a reward of
+  Divino-matic Rod (2768, both factions, min 40).
+- Wolfshead Helm (8345): Druid-only, required level 40, no quest reward, consistent with "Craft".
+
+**Confirmed:** Staff of Westfall (2042) and Tunic of Westfall (2041) both come from The Defias Brotherhood (166,
+Alliance, min 14); Crescent Staff (6505) from Leaders of the Fang (914, Horde, min 11). Manual Crowd Pummeler
+(9449, required 29, 29.0 dps), Loksey's Training Stick (7710, required 31), Ironshod Bludgeon (9408, required
+37) and Warden Staff (943, epic, required 43) have no quest reward. Devilsaur Gauntlets (15063, required 53) and
+Leggings (15062, required 55) have no quest reward.

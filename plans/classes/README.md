@@ -83,3 +83,9 @@ Limits worth knowing before anything gets copied into a route:
    Where a chain's locations weren't sourced they are left out rather than guessed.
 6. Level-60 endgame rewards (Rhok'delar, Benediction/Anathema, Dreadmist etc.) are noted at most
    as one-liners: they are outside "fastest way to 60".
+
+## DB verification
+
+Each class note ends with a "DB verification" section (checked 2026-09-19 against a local cmangos Classic snapshot,
+patch 1.12.1) that records checked item and quest IDs, and marks where the DB disagrees with the tables above. The
+notes themselves were not edited. Quest-side results are in `../quests/README.md`.

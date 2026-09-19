@@ -89,3 +89,56 @@ listed number.
 - No armor recommendations captured.
 - Confirm Zum'rah's Vexing Cane details (level, drop rate) — only the IV recommendation was found.
 - Verify the Limb Cleaver quest name.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+**Totem quests (confirmed).** All Shaman quests carry race mask 178 (Horde). Call of Earth (level 4; 1516-1518 and
+1519-1521, rewards the Earth Totem item 5175 and spells 8071 / 8073), Call of Fire (level 10; 1522-1527, Fire
+Totem 5176), Call of Water (level 20; 1528-1536, 63, 96, 100, 220 and others: a long chain, as the note says; Water
+Totem 5177) and **Call of Air (level 30; 1531 and 1532, a single step each: simple, as the note says)**. The Air
+quest grants spell 8385 and item 5178, matching "unlocks Windfury Totem"; confirm the spell name in game.
+
+**Answers to the open items**
+- **Zum'rah's Vexing Cane (18082):** drops from **Witch Doctor Zum'rah at 20%**, required level **42**, rare 2H staff,
+  40.9 dps. The "name suggests Zum'rah" guess is right.
+- **Limb Cleaver quest name:** not a dispute; Lost Thunderbrew Recipe (4134) is the **Horde** quest and Hurley
+  Blackbreath (4126) the Alliance one. WT is right for a Shaman.
+- Mograine's Might (7723, required 39, 38.9 dps) and The Chief's Enforcer (9477, required 45) exist as drops.
+
+**Conflicts with the notes**
+- **Barreling Reaper (6194)** comes from Defeat Nek'rosh (474), an **Alliance-only** quest. It is listed in a Horde-only
+  note; a Shaman cannot take it.
+- **Guerilla Cleaver:** "Bad Medicine" is Alliance-only (204, mask 77, min 30) and no item with that exact name exists,
+  so the 1H axe row needs recheck. Item names with no exact DB match: The Blackrock Slicer, The Hand of Antu'sul,
+  Furlbolg Medicine Totem, Soulbreaker, Lifeforce Dirks. Recheck spellings before using them.
+- **Drop rates differ from the tables.** Ravager (7717) drops from Herod at **15%** here, the notes say 25%. Mograine's
+  Might and The Chief's Enforcer are group-loot entries with no simple percentage. DB rates are 1.12.1 values.
+- **Silver Spade** is 30.1 dps in the DB, the table says 31.1.
+
+**Confirmed (quest, faction, `MinLevel`)**
+
+| Item | ID | Quest |
+|---|---|---|
+| Primitive Walking Stick | 5778 | Vile Familiars (792 min 2 / 1499 min 1, Horde) |
+| Cauldron Stirrer | 5340 | Apothecary Zamah (853, Horde, min 10) |
+| Samophlange Screwdriver | 11854 | Samophlange Manual (3924, Horde, min 10): a 2H **sword**, not a screwdriver-like tool |
+| Polished Walking Staff | 16889 | Torek's Assault (6544, Horde, min 20) |
+| Will of the Mountain Giant | 10652 | Weapons of Spirit (3129, Horde, min 40); the drop version is a different item, 9685, required 46 |
+| Sarah's Guide | 17004 | The Corpulent One (6136, Horde, min 56) |
+| Corrupted Blackwood Staff | 20724 | Into The Maw of Madness (8306, both, min 58) |
+| Skullbreaker | 17039 | An Unholy Alliance (6521, Horde, min 28) |
+| Black Water Hammer | 4511 | Deep Sea Salvage (662, both, min 35) |
+| Hunt Tracker Blade | 15706 | The Remains of Trey Lightforge (5385, min 49) |
+
+Drops that exist with the required level and dps the tables give: Diabolic Skiver 9475 (44, 42.8), Executioner's
+Cleaver 13018 (43, 41.8), Headspike 10799 (46, 44.2), Gatorbite Axe 17730 (48, 45.8), Princess Theradras' Scepter
+17766 (49, 46.5), Angerforge's Battle Axe 11816 (51, 48.1), Ripsaw 9478 (45, 33.3), Eater of the Dead 10805 (49,
+32.0), Grizzle's Skinner 11702 (50, 36.5), Tooth of Eranikus 10837 (51, 37.1), Bone Slicing Hatchet 18737 (57,
+40.6), Pronged Reaver 6692 (31, 24.0), Hand of Righteousness 7721 (39, 29.8), Galgann's Firehammer 9419 (41, 27.5).
+Not reverified: the Rod of the Sleepwalker level (DB required 24) and shield progression, still uncaptured.

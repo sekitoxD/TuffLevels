@@ -101,3 +101,27 @@ These are recorded in each faction file and have **not** been applied to the cla
   the Stockade for Alliance at 22-30, and Blackfathom Deeps / Wailing Caverns for Horde. Their value depends
   on already being in position.
 - **Un'Goro, Felwood, Winterspring and the Plaguelands are the agreed 50-60 zones** for both factions.
+
+## DB verification of the corrections above (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). The DB is close to Classic Era but
+not identical, has no Forever coverage, uses world coordinates rather than the addon's, and has no quest XP. Details
+and per-quest IDs are in the "DB verification" section at the end of each faction file and each class note.
+
+| Correction | DB result |
+|---|---|
+| Whirlwind chain starts at the class trainer (The Islander), not Bath'rah | **Confirmed.** 1718 is started by six class trainers and turned in to Klannoc Macleod; Bath'rah only starts Cyclonian onward. The class note still says Bath'rah (marked there). |
+| Big Game Hunter is open to all classes, needs level 28, 12-quest chain, rifle option | **Confirmed**, all four points. All three mastery chains must be finished. |
+| Mage wand and orb chains start with the class trainers | **Confirmed** (Deino, Jennea Cannon, Anastasia Hartwell, Bink, Uthel'nay). Wand materials were not checked. "Items of Power" is not in the wand chain in the DB. |
+| Paladin Summon Warhorse is short and free | **Consistent.** One quest (The Tome of Nobility, 1661, min 40, no cost in the DB). |
+| Cat, Travel and Dire Bear Form look like trainer spells | **Consistent.** No Druid quest exists between level 16 and 50. |
+| Marshal Maxwell is in the Burning Steppes, no Maxwell step in the Sunken Temple attunement | **Confirmed.** He stands at Morgan's Vigil, and his quests are the Onyxia-line ones. |
+| Venture Company Mining not confirmed at level 31 | **Partly.** `MinLevel` is 30 but it requires Singing Blue Shards (605). Level 43 is not a requirement. |
+| The Perfect Poison was not found | **Found.** Quest 9023, min 60, both factions, Silithus, rewards Doomulus Prime. |
+| Rogue poison chain step names need rechecking | **Partly.** The entry quests exist (2360 Alliance, 2478 Horde, both min 20); the middle steps were not checked. |
+| Warlock Small Soul Pouch and Box of Souls rewards need rechecking | **Confirmed** (22243 at level 20, 22244 at level 30). |
+
+New findings the DB adds that no earlier note had are listed in each class note: Limb Cleaver, Vanquisher's Sword
+and Triprunner Dungarees turned out to be faction splits rather than source disagreements, and several tables list a
+quest reward under the wrong faction (Jail Break!, Ormer's Revenge, Retrieval for Mauren, Defeat Nek'rosh).

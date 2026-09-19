@@ -561,3 +561,70 @@ Druid, Enamored Water Spirit, Blood of Morphaz, Magecraft). All are 50+ and need
   not found under those names.
 - Not researched: Dire Maul, Zul'Gurub, Live Stratholme detail, Undead-only Silverpine detail beyond the
   reward list, and paid guides (JW 12-60, Zygor, Dugi).
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's uiMapID + 0-100 x/y; (4) quest XP is not in the
+DB, so no XP figure above was checked. Nothing above was edited: this section records the checks, and the
+conflicts are marked here rather than resolved.
+
+**How the IDs below were found.** Quest names were pulled out of the text above and matched against the DB by
+**exact title** (plus the "WANTED:", "!" and "..." spellings). A match means a quest with that title exists and is
+open to this faction; **it can still be a different quest that shares the name**, and a name with several IDs
+lists them all. Names that are really NPCs, zones or sentence fragments did not match, so a missing name is not an
+error. Before promoting an entry to a step, run `python tools/qdb.py quest <id>` and copy the ID into the step
+`note`.
+
+**Faction check:** every matched quest is open to Horde or to both factions; none was Alliance-only.
+
+**Confirmed in detail**
+- **Big Game Hunter (208, min 28, all classes):** it has no prerequisite of its own. Welcome to the Jungle (583,
+  Barnil Stonepot) opens three four-quest chains, Tiger Mastery (185-188), Panther Mastery (190-193) and Raptor
+  Mastery (194-197), which is the "12-quest Stranglethorn Safari chain"; **all three must be finished** before 208
+  unlocks (exclusive group -193). Reward is Master Hunter's Bow or Rifle, as stated.
+- **The Ashenvale Hunt has four quests, not one:** 235, 742 and 6382 are alternates (taking one blocks the others),
+  and 6382 is the breadcrumb for 6383. The Ursangous's Paw (23) / Shadumbra's Head (24) pair in the Splintertree
+  entry has a third member, **Sharptalon's Claw (2)**, all three must be finished before The Hunt Completed (247)
+  unlocks. Sharptalon's Claw is started by an item.
+- **Hidden Enemies (5726-5730, min 9, Horde):** five quests, as stated. The last (5730) rewards the Axe of
+  Orgrimmar (15424) and Kris of Orgrimmar (15443); the Hammer and Staff options were not checked.
+- **Venture Company Mining (600):** `MinLevel` 30, quest level 41, both factions, **but it requires Singing Blue
+  Shards (605, min 30, Crank Fizzlebub)** first. So level 31 is possible; WT's level 43 is not a requirement.
+- **Whirlwind Weapon (1792):** chain and start corrected in `../classes/notable_warrior_items.md` (the start is the
+  class trainers and Klannoc Macleod, not Bath'rah).
+- **Class chains** (Tame Beast, Voidwalker, Bear Form, totems, Succubus, Felsteed, Mage wand and orb) are checked in
+  the class notes: see the DB verification sections in `../classes/`.
+- **Ravenholdt** (Rogue-only): The Manor, Ravenholdt (6681, min 24) leads to Syndicate Emblems (6701), matching the
+  L24 entry.
+
+**Checked IDs by section** (name, quest IDs, `MinLevel`, class lock if any)
+
+- **Top picks at a glance:** Leaders of the Fang 914 (min 11); Whirlwind Weapon 1792 (min 30) Warrior
+- **Starter zones:** Your Place In The World 4641 (min 1); Practical Prey 817 (min 5); Zalazane 826 (min 4); Minshina's Skull 808 (min 4); Encroachment 837 (min 6); Break a Few Eggs 815 (min 6); Carry Your Weight 791 (min 4); Dark Storms 806 (min 4); Ak'Zeloth 809 (min 4); The Demon Seed 924 (min 9)
+- **The Barrens (12-26):** Plainstrider Menace 844 (min 10); The Zhevra 845 (min 10); Raptor Thieves 869 (min 9); Supplies for the Crossroads 5041 (min 9); The Angry Scytheclaws 905 (min 10); Fungal Spores 848 (min 10); Disrupt the Attacks 871 (min 9); Harpy Raiders 867 (min 12); Kolkar Leaders 850 (min 11); Centaur Bracers 855 (min 9); Hezrul Bloodmark 852 (min 11); Southsea Freebooters 887 (min 9); The Guns of Northwatch 891 (min 13); Wenikee Boltbucket 3921 (min 10); Rilli Greasygob 3923 (min 10); Samophlange Manual 3924 (min 10); The Forgotten Pools 870 (min 10); The Stagnant Oasis 877 (min 10); Altered Beings 880 (min 10); The Warsong Reports 6543 (min 17); Egg Hunt 868 (min 17); Weapons of Choice 893 (min 17); Gann's Reclamation 843 (min 17); Revenge of Gann 846,849 (min 17); Isha Awak 873 (min 10); Washte Pawne 885 (min 10)
+- **Stonetalon and Ashenvale (17-28):** Avenge My Village 6548 (min 12); Protect Kaya 6523 (min 12); Cry of the Thunderhawk 913 (min 10); The Ashenvale Hunt 235,742,6382+1 (min 20); Naga at the Zoram Strand 6442 (min 14); King of the Foulweald 6621 (min 21); Je'neu of the Earthen Ring 824 (min 23); Satyr Horns 6441 (min 21); Torek's Assault 6544 (min 20); Ursangous's Paw 23 (min 20); Shadumbra's Head 24 (min 20)
+- **Hillsbrad (22-30):** Elixir of Suffering 496,499 (min 19); Elixir of Pain 501,502 (min 21); Elixir of Agony 509,513,515+2 (min 24); Souvenirs of Death 546 (min 20); Dangerous! 567 (min 19)
+- **Thousand Needles (28-34):** Pacify the Centaur 4841 (min 23); Alien Egg 4821 (min 24); Wanted - Arnak Grimtotem 5147 (min 25); Grimtotem Spying 5064 (min 24); Test of Faith 1149 (min 25); Homeward Bound 4770 (min 25); Hypercapacitor Gizmo 5151 (min 24); Sacred Fire 5062 (min 24); Free at Last 4904 (min 25)
+- **31-37:** Test of Endurance 1150 (min 25); Test of Strength 1151 (min 25); Test of Lore 1152,1154,1159+3 (min 25); Final Passage 1394 (min 25); Hardened Shells 1105 (min 28); Salt Flat Venom 1104 (min 28); Load Lightening 1176 (min 29); A Bump in the Road 1175 (min 28); Rocket Car Parts 1110 (min 28); Goblin Sponsorship 1178,1180,1181+2 (min 29); The Green Hills of Stranglethorn 338 (min 30); Panther Mastery 190,191,192+1 (min 28); Hunt for Yenniku 581 (min 30); Bloody Bone Necklaces 596 (min 30); The Vile Reef 629 (min 30); The Defense of Grom'gol 568,569 (min 33); Headhunting 582 (min 30); Mok'thardin's Enchantment 570,571,572+1 (min 33); Bloodscalp Clan Heads 584 (min 30); Investigate the Camp 201 (min 28); Bloodscalp Ears 189 (min 30); Skullsplitter Tusks 209 (min 37); Hostile Takeover 213 (min 31); Helcular's Revenge 552,553 (min 29); The Hammer May Fall 676 (min 30); Dalaran Patrols 545 (min 30); Battle of Hillsbrad 527,528,529+4 (min 19); Raising Spirits 672,674,675 (min 29); Foul Magics 671,673 (min 30-35); Claim Rackmore's Treasure 6161 (min 30)
+- **38-45:** Land Ho! 663 (min 35); Deep Sea Salvage 662 (min 35); Drowned Sorrows 664 (min 35); Lack of Surplus 698,699 (min 35); Threat From the Sea 1422,1426,1427 (min 35); Galen's Escape 1393 (min 30); Fresh Meat 1430 (min 35); Badlands Reagent Run 2258 (min 36); Broken Alliances 782,793 (min 40); Scaring Shaky 606 (min 30); Zanzil's Secret 621 (min 35); Army of the Black Dragon 1168 (min 38); Identifying the Brood 1169 (min 38)
+- **44-50:** The Ogres of Feralas 2975,2980 (min 38); Zapped Giants 7003 (min 45); Wastewander Justice 1690 (min 40); Southsea Shakedown 8366 (min 40); The Dunemaul Compound 5863 (min 44); Gahz'ridian 3161 (min 43); Gadgetzan Water Survey 992 (min 38)
+- **50-60:** Aquementas 4005 (min 47); Timbermaw Ally 8460 (min 45); Cleansing Felwood 4102 (min 48); Kim'jael Indeed! 3601 (min 47); Scarlet Diversions 5096 (min 50); The Scourge Cauldrons 5228 (min 50); All Along the Watchtowers 5098 (min 50); Kibler's Exotic Pets 4729 (min 55); The Battle for Alterac 7142 (min 51); Hero of the Frostwolf 8272 (min 51)
+- **Ragefire Chasm (L9-18, 4 srcs):** Returning the Lost Satchel 5724 (min 9)
+- **Scarlet Monastery (Horde):** Into the Scarlet Monastery 1048 (min 33)
+- **Zul'Farrak (L44-50, 6 srcs):** The Prophecy of Mosh'aru 3527 (min 40)
+- **Sunken Temple (L46-55, 4 srcs):** Pool of Tears 1424 (min 38); The Atal'ai Exile 1429 (min 38); The Temple of Atal'Hakkar 1445 (min 38); Into the Depths 3446 (min 46)
+- **Blackrock Depths and Spire (L52-60, 3 srcs each):** Attunement to the Core 7848 (min 55); Urok Doomhowl 4867 (min 55); Scholomance 838 (min 55); Mold Rhymes With 5514 (min 55); Fire Plume Forged 5802 (min 55); Araj's Scarab 5804 (min 55)
+- **Class-specific chains:** The Islander 1718 (min 30) Warrior; The Affray 1719 (min 30) Warrior; Path of Defense 1498 (min 10) Warrior; Brutal Hauberk 1848 (min 20) Warrior; Big Game Hunter 208 (min 28); The Hunter's Charm 8151 (min 50) Hunter; Aquatic Form 31 (min 16) Druid; Mage's Wand 1952 (min 30) Mage
+- **Warrior:** The Windwatcher 1791 (min 30) Warrior; Cyclonian 1712 (min 30) Warrior; The Summoning 1713 (min 30) Warrior; Thun'grim Firegaze 1502 (min 10) Warrior; A Troubled Spirit 8417 (min 50) Warrior; Warrior Kinship 8423 (min 50) Warrior; War on the Shadowsworn 8424 (min 50) Warrior
+- **Rogue:** The Shattered Salute 2460 (min 20) Rogue; Syndicate Emblems 6701 (min 24) Rogue
+- **Hunter:** The Hunter's Path 6065,6066,6067+3 (min 10) Hunter; Taming the Beast 6061,6062,6082+3 (min 10) Hunter; Training the Beast 6081,6089 (min 10) Hunter; Courser Antlers 8153 (min 50) Hunter; Wavethrashing 8231 (min 50) Hunter
+- **Warlock (Orc and Undead):** Halgar's Summons 1478 (min 10) Warlock; Creature of the Void 1473,1501 (min 10) Warlock; Gan'rul's Summons 1506 (min 10) Warlock; Devourer of Souls 1472,1507 (min 20) Warlock; Blind Cazul 1508 (min 20) Warlock; News of Dogran 1509,1510 (min 20) Warlock; Dogran's Captivity 1515 (min 20) Warlock; Love's Gift 1512 (min 20) Warlock; The Binding 1471,1474,1504+2 (min 10-30) Warlock; Hearts of the Pure 1476 (min 20) Warlock; Seeking Strahad 2996,3001 (min 30) Warlock; Tome of the Cabal 1801,1803,1805 (min 30) Warlock; Summon Felsteed 3631,4489,4490 (min 40) Warlock; What Niby Commands 7601 (min 50) Warlock; Flawless Fel Essence 7602 (min 50) Warlock
+- **Druid (Tauren):** Heeding the Call 5926,5927,5928 (min 10) Druid; Great Bear Spirit 5930 (min 10) Druid; Trial of the Lake 28 (min 16) Druid; Trial of the Sea Lion 30 (min 16) Druid
+- **Shaman (Orc, Troll, Tauren):** Call of Earth 1516,1517,1518+3 (min 4) Shaman; Call of Fire 1522,1523,1524+5 (min 10) Shaman; Call of Air 1531,1532 (min 30) Shaman; Call of Water 63,96,100+10 (min 20) Shaman; Elemental Mastery 8410 (min 50) Shaman
+- **Priest:** Hex of Weakness 5652,5654,5655+2 (min 10) Priest
+- **Mage:** Journey to the Marsh 1947 (min 30) Mage; Get the Scoop 1950 (min 30) Mage; Items of Power 1948 (min 30) Mage; Return to the Marsh 1953 (min 35) Mage; The Infernal Orb 1954 (min 35) Mage; The Exorcism 1955 (min 35) Mage; Power in Uldaman 1956 (min 35) Mage; Mana Surges 1957 (min 35) Mage; Celestial Power 1958 (min 35) Mage; Speak with Deino 1943 (min 26) Mage; Waters of Xavian 1944 (min 26) Mage; Laughing Sisters 1945 (min 26) Mage
+- **Flight paths and unlocks:** Serpentbloom 962 (min 14); Kaya's Alive 6401 (min 12)
+- **Traps and skips:** Crystal in the Mountains 635 (min 30); The Essence of Eranikus 3373,3374 (min 48); Mother's Milk 4866 (min 55); Kitchen Assistance 8317 (min 54)

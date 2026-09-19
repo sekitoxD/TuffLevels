@@ -590,3 +590,76 @@ Attunements and passes:
 - Not read: Scholomance/Stratholme key quests, Dire Maul quests, the Alliance frostsaber mount line, Nesingwary
   reward items, Myzrael chain steps, a full Wetlands/Menethil route, Stonetalon beyond one guide, and
   Alliance Barrens leveling.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's uiMapID + 0-100 x/y; (4) quest XP is not in the
+DB, so no XP figure above was checked. Nothing above was edited: this section records the checks, and the
+conflicts are marked here rather than resolved.
+
+**How the IDs below were found.** Quest names were pulled out of the text above and matched against the DB by
+**exact title** (plus the "WANTED:", "!" and "..." spellings). A match means a quest with that title exists and is
+open to this faction; **it can still be a different quest that shares the name**, and a name with several IDs
+lists them all. Names that are really NPCs, zones or sentence fragments did not match, so a missing name is not an
+error. Before promoting an entry to a step, run `python tools/qdb.py quest <id>` and copy the ID into the step
+`note`.
+
+**Faction check:** two names in the Alliance text match only **Horde** quests, and one match is a word, not a quest.
+- **Brutal Armor (1838)** is a **Horde** quest (Thun'grim Firegaze, Barrens, min 20). The Alliance entry says
+  "Yorus Barleybrew, Lakeshire (timed cave survival)"; the quests Yorus starts in the DB are **The Rethban
+  Gauntlet (1699, min 20)** and **The Shieldsmith (1702)**. The name in the note looks wrong for Alliance.
+- **Well of Corruption (4505)** is **Horde-only** (Winna Hazzard, min 49). The Alliance route text lists it beside
+  Cleansed Water Returns to Felwood (5159, both factions, min 48, Islen Waterseer); recheck the Alliance step name.
+- "Dangerous" in the PvP-server table is a description, not the Hillsbrad quest (which is Horde-only).
+
+**Confirmed in detail**
+- **There is no Marshal Maxwell step in the Sunken Temple attunement, and he is in the Burning Steppes:** Marshal
+  Maxwell (creature 9560) stands on map 0 at world -8379, -2749 (Morgan's Vigil); his quests are The True
+  Masters (4224, min 48), Marshal Windsor (4241, min 48), Maxwell's Mission (5081, min 55) and Stormwind
+  Rendezvous (6402, min 50). Not a Sunken Temple quest giver.
+- **Diamond Flask chain:** A Troubled Spirit (8417) → Warrior Kinship (8423) → War on the Shadowsworn (8424) →
+  Voodoo Feathers (8425), all min 50, as listed in the warrior note.
+- **The Perfect Poison exists:** 9023, min 60, both factions, Silithus (zone 1377), rewards Doomulus Prime (22348).
+  The README says it "was not found in any source"; the DB has it.
+- **Venture Company Mining (600):** needs Singing Blue Shards (605) turned in first, and the class/level facts match
+  the Horde file's entry above.
+- **Big Game Hunter (208), The Ashenvale Hunt and the class chains:** see the Horde file and `../classes/`. Both
+  factions share Big Game Hunter (open to all classes, min 28).
+- **Level flags examined and cleared:** a few matches sat above a nearby level band (for example The Crone of the
+  Kraul min 29, The Platinum Discs min 40, Legends of Maraudon min 41, The God Hakkar min 40, Attunement to the
+  Core min 55); each note entry states its own level and it agrees with the DB.
+
+**Checked IDs by section** (name, quest IDs, `MinLevel`, class lock if any)
+
+- **Top picks at a glance:** Teldrassil 940 (min 6); The Defias Brotherhood 65,132,135+4 (min 14)
+- **Starter zones:** A Threat Within 783 (min 1); Kobold Camp Cleanup 7 (min 1); Wolves Across the Border 33 (min 1); Milly's Harvest 3904 (min 2); Lost Necklace 85 (min 5); Pie for Billy 86 (min 5); Frostmane Hold 287 (min 7); Those Blasted Troggs 432 (min 5); Protecting the Herd 314 (min 6); Crown of the Earth 921,928,929+4 (min 1)
+- **Loch Modan, Westfall, Darkshore (11-20):** Thelsamar Blood Sausages 418 (min 7); Rat Catching 416 (min 10); In Defense of the King's Lands 217,224,237+1 (min 10); The Trogg Threat 267 (min 10); The Forgotten Heirloom 64 (min 9); The Killing Fields 9 (min 8); The People's Militia 12,13,14 (min 9); Red Leather Bandanas 153 (min 10); Keeper of the Flame 103 (min 10); The Coastal Menace 104 (min 15); For Love Eternal 963 (min 11); Bashal'Aran 954,955,956+1 (min 7); Plagued Lands 2118 (min 10)
+- **Redridge, Duskwood, Wetlands (16-30):** Encroaching Gnolls 244 (min 11); Assessing the Threat 246 (min 11); A Baying of Gnolls 124 (min 15); Underbelly Scales 122 (min 14); The Lost Tools 125 (min 15); Murloc Poachers 150 (min 20); Howling in the Hills 126 (min 15); Raven Hill 163 (min 17); Sven's Revenge 95 (min 20); The Totem of Infliction 101 (min 18); Mor'Ladim 228 (min 28); The Legend of Stalvan 66,67,68+10 (min 22); The Night Watch 56,57,58 (min 18); Look to the Stars 174,175,177+1 (min 20); The Hermit 165 (min 17); Worgen in the Woods 173,221,222+1 (min 23); War Banners 464 (min 23); The Cursed Crew 289 (min 22); Lifting the Curse 290 (min 22); The Zoram Strand 1008 (min 14); Raene's Cleansing 991,1023,1024+8 (min 18); Bathran's Hair 1010 (min 20)
+- **30-40:** Raptor Mastery 194,195,196+1 (min 28); Tiger Mastery 185,186,187+1 (min 28); Panther Mastery 190,191,192+1 (min 28); The Green Hills of Stranglethorn 338 (min 30); Goblin Sponsorship 1178,1180,1181+2 (min 29); Bloodscalp Ears 189 (min 30); Singing Blue Shards 605 (min 30); Some Assembly Required 577 (min 31); Scaring Shaky 606 (min 30); Venture Company Mining 600 (min 30); Akiris by the Bundle 617,623 (min 38); Voodoo Dues 609 (min 30); Zanzil's Secret 621 (min 35); Cortello's Riddle 624,625,626 (min 35); The Captain's Chest 614,8551 (min 35-40); Stranglethorn Fever 348,349 (min 32-40); The Second Rebellion 203 (min 30); Bad Medicine 204 (min 30); Krazek's Cookery 210 (min 32); Colonel Kurzen 202 (min 30); Special Forces 574 (min 30); The Brassbolts Brothers 1179,2769 (min 28-40); Hardened Shells 1105 (min 28); Rocket Car Parts 1110 (min 28); Load Lightening 1176 (min 29); A Bump in the Road 1175 (min 28); Martek the Exiled 1106 (min 26); Centaur Bounty 1387 (min 30); Kodo Roundup 5561 (min 30); Bone Collector 5501 (min 33); Book of the Ancients 6027 (min 30); Ghost-O-Plasm Round Up 6134 (min 34); Worth Its Weight in Gold 691 (min 30); Wand Over Fist 693 (min 30); Northfold Manor 681 (min 30); Stones of Binding 651 (min 30); Land Ho! 663 (min 35); Deep Sea Salvage 662 (min 35); Drowned Sorrows 664 (min 35); The Deserters 1286,1287 (min 30); Daelin's Men 1285 (min 30); Lieutenant Paval Reethe 1252,1259 (min 30); The Black Shield 1253,1319,1320 (min 30); Stinky's Escape 1222 (min 30); The Missing Diplomat 1241,1242,1243+14 (min 28); Dark Council 537 (min 30); Noble Deaths 512 (min 26); Crushridge Bounty 500 (min 30)
+- **40-50:** Mirages 718 (min 35); A Sign of Hope 720,721 (min 35); This Is Going To Be Hard 734,777,778 (min 35); Barbecued Buzzard Wings 703 (min 33); Encroaching Wildlife 1396 (min 30); The Lost Caravan 1421 (min 30); Noboru the Cudgel 1392 (min 29); Galen's Escape 1393 (min 30); Wastewander Justice 1690 (min 40); Water Pouch Bounty 1707,1878 (min 40); Southsea Shakedown 8366 (min 40); The Dunemaul Compound 5863 (min 44); The Thirsty Goblin 2605 (min 44); Rise of the Silithid 162,4267 (min 39-40); The Mark of Quality 2821 (min 40); Improved Quality 7733 (min 40); The Missing Courier 4124,4125 (min 40); Against the Hatecrest 2869,3130 (min 40); Against Lord Shalzaru 2870 (min 40); The Woodpaw Gnolls 4131 (min 40); Freedom For All Creatures 2969 (min 38); Zapped Giants 7003 (min 45); The Stave of Equinex 2879 (min 42); Witherbark Cages 2988 (min 40); The Altar of Zul 2989 (min 40); Troll Necklace Bounty 2880,2881 (min 40); The Flawless Flame 3442 (min 40); Forging the Shaft 3443 (min 40); The Torch of Retribution 3453,3454 (min 40); Squire Maltrake 3462 (min 40); Set Them Ablaze! 3463 (min 40); Suntara Stones 3367,3368 (min 40); The Horn of the Beast 3181 (min 40); Vulture's Vigor 2603 (min 45); Snickerfang Jowls 2581 (min 45); A Boar's Vitality 2583 (min 45); The Apes of Un'Goro 4289 (min 47); The Mighty U'cha 4301 (min 50); Expedition Salvation 3881 (min 48); Shizzle's Flyer 4503 (min 49); Roll the Bones 3882 (min 49); Calm Before the Storm 4508,4510 (min 50); The Videre Elixir 3909,4041 (min 47); Meet at the Grave 3912 (min 47); Linken's Sword 3914 (min 47); A Gnome's Assistance 3941 (min 47); Linken's Memory 3942 (min 47); Linken's Adventure 3961 (min 47)
+- **50-60:** Timbermaw Ally 8460 (min 45); Cleansing Felwood 4101 (min 48); Corruption 5307 (min 50); Felbound Ancients 4441 (min 49); Ancient Spirit 4261 (min 49); Dousing the Flames of Protection 5165 (min 48); To Winterspring! 5249 (min 53); Extinguish the Firegut 3823 (min 48); Broodling Essence 4726 (min 50); Tablet of the Seven 4296 (min 50); All Along the Watchtowers 5097 (min 50); A Plague Upon Thee 5903,5904,6389 (min 48); Better Late Than Never 5021,5022 (min 50); Unfinished Business 6004,6023,6025 (min 50); Demon Dogs 5542 (min 52); Blood Tinged Skies 5543 (min 52); Carrion Grubbage 5544 (min 52); Of Lost Honor 5845 (min 52); Chillwind Horns 4809 (min 50); High Chief Winterfall 5121 (min 52); Taking Back Silithus 8275 (min 54); Securing the Supply Lines 8280 (min 54); The Twilight Mystery 8284 (min 54)
+- **Stormwind Stockade (L22-30, 5 srcs; Alliance only):** The Stockade Riots 391 (min 16); Quell The Uprising 387 (min 22); The Color of Blood 388 (min 22); What Comes Around 386 (min 22); The Fury Runs Deep 378 (min 22)
+- **Razorfen Kraul (Alliance side, 3 srcs):** Mortality Wanes 1142 (min 25); The Crone of the Kraul 1101 (min 29)
+- **Scarlet Monastery:** In the Name of the Light 1053 (min 34); Southshore 538 (min 20); Mythology of the Titans 1050 (min 28)
+- **Razorfen Downs:** Bring the Light 3636 (min 39)
+- **Uldaman (L35-47, 5 srcs):** Agmond's Fate 704 (min 30); The Lost Dwarves 2398 (min 35); The Platinum Discs 2278,2279,2439 (min 40); Reclaimed Treasures 1360 (min 33); Uldaman Reagent Run 17 (min 36)
+- **Zul'Farrak (L44-54, 5 srcs):** Divino-matic Rod 2768 (min 40); Gahz'rilla 2770 (min 40); Scarab Shells 2865 (min 40); Troll Temper 3042 (min 40); Tiara of the Deep 2846 (min 40); Nekrum's Medallion 2991 (min 40); Thadius Grimshade 2990 (min 40); The Divination 2992 (min 40); Return to the Hinterlands 2993 (min 40); Saving Sharpbeak 2994 (min 40); Screecher Spirits 3520 (min 40); The Prophecy of Mosh'aru 3527 (min 40); The Ancient Egg 4787 (min 40); The Lost Tablets of Mosh'aru 5065 (min 40); The Final Tablets 4788 (min 40)
+- **Maraudon (L39-52, 3 srcs):** The Pariah's Instructions 7067 (min 39); Shadowshard Fragments 7070 (min 38); Legends of Maraudon 7044 (min 41); Vyletongue Corruption 7041 (min 41)
+- **Sunken Temple attunement (Alliance, L38-47, 3 srcs):** In Search of The Temple 1448 (min 38); To The Hinterlands 1449 (min 38); Gryphon Master Talonaxe 1450 (min 38); Rhapsody Shindigger 1451 (min 38); Rhapsody's Kalimdor Kocktail 1452 (min 38); Rhapsody's Tale 1469 (min 38); Into The Temple of Atal'Hakkar 1475 (min 41); The God Hakkar 3528 (min 40)
+- **Blackrock Depths (Alliance, L48-58, 4 srcs):** Overmaster Pyron 4262 (min 48); Incendius! 4263 (min 48); The Good Stuff 4286 (min 50); Kharan Mighthammer 4341 (min 50); Kharan's Tale 4342 (min 50); The Bearer of Bad News 4361 (min 50); The Fate of the Kingdom 4362 (min 50); The Princess's Surprise 4363 (min 50); Hurley Blackbreath 4126 (min 50); Attunement to the Core 7848 (min 55)
+- **Stratholme, Scholomance, Blackrock Spire (L52-60, 2 srcs, IV):** Houses of the Holy 5243 (min 55); The Archivist 5251 (min 55); The Truth Comes Crashing Down 5262 (min 55); The Flesh Does Not Lie 5212 (min 55); Menethil's Gift 5463,5464 (min 57); Dead Man's Plea 8945 (min 58); Scholomance 5533 (min 55); Barov Family Fortune 5343 (min 52); Plagued Hatchlings 5529 (min 55); Bijou's Belongings 5001 (min 55); Put Her Down 4701 (min 55); Kibler's Exotic Pets 4729 (min 55); Doomrigger's Clasp 4764 (min 57); Blackhand's Command 7761 (min 55); Eye of the Emberseer 6821 (min 56)
+- **Class-specific chains:** Summon Felsteed 4487,4488,4490 (min 40) Warlock; Taming the Beast 6063,6064,6084+3 (min 10) Hunter; Whirlwind Weapon 1792 (min 30) Warrior; Aquatic Form 5061 (min 16) Druid; Mage's Wand 1952 (min 30) Mage; Celestial Power 1958 (min 35) Mage
+- **Warrior:** A Warrior's Training 1638 (min 10) Warrior; The Islander 1718 (min 30) Warrior; Cyclonian 1712 (min 30) Warrior; The Summoning 1713 (min 30) Warrior; Yorus Barleybrew 1698 (min 20) Warrior; A Troubled Spirit 8417 (min 50) Warrior; Warrior Kinship 8423 (min 50) Warrior; War on the Shadowsworn 8424 (min 50) Warrior; Voodoo Feathers 8425 (min 50) Warrior
+- **Paladin (Alliance only):** The Tome of Nobility 1661,4485,4486 (min 40) Paladin; Forging the Mightstone 8418 (min 50) Paladin; Lord Grayson Shadowbreaker 7638 (min 60) Paladin; Inert Scourgestones 8416 (min 50) Paladin
+- **Rogue:** A Simple Request 8233 (min 50) Rogue; Sealed Azure Bag 8234 (min 50) Rogue; Encoded Fragments 8235 (min 50) Rogue; The Azure Key 8236 (min 50) Rogue
+- **Mage:** Journey to the Marsh 1947 (min 30) Mage; Get the Scoop 1950 (min 30) Mage; Items of Power 1948 (min 30) Mage; Return to the Marsh 1953 (min 35) Mage; The Infernal Orb 1954 (min 35) Mage; The Exorcism 1955 (min 35) Mage; Mana Surges 1957 (min 35) Mage; Destroy Morphaz 8253 (min 50) Mage
+- **Warlock:** Gakin's Summons 1685,1717 (min 10-20) Warlock; Surena Caledon 1688 (min 10) Warlock; The Binding 1689,1739,1795 (min 10-30) Warlock; Devourer of Souls 1716 (min 20) Warlock; Heartswood 1738 (min 20) Warlock; Seeking Strahad 1798 (min 30) Warlock; Tome of the Cabal 1758,1802,1804 (min 30) Warlock; An Imp's Request 8419 (min 50) Warlock; Trolls of a Feather 8422 (min 50) Warlock
+- **Druid (Night Elf):** Heeding the Call 5923,5924,5925 (min 10) Druid; Great Bear Spirit 5929 (min 10) Druid; Lessons Anew 6121 (min 14) Druid; The Principal Source 6122 (min 14) Druid; Gathering the Cure 6123 (min 14) Druid; Curing the Sick 6124 (min 14) Druid; Power over Poison 6125 (min 14) Druid; Trial of the Lake 29 (min 16) Druid; Trial of the Sea Lion 272 (min 16) Druid; A Better Ingredient 9053 (min 50) Druid; Torwa Pathfinder 9063 (min 50) Druid
+- **Sunken Temple, level 50 class chains:** The Green Drake 8232 (min 50) Hunter
+- **Flight paths and unlocks:** A Swift Message 6181 (min 10); Seal of Ascension 4742,4743 (min 57)
+- **Traps and skips:** Redridge Goulash 92 (min 15); Goretusk Liver Pie 22 (min 9); Bride of the Embalmer 253 (min 20); Filthy Paws 307 (min 9); They Call Him Smiling Jim 1282 (min 30); Tremors of the Earth 717,732 (min 40)
+- **Corrections to `plans/classes/` and to the brief:** The Affray 1719 (min 30) Warrior
+- **Unresolved conflicts:** Knowledge in the Deeps 971 (min 10)

@@ -84,3 +84,56 @@ wands work for both factions.
   it begins with Tabetha).
 - Horde wand equivalents at ~20-30 not researched.
 - Whether the Library step in the Mage's Wand chain is soloable at ~35-38.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+**Chains (all Mage-only, no race limit, both factions)**
+
+| Chain | Quest IDs in DB order | Min level | Reward |
+|---|---|---|---|
+| Mage's Wand | Journey to the Marsh 1947 → Hidden Secrets 1949 → Get the Scoop 1950 → Rituals of Power 1951 → Mage's Wand 1952 | 30 | Choice of Icefury Wand 7514, Ragefire Wand 7513, Nether Force Wand 11263 |
+| Celestial | Return to the Marsh 1953 → The Infernal Orb 1954 → The Exorcism 1955 → Power in Uldaman 1956 → Mana Surges 1957 → Celestial Power 1958 | 35 | Choice of Celestial Orb 7515 (off-hand) or Celestial Stave 9517 (2H staff, 35.7 dps) |
+| Sunken Temple | Magecraft 8250 → Magic Dust 8251 → The Siren's Coral 8252 → Destroy Morphaz 8253 | 50 | Three choices, see below |
+
+- **Starts (resolves the "Confirm the Celestial chain start" open item):** both Marsh chains are started by the
+  **mage class trainers** (Journey to the Marsh: Deino, Jennea Cannon; Return to the Marsh: Anastasia Hartwell, Bink,
+  Uthel'nay, Jennea Cannon). Tabetha is where the middle and last steps turn in. NTB is right, the "begins with
+  Tabetha" sources are not. Magecraft is started by the trainers too; Destroy Morphaz is started by Archmage
+  Xylem (map 1, Azshara).
+- **CONFLICT: "Items of Power" is not in the wand chain.** The note puts it between Rituals of Power and Mage's
+  Wand. In the DB, Items of Power (1948, min 30) has no prerequisite and no next-in-chain; it is started and
+  turned in by Tabetha, and Mage's Wand (1952) requires **Rituals of Power (1951)**. Whether Items of Power is
+  a required side quest is not answered by the DB; check in game. Hidden Secrets turns in to Magus Tirth.
+- **CONFLICT: wand damage.** The three wands are 37.1 (Ragefire), 37.2 (Icefury) and 37.3 dps (Nether Force) in
+  the DB, not "~26.6".
+- **CONFLICT: the Sunken Temple reward is a choice of three, not two:** Glacial Spike (20035, 1H dagger, 34.6
+  dps) as well as Fire Ruby (20036, trinket) and Arcane Crystal Pendant (20037, neck).
+- Arcane Refreshment (7463) exists, min 60, both factions. The Arcanist's Cookbook (7500) is a min 54 Mage quest.
+
+**Wand table (item ID, quest, faction, `MinLevel`).** Every DPS in the table matches the DB, and **the WT names
+are the DB names** (Gravestone Scepter, Excavation Rod, Noxious Shooter, Cairnstone Sliver), so the "prefer WT"
+advice holds.
+
+| Item | ID | Source |
+|---|---|---|
+| Spark of the People's Militia | 12296 | The People's Militia (14, **Alliance**, min 9) |
+| Excavation Rod | 5246 | Ormer's Revenge (296, **Alliance**, min 22) |
+| Consecrated Wand | 5244 | Worgen in the Woods (223, **Alliance**, min 23) |
+| Gravestone Scepter | 7001 | Blackfathom Villainy: 1200 **Alliance** / 6561 **Horde**, min 18 (the note's ~24-30 is later than the DB gate) |
+| Rod of Sorrow | 5247 | Wanted! Otto and Falconcrest (685, **Alliance**, min 30) |
+| Burning Sliver | 5249 | Crushridge Warmongers (504, **Alliance**, min 30) |
+| Cairnstone Sliver | 9654 | The Morrow Stone (2942, **Alliance**, min 42, Feralas) |
+| Smokey's Fireshooter | 16993 | When Smokey Sings, I Get Violent (6041, both, min 54) |
+| Carrot on a Stick | 11122 | Gahz'rilla (2770, both, min 40) |
+
+That answers "Horde equivalents were not listed": the low-20s to low-40s quest wands above are all
+**Alliance-only quests** (except Blackfathom Villainy), so Horde has no quest equivalent in this DB, and the note's
+"work for both factions" holds only for the drops, vendor and craft wands. Drops and vendor wands (Cookie's
+Stirring Rod 5198, Blackbone Wand 5239, Noxious Shooter 17745 required 46, Rod of Corrosion 10836 required 51,
+Mana Channeling Wand 18483 required 56, Illusionary Rod 7713 required 34) have no quest reward, as tabled.

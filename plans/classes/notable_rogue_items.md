@@ -131,3 +131,66 @@ Source for all four tables: WIC.
 - Resolve the Vanquisher's Sword quest name (Razorfen Downs) and the Blade of Cunning source.
 - Off-hand progression not documented in the sources.
 - Ravenholdt chain start not recorded.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; the checks and disagreements are listed here.
+
+**Resolves the two disputed names**
+- **Vanquisher's Sword (10823)** is a faction split, not a disagreement: **Bring the End (3341) is Horde**
+  (min 37), **Bring the Light (3636) is Alliance** (min 39). WT ("Bring the Light" for Alliance) is right. The
+  WIC tables above have the two names swapped (Bring the End in the Alliance table, Bring the Light in the Horde
+  table).
+- **Blade of Cunning (7298)** is a Rogue-only quest reward in the DB, from five level 10 class quests (The
+  Shattered Hand 1858, The Deathstalkers 1978, Snatch and Grab 2206, Onin's Report 2239, Destiny Calls 2242).
+  That matches WIC; it disagrees with NTB ("only XP and silver"). The DB is 1.12.1, so if it matters, check the
+  reward in game.
+
+**Conflicts with the notes**
+- **Jail Break! (4322) is Alliance-only** (race mask 77, Marshal Windsor, min 50). The note says "both factions"
+  and lists Blade of Reckoning (12061) in the Horde table. In the DB no Horde quest rewards it.
+- **"Azsharite Weaponry" is really Enchanted Azsharite Fel Weaponry (3625):** both factions, given by Galvan the
+  Ancient, `MinLevel` 45 (quest level 58), zone 33 (Stranglethorn Vale). The note says level 55. Rewards are
+  the Felbane Sword (10696), Dagger (10697) and Staff (10698).
+- **Valiant Shortsword (15801)** comes from Mission Accomplished! for **both** factions (5237 Alliance, 5238
+  Horde, min 50, Western Plaguelands). The note lists it only in the Alliance table.
+- **The Ravenholdt line is not the source of the "end gear" items.** Whisperwalk Boots (20255), Duskbat Drape
+  (19982) and Ebon Mask (19984) are rewards of **The Azure Key (8236)**: Rogue-only, min 50, started by Archmage
+  Xylem (map 1, Azshara), requires Encoded Fragments (8235). The Ravenholdt start in the DB, The Manor,
+  Ravenholdt (6681, Rogue, min 24), leads to Syndicate Emblems (6701). Whether the two chains connect is not
+  answered here.
+- **Electrocutioner's Leg** is spelled **Electrocutioner Leg** (9446, required 29, 22.1 dps).
+- Blade of Eternal Darkness (17780) is 34.3 dps in the DB, 34.4 in the table; it is an **Epic** (required 49).
+
+**Confirmed (item, quest ID, faction, `MinLevel`)**
+
+| Item | ID | Quest |
+|---|---|---|
+| Sword of Serenity, Bonebiter, Black Menace, Orb of Lorica | 6829, 6830, 6831, 11262 | In the Name of the Light (1053, Alliance, min 34): the reward list is confirmed |
+| Sword of Omen | 6802 | Into The Scarlet Monastery (1048, Horde, min 33): resolves the "1 src, verify" flag |
+| Thrash Blade | 17705 | Corruption of Earth and Seed (7064 Horde / 7065 Alliance, min 45) |
+| Linken's Sword of Mastery | 11902 | It's Dangerous to Go Alone (3962, both, min 47) |
+| Daryl's Shortsword | 3572 | A Hunter's Challenge (258, Alliance, min 11) |
+| Solid Shortblade | 2074 | Red Silk Bandanas (214, Alliance, min 14) |
+| Elegant Shortsword | 5321 | Serena Bloodfeather (876, Horde, min 12) |
+| Wingblade | 6504 | Leaders of the Fang (914, Horde, min 11) |
+| Sword of Hammerfall (note: "of the Hammerfall") | 4977 | The Real Threat (680, Horde, min 30); also offers Mistspray Kilt |
+| Thornblade | 2908 | A Dark Threat Looms (283 and five siblings, Alliance, min 16) |
+| Ceremonial Elven Blade | 11856 | A Hero's Welcome (4266, Alliance, min 40) |
+| Compact Fighting Knife | 4974 | Supervisor Fizsprocket (765, Horde, min 5) |
+| Kris of Orgrimmar | 15443 | Hidden Enemies (5730, Horde, min 9) |
+| Silent Hunter | 9520 | Call to Arms (679, Horde, min 30) |
+| Tok'Kar's Murloc Shanker | 9680 | Threat From the Sea (1427, Horde, min 35) |
+| Fiendish Skiv | 10703 | Challenge Overlord Mok'Morokk (1173, Horde, min 38) |
+| Beasthunter Dagger | 15783 | Shy-Rotam (5056, Horde, min 53) |
+
+Poisons: Alliance **Mathias and the Defias (2360)**, Rogue-only, min 20, Master Mathias Shaw; Horde **Mission:
+Possible But Not Probable (2478)**, Rogue-only, min 20. Both exist as described. The rest of the dagger and
+sword rows marked D (dungeon drop) or V (vendor) have no quest reward in the DB, consistent with the tables;
+required levels match (Butcher's Slicer 18, Cruel Barb 19, Bite of Serra'kis 23, Toxic Revenger 27, Swinetusk
+Shank 30, Rondel 39, Gahz'rilla Fang 42, Satyr's Lash 45, Barman Shanker 50, Dire Nail 51, Keris of Zul'Serak 55,
+Distracting Dagger 57).

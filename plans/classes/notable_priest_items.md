@@ -49,3 +49,29 @@ options: Smoldering Wand (13.4), Blackbone Wand (35.3, L41, capital-city wand ve
 - Priests can use maces/staves/daggers; the guides list *only wands*, so a melee/staff stat stick
   (e.g. the Illusionary Rod in the Mage file, or the Scarlet Monastery staves) is not covered.
 - Horde equivalents for the low-20s quest wands not documented.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+**The wand ladder** is verified in [notable_mage_items.md](notable_mage_items.md#db-verification-checked-2026-09-19):
+every DPS matches, the WT item names are the DB names, and the quest wands from The People's Militia through The
+Morrow Stone are **Alliance-only** quests (Blackfathom Villainy has a Horde twin). That answers the open item
+"Horde equivalents for the low-20s quest wands": there are none in this DB. Smoldering Wand (5208, 13.4 dps) exists
+with required level 15.
+
+**Blood of Morphaz (8257):** Priest-only, both factions, min 50, started by Ogtinc and turned in to Greta Mosshoof.
+Reward is a choice of **three**, not two: **Woestave (20082, wand, 51.3 dps)**, **Blessed Prayer Beads (19990,
+trinket)** and **Circle of Hope (20006, ring)**. **CONFLICT:** Woestave is 51.3 dps in the DB, not ~53.2.
+
+**Class quests.** The level 10 and 20 racial Priest quests exist as spell unlocks with **no item rewards**
+(min 10: Desperate Prayer, Touch of Weakness, Hex of Weakness, Stars of Elune / Returning Home; min 20: Devouring
+Plague, Shadowguard, A Lack of Fear, Arcane Feedback, Elune's Grace), so "no items" is confirmed.
+
+**Benediction (18608) / Anathema (18609):** both 2H staves, required level 60, 59.3 dps. The quest **The Balance of
+Light and Shadow (7622)** is Priest-only, min 60, both factions, but its fixed reward is **Splinter of Nordrassil
+(18659)**, not the staff; the staff is a separate item, so the note's "quest gives the staff" needs a second look.

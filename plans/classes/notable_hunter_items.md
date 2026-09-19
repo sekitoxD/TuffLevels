@@ -97,3 +97,52 @@ of those levels.
   this class and needs a proper pass on a gun-specific guide.
 - Melee weapon for hunters (Raptor Strike / stat stick) not covered.
 - Level for several low-level quest bows was not stated by the source.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+**Big Game Hunter (208):** open to **all classes and both factions**, `MinLevel` **28** (quest level 43), started
+by Hemet Nesingwary (Stranglethorn Vale, map 0). The note's "level 25" is below the requirement. The reward is a
+choice of **Master Hunter's Bow (17686, 19.4 dps)** or **Master Hunter's Rifle (17687, 19.4 dps)**, so the rifle
+option is **confirmed**, not "very likely". A second item also named Master Hunter's Bow exists (4110, 20.8 dps,
+usable by every class, no quest reward); it is not the quest's bow.
+
+**Conflicts with the notes**
+- **Verdant Keeper's Aim (17753):** 27.3 dps in the DB; the notes say 28.2. Quest confirmed: Corruption of Earth
+  and Seed (7064 Horde / 7065 Alliance, min 45).
+- **Venomstrike (6469):** 9.6 dps in the DB (required level 19); the Horde table says 11.5.
+- **Raptor's End (3493)** comes from Ormer's Revenge (**296, Alliance only**, Wetlands, min 22). The Horde table
+  lists it too; a Horde Hunter cannot take that quest.
+- **The Sacred Flame (1197), the "location disagrees" row:** it is a **Horde** quest (min 20) given by Rau
+  Cliffrunner, zone sort 1638, which is Thunder Bluff. The Thousand Needles reading is not supported. Reward
+  choice: Cliffrunner's Aim (6739) or 6740.
+- **Call of the Raptor** has no quest of that title in the DB (single source NTB). Hemet Nesingwary's Raptor
+  Mastery chain (194-197, min 28, prerequisite Welcome to the Jungle 583) exists but has no item rewards in the
+  DB. The Voodoo Hunting Bow has no item of that name; Headhunter's Bands (15351, required 25) exists. Treat all
+  three as **unconfirmed**.
+- **Rhok'delar:** the chain's Hunter quest Ancient Sinew Wrapped Lamina (7634) has `MinLevel` **60**, not "L50+".
+  The Devilsaur Eye (19991) is real; its chain starts with The Hunter's Charm (8151, Hunter-only, min 50).
+
+**Confirmed (item, quest, faction, `MinLevel`)**
+
+| Item | ID | Quest |
+|---|---|---|
+| Ashwood Bow | 5596 | Crown of the Earth (935, Alliance, Teldrassil, min 1) |
+| Daryl's Hunting Bow | 2903 | A Hunter's Boast (257, Alliance, min 11) |
+| Hickory Shortbow | 4931 | Securing the Lines (835, Horde, Durotar, min 7): also offers 4932 |
+| Orcish Battle Bow | 5346 | Centaur Bracers (855, Horde, Barrens, min 9) |
+| Bow of Plunder | 3742 | Dangerous! (567, Horde, Hillsbrad, min 19) |
+| Highland Bow | 19114 | Return to Primal Torntusk (7847, Horde, Hinterlands, min 46) |
+| Thornflinger | 16622 | Wildkin of Elune (4902, min 52) |
+| Thorium Headed Arrow | 18042 | A Fair Trade (7341) / Arrows Are For Sissies (7342), min 52: **a quest reward, not only a vendor item** |
+
+Vendor and drop rows have no quest reward in the DB, consistent with the tables; DPS matches for Hornwood,
+Ashwood, Laminated, Daryl's, Fine Longbow (7.4), Reinforced, Naga Heartpiercer, Sturdy Recurve, Massive Longbow,
+Sylvan Shortbow, Satyr's Bow, Riphook and Ancient Bone Bow. Guns: Sniper Rifle (3430, required 39, 20.2 dps) and
+Sharpshooter Harquebus (15325, required 55, 28.0 dps) exist as described. Taming the Beast is a family of Hunter
+quests (min 10), one per race group (for example 6061 mask 32, 6064 mask 4), not one quest.

@@ -115,3 +115,64 @@ but were not written up as "Warrior recommendations" by the source — treat as 
 - Confirm Berserker Stance prerequisite wording and whether the Whirlwind chain has a level
   requirement above 30.
 - No armor/gear research was found that was warrior-specific beyond the trinket above.
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's uiMapID + 0-100 x/y; (4) quest XP is not in
+the DB. Nothing above was edited; disagreements are listed here instead.
+
+**Whirlwind chain (confirmed).** Order is The Islander (1718) → The Affray (1719) → The Windwatcher (1791) →
+Cyclonian (1712) → The Summoning (1713) → Whirlwind Weapon (1792). All six are Warrior-only, `MinLevel` 30, no
+race limit.
+- **CONFLICT with "Chain" above:** the chain does **not** start with Bath'rah. The Islander is started by the
+  class trainers (six of them, both factions) and turned in to **Klannoc Macleod** (Fray Island, Barrens, map 1).
+  Klannoc starts The Affray (Kill Big Will) and The Windwatcher; Bath'rah (Alterac Mountains, map 0) only turns
+  in The Windwatcher and starts Cyclonian onward. The reward is a choice of Whirlwind Axe (6975), Whirlwind
+  Warhammer (6976) or Whirlwind Sword (6977), all two-handers.
+- Cyclonian materials match: 8 Liferoot (3357), 30 Bloodscalp Tusk (3901), 1 Essence of the Exile (6851).
+  The Summoning needs a Whirlwind Heart (6894).
+- Whirlwind Axe (6975): 102-154, 3.60 speed, 35.6 dps, +15 Strength +14 Stamina, Warrior-only, BoP.
+  **`RequiredLevel` is 0** in the DB (item level 40); the level 30 gate comes from the quests' `MinLevel`.
+- Not answered by the DB: whether "the Berserker Stance quest" is The Affray or a separate step, and how long
+  the elite fights take. Confirm in game.
+
+**Weapon tables.** Item IDs and quest sources below were matched by exact name; every DPS in the tables that has
+a figure matches the DB except Silver Spade.
+
+| Item | ID | Reward of (quest ID) | Note |
+|---|---|---|---|
+| Elunite Axe | 6966 | Weapons of Elunite (1693, Alliance Warrior, min 10) | **CONFLICT:** it is a one-handed main-hand axe (7.8 dps), not a 2H axe. Warrior-only. The Horde quest in the table, Forged Steel (1503, Horde Warrior, min 10), rewards Thun'grim's Axe/Mace/Dagger/Sword (7326-7329), **not** the Elunite Axe. |
+| Edge of the People's Militia | 1566 | The People's Militia (14, Alliance) | 2H sword, 11.2 dps |
+| Staff of Westfall | 2042 | The Defias Brotherhood (166, Alliance) | 20.5 dps |
+| Miner's Revenge | 1893 | Oh Brother. . . (167, Alliance) | Title has trailing periods in the DB |
+| Staff of the Purifier | 5613 | The Tower of Althalaxx (973, Alliance) | 15.3 dps |
+| Headbasher | 1264 | The Fury Runs Deep (378, Alliance, min 22) | 2H mace, 17.6 dps |
+| Ancient War Sword | 3209 | Defeat Nek'rosh (474, Alliance, min 23) | 21.7 dps |
+| Archeus | 2000 | A Daughter's Love (231, Alliance, min 28) | 2H sword, 23.9 dps |
+| Silver Spade | 4128 | Venture Company Mining (600, both, min 30, quest level 41) | **CONFLICT:** 30.1 dps in the DB, 31.1 in the table |
+| Bonebiter | 6830 | In the Name of the Light (1053, Alliance, min 34) | 38.8 dps |
+| Resurgence Rod | 17743 | Corruption of Earth and Seed (7064 Horde / 7065 Alliance, min 45) | 45.8 dps |
+| Ice Barbed Spear | 19106 | Hero of the Frostwolf (8272), also Korrak and Stormpike quests | Horde and Alliance both have a source |
+| Doomulus Prime | 22348 | The Perfect Poison (9023, min 60) | Quest exists in the DB; see the rogue note for the open "not found" item |
+| Darkwood Staff | 3446 | The Family Crypt (408, Horde, min 7) | 9.1 dps |
+| Axe of Orgrimmar | 15424 | Hidden Enemies (5730, Horde, min 9) | 2H axe, 11.8 dps; the other four Hidden Enemies quests are different |
+| Wind Rider Staff | 5306 | Cry of the Thunderhawk (913, Horde, min 10) | 13.0 dps |
+| Crescent Staff | 6505 | Leaders of the Fang (914, Horde, min 11) | 20.3 dps |
+| Demolition Hammer | 5322 | Weapons of Choice (893, Horde, min 17) | 17.6 dps |
+| Skullsplitter | 9521 | Call to Arms (679, Horde, min 30) | 30.2 dps |
+| Tok'kar's Murloc Chopper | 9679 | Threat From the Sea (1427, Horde, min 35) | 32.5 dps |
+| Nimboya's Mystical Staff | 4134 | Saving Yenniku (592, Horde, min 30) | 35.7 dps |
+| Beastslayer | 11907 | The Mighty U'cha (4301, both, min 50) | 42.6 dps |
+| Limb Cleaver | 12000 | Lost Thunderbrew Recipe (4134, **Horde**) and Hurley Blackbreath (4126, **Alliance**) | **Resolves the "sources disagree" row:** the two names are the two factions' versions of one quest. 42.7 dps |
+| Diamond Flask | 20130 | Voodoo Feathers (8425, min 50) | Trinket, no class limit |
+
+Drops with no quest reward in the DB, consistent with the tables: Large Axe (vendor, 2491), Corpsemaker (6687,
+required 29), Ravager (7717, required 37), Grim'lok's Charge (9416, required 42, a **polearm**), The Chief's
+Enforcer (9477, required 45, a **staff**), Living Root (6631, required 20), Dreadforge Retaliator (11931,
+required 54).
+
+Still open: the Horde Whirlwind-timing dispute (solo difficulty of the level 38-40 elites) is game knowledge, not
+in the DB.

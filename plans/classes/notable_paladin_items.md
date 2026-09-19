@@ -80,3 +80,57 @@ Razorfen Downs), Linken's Sword of Mastery (L47, Un'goro "It's Dangerous to Go A
 - Verify the Verigan's Fist material sources (lumber, hammer, ore shipment, Kor gem) and where each
   comes from — not captured here.
 - Whether Horde-side Paladin quests should be ignored entirely (Classic Era: yes).
+
+## DB verification (checked 2026-09-19)
+
+Snapshot: cmangos `classic-db` `22b51464f1625f6ef6275771de1f5466c6f5d19e` + `mangos-classic`
+`8ec338a1704e7dcb1c0213eb7ed58f9231ade40f`, imported 2026-09-19 (patch 1.12.1). Looked up with
+`tools/qdb.py`. Limits: (1) the DB is 1.12.1, not Classic Era 1.15, so "close, not identical"; (2) no Forever
+coverage; (3) DB positions are world coordinates, not the addon's coordinates; (4) quest XP is not in the DB.
+Nothing above was edited; checks and disagreements are listed here.
+
+All Paladin quests in the DB carry race mask 5 (Human + Dwarf), so "Alliance only" holds.
+
+**Verigan's Fist chain (confirmed, with two additions)**
+- Order: The Tome of Valor 1649 → 1650 → 1651 → **1652** (Daphne Stilwell starts, Duthorian Rall turns in;
+  rewards Bastion of Stormwind 9607 and the spell Sense Undead) → The Test of Righteousness **1653** (Duthorian
+  Rall starts, Jordan Stilwell turns in) → **1654** → **1806**. All `MinLevel` 20, Paladin-only. The reward of 1806
+  is **Verigan's Fist (6953)**: 2H mace, 25.6 dps, item level 31, Paladin-only.
+- **Two side quests supply materials** (both need 1654 active): **Seeking the Kor Gem (1442**, Thundris
+  Windweaver, gives the Purified Kor Gem 7083) and **Bailor's Ore Shipment (1655**, Bailor Stonehand, gives
+  Jordan's Refined Ore Shipment 6993). This answers half of the "verify the material sources" open item. The other
+  two materials, Whitestone Oak Lumber (6994) and Jordan's Smithing Hammer (6895), are not quest rewards in this
+  DB; their source is still open. Start items: Tome of Valor (6776, from quests 1793 / 1794).
+
+**Other class quests**
+- **Redemption:** The Tome of Divinity, a level 12 chain per race (Human 1641-1644, 1780, 1781, 1786-1788; Dwarf
+  1645-1648, 1778, 1779, 1783-1785). The last step grants spell 7328. Confirmed at level 12.
+- **Summon Warhorse:** The Tome of Nobility (1661, Duthorian Rall, min 40, grants spell 13819). Single quest in the
+  DB, consistent with the README's "short and free" correction.
+- **Forging the Mightstone (8418):** min 50, Commander Ashlam Valorfist. Chain in the DB: Chillwind Point 8415 →
+  Dispelling Evil 8414 → Inert Scourgestones 8416 → 8418. Choice of **Lightforged Blade (20504, 2H sword,
+  required 47)**, **Sanctified Orb (20512)** or **Chivalrous Signet (20505)**, plus a fixed Holy Mightstone
+  (20620). Matches the note.
+- Not in the note: **The Light and How To Swing It (7501)**, Paladin-only, min 54, all races.
+
+**Weapon table.** Every DPS matches the DB. Quest sources by ID:
+
+| Item | ID | Quest |
+|---|---|---|
+| Trogg Slicer | 6186 | Gathering Idols (297, Alliance, Loch Modan, min 13) |
+| Orc Crusher | 6093 | Tharil'zun (19, Alliance, Redridge, min 18): note spells it "Tharil'Zun" |
+| Edge of the People's Militia, Miner's Revenge, Headbasher, Ancient War Sword, Archeus, Bonebiter, Beastslayer, Ice Barbed Spear, Doomulus Prime | 1566, 1893, 1264, 3209, 2000, 6830, 11907, 19106, 22348 | Same quests and IDs as in `notable_warrior_items.md` |
+
+Drops with no quest reward, matching the table: Smite's Mighty Hammer (7230, required 18), Strike of the Hydra
+(6909, required 26, 25.6 dps), Corpsemaker, Ravager, Force of Magma (11803, required 51, 48.1 dps), Dreadforge
+Retaliator.
+
+**Conflicts with the notes**
+- **Silver Spade** is 30.1 dps in the DB; the note says 31.1.
+- **Limb Cleaver** is not disputed: **Hurley Blackbreath (4126)** is the **Alliance** version, so WIC is right
+  for a Paladin. The Horde version is Lost Thunderbrew Recipe (4134).
+- The WT 1H sword list checks out and all are Alliance quests: Brushwood Blade (18957) from Druid of the Claw (2561,
+  min 3); Briarsteel Shortsword (15335) from The Fragments Within (4813, min 12); Lucine Longsword (3400) from
+  What Comes Around... (386, min 22); Vanquisher's Sword via **Bring the Light (3636, Alliance, min 39)**. The DB
+  has a second Brushwood Blade (9602, a 2H sword) that is not the quest reward. Electrocutioner's Leg is spelled
+  **Electrocutioner Leg** (9446, required 29).
