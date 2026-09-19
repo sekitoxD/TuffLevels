@@ -193,6 +193,108 @@ function Compat:GetSpellBookName(index)
 end
 
 --------------------------------------------------------------------------
+-- Zone name -> uiMapID
+--------------------------------------------------------------------------
+
+-- Route steps carry a zone NAME, not a uiMapID. uiMapIDs are per-flavor
+-- data, not API, so a number baked into a route file is a guess about a
+-- client we can't inspect from here. Instead, ask this client what it calls
+-- its own zones and build the index once.
+--
+-- The table below is Classic Era's numbering and exists only as a fallback
+-- for a client where the map-tree walk returns nothing.
+
+local CLASSIC_MAP_IDS = {
+    ["durotar"] = 1411,               ["mulgore"] = 1412,
+    ["the barrens"] = 1413,           ["alterac mountains"] = 1416,
+    ["arathi highlands"] = 1417,      ["badlands"] = 1418,
+    ["blasted lands"] = 1419,         ["tirisfal glades"] = 1420,
+    ["silverpine forest"] = 1421,     ["western plaguelands"] = 1422,
+    ["eastern plaguelands"] = 1423,   ["hillsbrad foothills"] = 1424,
+    ["the hinterlands"] = 1425,       ["dun morogh"] = 1426,
+    ["searing gorge"] = 1427,         ["burning steppes"] = 1428,
+    ["elwynn forest"] = 1429,         ["deadwind pass"] = 1430,
+    ["duskwood"] = 1431,              ["loch modan"] = 1432,
+    ["redridge mountains"] = 1433,    ["stranglethorn vale"] = 1434,
+    ["swamp of sorrows"] = 1435,      ["westfall"] = 1436,
+    ["wetlands"] = 1437,              ["teldrassil"] = 1438,
+    ["darkshore"] = 1439,             ["ashenvale"] = 1440,
+    ["thousand needles"] = 1441,      ["stonetalon mountains"] = 1442,
+    ["desolace"] = 1443,              ["feralas"] = 1444,
+    ["dustwallow marsh"] = 1445,      ["tanaris"] = 1446,
+    ["azshara"] = 1447,               ["felwood"] = 1448,
+    ["un'goro crater"] = 1449,        ["moonglade"] = 1450,
+    ["silithus"] = 1451,              ["winterspring"] = 1452,
+    ["stormwind city"] = 1453,        ["orgrimmar"] = 1454,
+    ["ironforge"] = 1455,             ["thunder bluff"] = 1456,
+    ["darnassus"] = 1457,             ["undercity"] = 1458,
+}
+
+-- The route spreadsheets spell several zones their own way, and a couple of
+-- entries are outright typos that still have to resolve to something.
+local ZONE_ALIASES = {
+    ["stonetalon mts"]        = "stonetalon mountains",
+    ["stonetalon mountains"]  = "stonetalon mountains",
+    ["ungoro crater"]         = "un'goro crater",
+    ["un'goro crater"]        = "un'goro crater",
+    ["the undercity"]         = "undercity",
+    ["capital city"]          = "undercity",
+    ["trisfall"]              = "tirisfal glades",
+    ["trisfal"]               = "tirisfal glades",
+    ["trisfal glades"]        = "tirisfal glades",
+    ["tirisfal"]              = "tirisfal glades",
+    ["hinterlands"]           = "the hinterlands",
+    ["ogrimmar"]              = "orgrimmar",
+    ["thunderbluff"]          = "thunder bluff",
+    ["tanris"]                = "tanaris",
+    ["the badlands"]          = "badlands",
+    ["eastern plagueland"]    = "eastern plaguelands",
+    ["easternplaguelands"]    = "eastern plaguelands",
+    ["barrens"]               = "the barrens",
+    ["northern barrens"]      = "the barrens",
+}
+
+local zoneIndex
+
+local function ZoneIndex()
+    if zoneIndex then return zoneIndex end
+
+    local built = {}
+    if C_Map and C_Map.GetMapChildrenInfo then
+        -- 946 is the Cosmic map; asking for all descendants gets every zone
+        -- in one call instead of recursing the tree by hand.
+        for _, root in ipairs({ 946, 947 }) do
+            local all = Compat:Guard(C_Map.GetMapChildrenInfo, root, nil, true)
+            if all then
+                for _, info in ipairs(all) do
+                    if info.name and info.mapID then
+                        local key = info.name:lower()
+                        if not built[key] then built[key] = info.mapID end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Only memoize a walk that actually found something. Called too early
+    -- (before the map system is up) it comes back empty, and caching that
+    -- would poison every lookup for the rest of the session.
+    if next(built) then zoneIndex = built end
+    return built
+end
+
+-- Returns the uiMapID this client uses for a zone name, or nil.
+function Compat:MapID(zone)
+    if type(zone) ~= "string" or zone == "" then return nil end
+
+    local key = zone:lower()
+    key = ZONE_ALIASES[key] or key
+
+    local index = ZoneIndex()
+    return index[key] or CLASSIC_MAP_IDS[key]
+end
+
+--------------------------------------------------------------------------
 -- Quest name resolution
 --------------------------------------------------------------------------
 
@@ -209,19 +311,54 @@ function Compat:CacheQuestName(name, questID)
     if name and questID then nameCache[name:lower()] = questID end
 end
 
+-- A name -> ID map of the CURRENT quest log, rebuilt at most once per quest
+-- event. A 2800-step route asks "what is this name's ID?" thousands of times
+-- per refresh; walking all 25 log slots for each of those is the difference
+-- between an instant refresh and a visible hitch on QUEST_LOG_UPDATE.
+local logIndex
+
+function Compat:InvalidateLogIndex()
+    logIndex = nil
+end
+
+local function LogIndex()
+    if logIndex then return logIndex end
+
+    local map = {}
+    for i = 1, Compat:NumQuestLogEntries() do
+        local info = Compat:GetQuestLogInfo(i)
+        if info and not info.isHeader and info.title then
+            map[info.title:lower()] = info.questID
+        end
+    end
+
+    logIndex = map
+    return map
+end
+
 function Compat:GetQuestIDByName(name)
     if not name then return nil end
     local key = name:lower()
     if nameCache[key] then return nameCache[key] end
 
-    for i = 1, self:NumQuestLogEntries() do
-        local info = self:GetQuestLogInfo(i)
-        if info and not info.isHeader and info.title then
-            nameCache[info.title:lower()] = info.questID
-            if info.title:lower() == key then return info.questID end
-        end
+    for title, questID in pairs(LogIndex()) do
+        nameCache[title] = questID
     end
-    return nil
+    return nameCache[key]
+end
+
+-- Chain quests reuse one name for every link: the route sheet has four
+-- separate quests all called "Arugal's Folly". The cache above is keyed by
+-- name, so link 1's ID would answer for links 2-4 forever - and since link 1
+-- IS flagged complete by then, every later link would read as already done
+-- and the engine would blow through the whole chain without you playing it.
+--
+-- Steps that carry an ambiguous name resolve through here instead: live log
+-- only, no cache read, no cache write. The log holds exactly the link you
+-- are on right now, which is the one thing that can disambiguate them.
+function Compat:GetQuestIDByNameLive(name)
+    if not name then return nil end
+    return LogIndex()[name:lower()]
 end
 
 function Compat:LoadNameCache()

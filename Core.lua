@@ -41,6 +41,15 @@ local function ResolveQuest(step)
     if step.quest then return step.quest end
     if not step.questName then return nil end
 
+    -- step.ambiguous means several quests in the route share this name
+    -- (chain links). Only the live quest log can say which one you hold, so
+    -- don't let the name cache answer and don't teach it a wrong answer.
+    if step.ambiguous then
+        local id = Compat:GetQuestIDByNameLive(step.questName)
+        if id then step.quest = id end
+        return id
+    end
+
     local id = Compat:GetQuestIDByName(step.questName)
     if id then
         step.quest = id
@@ -286,13 +295,20 @@ function Core:AutoSelectRoute()
 
     if #candidates == 0 then return nil end
 
-    -- Prefer a real route over a demo/skeleton, then the lowest starting
-    -- level, then name, so the result is the same every time regardless
-    -- of registration order.
+    -- Prefer a real route over a demo/skeleton, then a solo route over one
+    -- that needs a standing 5-man, then the lowest starting level, then
+    -- name, so the result is the same every time regardless of
+    -- registration order.
     table.sort(candidates, function(a, b)
         local aDemo = a.route.sample or a.route.skeleton
         local bDemo = b.route.sample or b.route.skeleton
         if aDemo ~= bDemo then return not aDemo end
+
+        -- route.group means "assumes a premade group". Playable, but never
+        -- the right guess for a character we know nothing about.
+        local aGroup = a.route.group or false
+        local bGroup = b.route.group or false
+        if aGroup ~= bGroup then return not aGroup end
 
         local aLevel = a.route.levels and a.route.levels[1] or math.huge
         local bLevel = b.route.levels and b.route.levels[1] or math.huge
@@ -392,6 +408,9 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         if ns.Arrow then ns.Arrow:Build() end
         if ns.Marker then C_Timer.After(1, function() ns.Marker:RescanAll() end) end
     else
+        -- Anything that isn't login is a quest event, so the cached view of
+        -- the quest log is stale from here on.
+        Compat:InvalidateLogIndex()
         ThrottledReconcile()
     end
 end))

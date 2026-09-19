@@ -23,5 +23,56 @@ Zones.lua
 GuideImport.lua
 SheetImport.lua
 Rogue.lua
+
+# -- existing seeded / skeleton routes ------------------------------------
 Routes\Durotar.lua
 Routes\Horde1-60.lua
+
+# -- Undead opening --------------------------------------------------------
+Routes\Horde\TirisfalStart.lua
+
+# -- solo Orc/Troll 1-60: Init first, zone files, Register last -------------
+Routes\Horde\Solo\Init.lua
+Routes\Horde\Solo\ArathiHighlands.lua
+Routes\Horde\Solo\Ashenvale.lua
+Routes\Horde\Solo\Azshara.lua
+Routes\Horde\Solo\Badlands.lua
+Routes\Horde\Solo\BlastedLands.lua
+Routes\Horde\Solo\BurningSteppes.lua
+Routes\Horde\Solo\Desolace.lua
+Routes\Horde\Solo\Durotar.lua
+Routes\Horde\Solo\DustwallowMarsh.lua
+Routes\Horde\Solo\EasternPlaguelands.lua
+Routes\Horde\Solo\Felwood.lua
+Routes\Horde\Solo\Feralas.lua
+Routes\Horde\Solo\HillsbradFoothills.lua
+Routes\Horde\Solo\SearingGorge.lua
+Routes\Horde\Solo\Silithus.lua
+Routes\Horde\Solo\SilverpineForest.lua
+Routes\Horde\Solo\StonetalonMts.lua
+Routes\Horde\Solo\StranglethornVale.lua
+Routes\Horde\Solo\SwampofSorrows.lua
+Routes\Horde\Solo\Tanaris.lua
+Routes\Horde\Solo\TheBarrens.lua
+Routes\Horde\Solo\TheHinterlands.lua
+Routes\Horde\Solo\ThousandNeedles.lua
+Routes\Horde\Solo\ThunderBluff.lua
+Routes\Horde\Solo\Undercity.lua
+Routes\Horde\Solo\UngoroCrater.lua
+Routes\Horde\Solo\WesternPlaguelands.lua
+Routes\Horde\Solo\Winterspring.lua
+Routes\Horde\Solo\Register.lua
+
+# -- 5-man Orc/Troll 1-60: Init first, parts in order, Register last --------
+Routes\Horde\Dungeon\Init.lua
+Routes\Horde\Dungeon\01-VALLEYOFTRIALS.lua
+Routes\Horde\Dungeon\02-MidBarrensLap.lua
+Routes\Horde\Dungeon\03-AshenvaleLap.lua
+Routes\Horde\Dungeon\04-DesolaceSnoozeFest1.lua
+Routes\Horde\Dungeon\05-Arathithunderdome.lua
+Routes\Horde\Dungeon\06-UldumanBlitz.lua
+Routes\Horde\Dungeon\07-Continued.lua
+Routes\Horde\Dungeon\08-Felwood1.lua
+Routes\Horde\Dungeon\09-BRDPrisonPrepFarm.lua
+Routes\Horde\Dungeon\10-BRDPrisonPrepFarm.lua
+Routes\Horde\Dungeon\Register.lua
