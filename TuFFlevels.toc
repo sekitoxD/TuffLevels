@@ -1,0 +1,27 @@
+## Interface: 16001, 120100, 11507
+## Title: TuFFlevels
+## Notes: Step-by-step leveling routes. Forever / Retail / Classic Era.
+## Author: you
+## Version: 1.4.0
+## SavedVariablesPerCharacter: TuFFlevelsCharDB
+## SavedVariables: TuFFlevelsDB
+## OptionalDeps: QuestieDB, Questie, TomTom
+## X-Category: Leveling
+
+Compat.lua
+Theme.lua
+Data.lua
+Core.lua
+Recorder.lua
+Marker.lua
+UI.lua
+Arrow.lua
+Panel.lua
+Progress.lua
+Import.lua
+Zones.lua
+GuideImport.lua
+SheetImport.lua
+Rogue.lua
+Routes\Durotar.lua
+Routes\Horde1-60.lua
