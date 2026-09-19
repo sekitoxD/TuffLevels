@@ -1,7 +1,7 @@
 ## Interface: 16001, 120100, 11507
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Forever / Retail / Classic Era.
-## Author: you
+## Author: sekitoxD
 ## Version: 1.4.0
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB

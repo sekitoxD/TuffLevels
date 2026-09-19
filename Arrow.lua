@@ -41,7 +41,7 @@ local function Bearing(step)
     local dy = (step.y / 100) - py
 
     -- Map coordinates run y-down; world angles run y-up.
-    local angle = math.atan(dx, -dy)
+    local angle = Compat.Atan2(dx, -dy)
 
     local facing = Compat:Guard(GetPlayerFacing)
     if facing then
@@ -71,9 +71,9 @@ function Arrow:Build()
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        TuFFlevelsDB = TuFFlevelsDB or {}
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
         local p, _, rp, x, y = self:GetPoint()
-        TuFFlevelsDB.arrowPos = { p, rp, x, y }
+        db.arrowPos = { p, rp, x, y }
     end)
 
     tex = frame:CreateTexture(nil, "OVERLAY")
@@ -100,18 +100,23 @@ function Arrow:Build()
     titleText:SetWidth(140)
     titleText:SetTextColor(unpack(Theme.color.dim))
 
-    TuFFlevelsDB = TuFFlevelsDB or {}
-    if TuFFlevelsDB.arrowPos then
-        local p, rp, x, y = unpack(TuFFlevelsDB.arrowPos)
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    if db.arrowPos then
+        local p, rp, x, y = unpack(db.arrowPos)
         frame:ClearAllPoints()
         frame:SetPoint(p, UIParent, rp, x, y)
     end
+
+    local guardedUpdate = Compat:Wrap("Arrow", function() Arrow:Update() end, function()
+        frame:Hide()
+        ns.Print("|cffff5555Arrow disabled after repeated errors.|r /tuff errors for details.")
+    end)
 
     frame:SetScript("OnUpdate", function(self, elapsed)
         self._t = (self._t or 0) + elapsed
         if self._t < 0.05 then return end
         self._t = 0
-        Arrow:Update()
+        guardedUpdate()
     end)
 end
 

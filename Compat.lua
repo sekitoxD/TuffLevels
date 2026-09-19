@@ -111,6 +111,32 @@ function Compat:CanReload()
 end
 
 --------------------------------------------------------------------------
+-- Math
+--------------------------------------------------------------------------
+
+-- WoW's Lua 5.1 runtime takes one argument in math.atan; math.atan2, if it
+-- exists at all, is the two-argument, four-quadrant form arrow bearings
+-- need. Use it when present, otherwise reconstruct the same result by hand.
+function Compat.Atan2(y, x)
+    if math.atan2 then
+        return math.atan2(y, x)
+    end
+    if x > 0 then
+        return math.atan(y / x)
+    elseif x < 0 then
+        if y >= 0 then
+            return math.atan(y / x) + math.pi
+        else
+            return math.atan(y / x) - math.pi
+        end
+    else
+        if y > 0 then return math.pi / 2
+        elseif y < 0 then return -math.pi / 2
+        else return 0 end
+    end
+end
+
+--------------------------------------------------------------------------
 -- API shims
 --------------------------------------------------------------------------
 
@@ -146,6 +172,24 @@ function Compat:GetQuestLogInfo(index)
     if not (C_QuestLog and C_QuestLog.GetInfo) then return nil end
     local ok, result = pcall(C_QuestLog.GetInfo, index)
     return ok and result or nil
+end
+
+-- The modern C_SpellBook API takes an Enum.SpellBookSpellBank value
+-- ("Player"), not the old numeric BOOKTYPE_SPELL bank argument. Passing a
+-- bare 2 where that enum is expected returns nothing or the wrong list.
+-- GetSpecialization and other spec APIs are absent on Forever, so this
+-- stays a pure bank-argument shim rather than anything spec-aware.
+function Compat:GetSpellBookName(index)
+    if C_SpellBook and C_SpellBook.GetSpellBookItemName then
+        local bank = Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
+        local ok, name = pcall(C_SpellBook.GetSpellBookItemName, index, bank)
+        return ok and name or nil
+    end
+    if _G.GetSpellBookItemName then
+        local ok, name = pcall(_G.GetSpellBookItemName, index, "spell")
+        return ok and name or nil
+    end
+    return nil
 end
 
 --------------------------------------------------------------------------
@@ -208,7 +252,7 @@ function Compat:Guard(fn, ...)
     if not results[1] then
         errorCount = errorCount + 1
         if errorCount == ERROR_BUDGET then
-            print("|cffff5555TuFFlevels|r: error budget reached, suppressing further errors. /sl errors")
+            print("|cffff5555TuFFlevels|r: error budget reached, suppressing further errors. /tuff errors")
         end
         Compat.lastError = results[2]
         return nil
@@ -218,4 +262,73 @@ end
 
 function Compat:ErrorCount()
     return errorCount
+end
+
+--------------------------------------------------------------------------
+-- Per-module handler wrapping
+--------------------------------------------------------------------------
+
+-- Compat:Guard above wraps individual API calls. It does not help an
+-- OnUpdate or OnEvent handler that throws from its own logic (not from a
+-- WoW API call) - on Forever that can hit the 100-error session cap in
+-- seconds, at 20Hz, and it would silently mask every other addon's errors
+-- too since the single shared budget above would blow through instantly.
+--
+-- Compat:Wrap gives every named handler its own small budget. One module
+-- tripping (e.g. Arrow's OnUpdate) does not affect any other module, and
+-- each distinct error message is only printed once - after that it just
+-- counts, so a spammy handler doesn't spam chat.
+
+local moduleCounts  = {}   -- [name] = count
+local moduleTripped = {}   -- [name] = true once that module goes silent
+local seenMessages  = {}   -- [name] = { [message] = true }
+local totalWrapped  = 0
+
+local MODULE_BUDGET = 5
+local TOTAL_WRAP_BUDGET = 30   -- well under the client's 100-error cap
+
+-- Wraps fn so it never throws past this call. name groups it for
+-- accounting and for /tuff errors. onTrip, if given, runs once the first
+-- time this module's budget is spent (e.g. hide a frame, disable a
+-- feature) instead of going silent with no explanation.
+function Compat:Wrap(name, fn, onTrip)
+    return function(...)
+        if moduleTripped[name] then return end
+
+        local results = { pcall(fn, ...) }
+        if results[1] then
+            return unpack(results, 2)
+        end
+
+        local msg = tostring(results[2])
+        seenMessages[name] = seenMessages[name] or {}
+        local isNewMessage = not seenMessages[name][msg]
+        seenMessages[name][msg] = true
+
+        moduleCounts[name] = (moduleCounts[name] or 0) + 1
+        totalWrapped = totalWrapped + 1
+        Compat.lastError = msg
+
+        if isNewMessage then
+            print(("|cffff5555TuFFlevels|r [%s]: %s"):format(name, msg))
+        end
+
+        if not moduleTripped[name]
+           and (moduleCounts[name] >= MODULE_BUDGET or totalWrapped >= TOTAL_WRAP_BUDGET) then
+            moduleTripped[name] = true
+            print(("|cffff5555TuFFlevels|r: %s hit its error limit and is now suppressed. /tuff errors"):format(name))
+            if onTrip then pcall(onTrip) end
+        end
+
+        return nil
+    end
+end
+
+-- [name] = { count = n, lastError = "..." }, for /tuff errors.
+function Compat:ModuleErrorCounts()
+    local out = {}
+    for name, count in pairs(moduleCounts) do
+        out[name] = { count = count, tripped = moduleTripped[name] or false }
+    end
+    return out
 end

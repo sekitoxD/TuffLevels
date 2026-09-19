@@ -168,12 +168,19 @@ function UI:Build()
     nextB.text:SetText(Theme:Accent(">"))
     nextB:SetScript("OnClick", function() UI:JumpSection(1) end)
 
-    -- the step just completed, dimmed
+    -- the step just completed, dimmed - doubles as the "paused" hint and
+    -- Resume click target while Core.pinned is set (see Refresh)
     frame.previous = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     frame.previous:SetPoint("TOPLEFT", 12, -52)
     frame.previous:SetPoint("TOPRIGHT", -12, -52)
     frame.previous:SetJustifyH("LEFT")
     frame.previous:SetHeight(14)
+
+    local resumeBtn = CreateFrame("Button", nil, frame)
+    resumeBtn:SetAllPoints(frame.previous)
+    resumeBtn:SetScript("OnClick", function()
+        if ns.Core.pinned then ns.Core:Resume() end
+    end)
 
     -- current step body
     frame.current = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -233,11 +240,7 @@ function UI:JumpSection(direction)
 
     local target = marks[math.max(1, math.min(#marks, currentMark + direction))]
     if target then
-        Core.index = target
-        Core:Reconcile()
-        Core:Save()
-        self:Refresh()
-        if ns.Marker then ns.Marker:RescanAll() end
+        Core:SetIndex(target, { pin = true })
     end
 end
 
@@ -279,7 +282,9 @@ function UI:Refresh()
         local s = Core.active.steps[i]
         if s and s.type ~= "section" then prevStep = s break end
     end
-    if prevStep then
+    if Core.pinned then
+        frame.previous:SetText(Theme.hex.warn .. "Paused here. Next or click here to Resume.|r")
+    elseif prevStep then
         local label = StepLabel(prevStep)
         if #label > 42 then label = label:sub(1, 40) .. "..." end
         frame.previous:SetText(Theme.hex.faint ..

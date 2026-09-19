@@ -68,7 +68,8 @@ Three beta bugs the addon handles:
 | `/tuff verify` | Validate the active route against the database |
 | `/tuff capture` | Dump your quest log as pasteable route steps |
 | `/tuff where` | Print current step number |
-| `/tuff goto <n>` | Jump to a step (progress recovery) |
+| `/tuff goto <n>` | Jump to a step (progress recovery); pauses auto-advance |
+| `/tuff resume` | Un-pause after Back/goto and let auto-advance continue |
 | `/tuff client` | Flavor, interface, rejected events, database status |
 | `/tuff errors` | Suppressed error count |
 | `/tuff reset` | Back to step 1 |
@@ -104,7 +105,7 @@ Steps filter by `races`, `class`, and `minLevel`, so one file can serve Orc and 
 
 ## Known constraints
 
-**Protected functions.** No auto-accept, no auto-turn-in, no auto-select-reward. Blocked on every client, no workaround. Display and tracking only — same limitation RestedXP has.
+**No auto-accept or auto-turn-in yet.** Not implemented. Whether the required calls (`AcceptQuest`, `CompleteQuest`, `GetQuestReward`, gossip selection) work from an event handler without a hardware event on Forever is under investigation — RestedXP advertises these features on Forever, so "blocked on every client" was an unverified guess, not a confirmed limitation. Display and tracking work today regardless of the outcome.
 
 **Interface versions.** Mainline TOC lists `16001, 120100` — Forever first. Bump when either client patches.
 

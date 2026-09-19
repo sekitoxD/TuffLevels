@@ -144,7 +144,7 @@ end
 -- Note taking
 --------------------------------------------------------------------------
 
--- /sl note <text> — attach a note to the last recorded step, or drop a
+-- /tuff note <text> — attach a note to the last recorded step, or drop a
 -- standalone note at your current position. This is where the human
 -- knowledge goes: "pull him away from the adds", "skip if under level 8".
 function Recorder:AddNote(text)
@@ -158,7 +158,7 @@ function Recorder:AddNote(text)
     end
 end
 
--- /sl mark <text> — record a travel/manual step at your exact position.
+-- /tuff mark <text> — record a travel/manual step at your exact position.
 -- Use it for flight paths, hearth points, "run through this cave", etc.
 function Recorder:AddMark(text)
     Record({ kind = "travel", title = text or "Travel" })
@@ -346,7 +346,7 @@ Compat:RegisterEvents(rf, {
     "ZONE_CHANGED_NEW_AREA",
 })
 
-rf:SetScript("OnEvent", function(self, event, ...)
+rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         Recorder:Restore()
         return
@@ -392,4 +392,4 @@ rf:SetScript("OnEvent", function(self, event, ...)
                      targetLevel = newLevel })
         end
     end
-end)
+end))

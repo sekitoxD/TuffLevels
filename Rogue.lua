@@ -399,7 +399,7 @@ Compat:RegisterEvents(rf, {
     "CHAT_MSG_SYSTEM",
 })
 
-rf:SetScript("OnEvent", function(self, event, ...)
+rf:SetScript("OnEvent", Compat:Wrap("Rogue", function(self, event, ...)
     if not Rogue:IsRogue() then return end
 
     if event == "PLAYER_LEVEL_UP" then
@@ -424,7 +424,7 @@ rf:SetScript("OnEvent", function(self, event, ...)
         -- the spellbook scan below attach names.
         Rogue:ScanSpellbook()
     end
-end)
+end))
 
 -- Walks the rogue spellbook and records anything not already known, stamped
 -- with your current level.
@@ -432,12 +432,8 @@ function Rogue:ScanSpellbook()
     if not self:IsRogue() then return end
     local level = UnitLevel("player")
 
-    local getInfo = (C_SpellBook and C_SpellBook.GetSpellBookItemName)
-                    or _G.GetSpellBookItemName
-    if not getInfo then return end
-
     for i = 1, 200 do
-        local name = Compat:Guard(getInfo, i, 2)   -- 2 = BOOKTYPE_SPELL / player
+        local name = Compat:GetSpellBookName(i)
         if not name then break end
         self:Record(name, level)
     end

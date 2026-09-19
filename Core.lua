@@ -19,6 +19,7 @@ ns.Print = Print
 Core.routes = {}          -- [name] = routeTable
 Core.active = nil         -- currently loaded route
 Core.index  = 1           -- current step index
+Core.pinned = false       -- true after manual navigation; blocks auto-advance
 
 --------------------------------------------------------------------------
 -- Route registration (called from Routes/*.lua)
@@ -165,10 +166,31 @@ function Core:CurrentStep()
     return self.active.steps[self.index]
 end
 
+-- The only place self.index is assigned. Clamps to the valid range, saves,
+-- and refreshes every dependent module. Never advances further on its own -
+-- call Reconcile separately if auto-advance past done steps is wanted.
+function Core:SetIndex(n, opts)
+    opts = opts or {}
+    local total = self.active and #self.active.steps or 0
+    self.index = math.max(1, math.min(n, total + 1))
+    if opts.pin then self.pinned = true end
+
+    self:Save()
+    if ns.UI then ns.UI:Refresh() end
+    local step = self:CurrentStep()
+    if step then Data:SetWaypoint(step) end
+    if ns.Marker then ns.Marker:RescanAll() end
+    if ns.Panel then ns.Panel:Refresh() end
+    if ns.Progress then ns.Progress:Refresh() end
+end
+
 -- Walk forward past every step that's already satisfied or doesn't apply.
--- Called on login and after every relevant event.
+-- Called on login and after every relevant event. Does nothing while
+-- pinned - otherwise a quest event within ~0.3s of Back or a manual goto
+-- would immediately undo it by skipping straight past the step the player
+-- just navigated to.
 function Core:Reconcile()
-    if not self.active then return end
+    if not self.active or self.pinned then return end
 
     local moved = false
     local guard = 0
@@ -199,21 +221,23 @@ end
 
 function Core:Advance()
     if not self.active then return end
-    self.index = math.min(self.index + 1, #self.active.steps + 1)
+    self.pinned = false
+    self:SetIndex(self.index + 1)
     self:Reconcile()
-    self:Save()
-    if ns.UI then ns.UI:Refresh() end
-    local step = self:CurrentStep()
-    if step then Data:SetWaypoint(step) end
-    if ns.Marker then ns.Marker:RescanAll() end
 end
 
 function Core:Back()
     if not self.active then return end
-    self.index = math.max(self.index - 1, 1)
-    self:Save()
-    if ns.UI then ns.UI:Refresh() end
-    if ns.Marker then ns.Marker:RescanAll() end
+    self:SetIndex(self.index - 1, { pin = true })
+end
+
+-- Un-pins and lets Reconcile skip forward past whatever's already done.
+-- Also the seam for Plan 2's fast-forward (scan from step 1 for the
+-- furthest step whose quest flags say it's done) once that's built.
+function Core:Resume()
+    if not self.active then return end
+    self.pinned = false
+    self:Reconcile()
 end
 
 --------------------------------------------------------------------------
@@ -225,6 +249,7 @@ function Core:LoadRoute(name)
     if not route then return false end
 
     self.active = route
+    self.pinned = false
     self.index = 1
     self:Reconcile()
     self:Save()
@@ -233,21 +258,53 @@ function Core:LoadRoute(name)
 end
 
 -- Pick the best route for this character automatically.
+--
+-- pairs() iteration order over Core.routes is unspecified, so with more
+-- than one matching route the pick could differ between launches or even
+-- between /reloads on the same character - and on Forever, where the
+-- saved route choice never survives a relaunch, that's every login.
+-- Collect every match and rank it deterministically instead of returning
+-- whichever pairs() happens to hand back first.
 function Core:AutoSelectRoute()
     local race = Data:PlayerRace()
     local faction = Data:PlayerFaction()
 
+    local candidates = {}
     for name, route in pairs(self.routes) do
         if route.faction == faction then
-            if not route.races then
-                return name
+            local matches = not route.races
+            if not matches then
+                for _, r in ipairs(route.races) do
+                    if r == race then matches = true break end
+                end
             end
-            for _, r in ipairs(route.races) do
-                if r == race then return name end
+            if matches then
+                table.insert(candidates, { name = name, route = route })
             end
         end
     end
-    return nil
+
+    if #candidates == 0 then return nil end
+
+    -- Prefer a real route over a demo/skeleton, then the lowest starting
+    -- level, then name, so the result is the same every time regardless
+    -- of registration order.
+    table.sort(candidates, function(a, b)
+        local aDemo = a.route.sample or a.route.skeleton
+        local bDemo = b.route.sample or b.route.skeleton
+        if aDemo ~= bDemo then return not aDemo end
+
+        local aLevel = a.route.levels and a.route.levels[1] or math.huge
+        local bLevel = b.route.levels and b.route.levels[1] or math.huge
+        if aLevel ~= bLevel then return aLevel < bLevel end
+
+        return a.name < b.name
+    end)
+
+    local pick = candidates[1]
+    Print(("Auto-selected route: %s (best match for %s %s)"):format(
+        pick.name, tostring(race), tostring(faction)))
+    return pick.name
 end
 
 --------------------------------------------------------------------------
@@ -316,7 +373,7 @@ local function ThrottledReconcile()
     end)
 end
 
-f:SetScript("OnEvent", function(self, event, ...)
+f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         Data:DetectProvider()
         Compat:LoadNameCache()
@@ -337,7 +394,7 @@ f:SetScript("OnEvent", function(self, event, ...)
     else
         ThrottledReconcile()
     end
-end)
+end))
 
 --------------------------------------------------------------------------
 -- Slash commands
@@ -347,7 +404,7 @@ SLASH_TUFFLEVELS1 = "/tuff"
 SLASH_TUFFLEVELS2 = "/tufflevels"
 SLASH_TUFFLEVELS3 = "/sl"
 
-SlashCmdList["TUFFLEVELS"] = function(msg)
+SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     local cmd, arg = msg:match("^(%S*)%s*(.-)$")
     cmd = (cmd or ""):lower()
 
@@ -393,10 +450,13 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
     elseif cmd == "routes" then
         Print("Available routes:")
         for name, route in pairs(Core.routes) do
-            Print(("  %s  (%s, levels %s-%s)"):format(
+            local tag = ""
+            if route.skeleton then tag = "  |cffffff00[skeleton - no quest IDs]|r"
+            elseif route.sample then tag = "  |cffffff00[sample - unverified IDs, run /tuff verify]|r" end
+            Print(("  %s  (%s, levels %s-%s)%s"):format(
                 name, route.faction or "?",
                 route.levels and route.levels[1] or "?",
-                route.levels and route.levels[2] or "?"))
+                route.levels and route.levels[2] or "?", tag))
         end
 
     elseif cmd == "load" then
@@ -410,7 +470,7 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
         if not Core.active then Print("No route loaded.") return end
         Print(("Validating '%s' (%d steps, provider: %s)"):format(
             Core.active.name, #Core.active.steps, Data:ProviderName()))
-        local problems, unknown = Data:ValidateRoute(Core.active)
+        local problems, unknown, unresolved = Data:ValidateRoute(Core.active)
         if #problems == 0 then
             Print("|cff00ff00No structural problems found.|r")
         else
@@ -420,6 +480,9 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
         end
         if unknown > 0 then
             Print(("|cffffff00%d quest IDs could not be checked (no database installed).|r"):format(unknown))
+        end
+        if unresolved > 0 then
+            Print(("%d steps resolve by name at runtime (not a problem)."):format(unresolved))
         end
 
     elseif cmd == "capture" then
@@ -451,7 +514,7 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
                 ns.Recorder.active and "|cff00ff00ON|r" or "|cffff5555OFF|r",
                 #ns.Recorder.log))
         else
-            Print("Usage: /sl rec start | stop | status | export [name] | clear")
+            Print("Usage: /tuff rec start | stop | status | export [name] | clear")
         end
 
     elseif cmd == "marker" then
@@ -473,7 +536,7 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
         end
 
     elseif cmd == "note" then
-        if arg == "" then Print("Usage: /sl note <text>") else ns.Recorder:AddNote(arg) end
+        if arg == "" then Print("Usage: /tuff note <text>") else ns.Recorder:AddNote(arg) end
 
     elseif cmd == "mark" then
         ns.Recorder:AddMark(arg ~= "" and arg or nil)
@@ -486,13 +549,15 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
     elseif cmd == "goto" then
         local n = tonumber(arg)
         if n then
-            Core.index = math.max(1, n)
-            Core:Reconcile()
-            if ns.UI then ns.UI:Refresh() end
-            Print("Jumped to step " .. Core.index)
+            Core:SetIndex(n, { pin = true })
+            Print("Jumped to step " .. Core.index .. " (pinned - /tuff resume to continue auto-advance)")
         else
-            Print("Usage: /sl goto <step number>")
+            Print("Usage: /tuff goto <step number>")
         end
+
+    elseif cmd == "resume" then
+        Core:Resume()
+        Print("Resumed. Step " .. Core.index)
 
     elseif cmd == "client" then
         Print(("Flavor: %s  |  Interface: %d  |  Mainline: %s"):format(
@@ -508,19 +573,29 @@ SlashCmdList["TUFFLEVELS"] = function(msg)
         end
 
     elseif cmd == "errors" then
-        Print(("Suppressed errors: %d"):format(Compat:ErrorCount()))
+        Print(("Guard-wrapped API calls suppressed: %d"):format(Compat:ErrorCount()))
+        local counts = Compat:ModuleErrorCounts()
+        local any = false
+        for name, info in pairs(counts) do
+            any = true
+            Print(("  %s: %d error(s)%s"):format(
+                name, info.count, info.tripped and " |cffff5555(suppressed)|r" or ""))
+        end
+        if not any then Print("  No handler errors this session.") end
         if Compat.lastError then Print("Last: " .. tostring(Compat.lastError)) end
 
     elseif cmd == "reset" then
-        Core.index = 1
+        Core.pinned = false
+        Core:SetIndex(1)
         Core:Reconcile()
         Print("Reset to step 1.")
 
     else
-        Print("Commands: show | next | back | where | goto <n> | routes | load <name>")
+        Print("Commands: show | next | back | resume | where | goto <n> | routes | load <name>")
         Print("          verify | capture | client | errors | reset")
-        Print("Recording: /sl rec start | stop | status | export | clear")
-        Print("          /sl note <text> | /sl mark <text>")
-        Print("Markers: /sl marker | /sl plates [off] | /sl npc")
+        Print("Recording: /tuff rec start | stop | status | export | clear")
+        Print("          /tuff note <text> | /tuff mark <text>")
+        Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")
+        Print("(/tuff, /tufflevels and /sl all work the same)")
     end
-end
+end)

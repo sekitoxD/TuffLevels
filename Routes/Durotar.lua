@@ -4,13 +4,13 @@
 -- The quest IDs below are UNVERIFIED. They are structurally correct
 -- examples of the step format, not a validated route.
 --
--- Before trusting any of them, run:  /sl verify
+-- Before trusting any of them, run:  /tuff verify
 -- That checks every ID in this file against QuestieDB and reports
 -- anything it can't find.
 --
 -- To author real steps without looking IDs up by hand:
 --   1. Accept the quests in game, in the order you want them
---   2. /sl capture
+--   2. /tuff capture
 --   3. Paste the output here and edit types/notes/coords
 -- ###################################################################
 --
@@ -43,7 +43,8 @@ ns.RegisterRoute("Durotar (Orc/Troll)", {
     faction = "Horde",
     races   = { "Orc", "Troll" },
     levels  = { 1, 12 },
-    author  = "you",
+    author  = "sekitoxD",
+    sample  = true,   -- unverified IDs; never auto-selected over a real route
 
     steps = {
         { type = "section", name = "Valley of Trials", levels = { 1, 6 } },

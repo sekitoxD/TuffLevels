@@ -75,7 +75,7 @@ function Data:GetQuestName(questID, fallback)
 end
 
 -- Does this quest ID exist in the database at all?
--- Used by /sl verify to catch typo'd IDs in route files.
+-- Used by /tuff verify to catch typo'd IDs in route files.
 function Data:QuestExists(questID)
     if not self:HasProvider() then return nil end  -- nil = unknown, not false
     return self:GetQuestName(questID) ~= nil
@@ -123,14 +123,13 @@ end
 function Data:ValidateRoute(route)
     local problems = {}
     local unknown = 0
+    local unresolved = 0
 
     for i, step in ipairs(route.steps) do
         local label = ("step %d (%s)"):format(i, step.type or "?")
 
         if step.type == "accept" or step.type == "turnin" or step.type == "complete" then
-            if type(step.quest) ~= "number" then
-                table.insert(problems, label .. ": missing numeric quest ID")
-            else
+            if type(step.quest) == "number" then
                 local exists = self:QuestExists(step.quest)
                 if exists == false then
                     table.insert(problems,
@@ -138,6 +137,13 @@ function Data:ValidateRoute(route)
                 elseif exists == nil then
                     unknown = unknown + 1
                 end
+            elseif type(step.questName) == "string" and step.questName ~= "" then
+                -- Spreadsheet-imported steps carry a name instead of an ID.
+                -- Not resolvable until the quest is seen in a live log, so
+                -- this is informational, not a validation failure.
+                unresolved = unresolved + 1
+            else
+                table.insert(problems, label .. ": missing numeric quest ID or quest name")
             end
         end
 
@@ -156,7 +162,7 @@ function Data:ValidateRoute(route)
         end
     end
 
-    return problems, unknown
+    return problems, unknown, unresolved
 end
 
 --------------------------------------------------------------------------

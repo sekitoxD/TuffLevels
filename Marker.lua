@@ -233,10 +233,21 @@ end
 
 -- Friendly NPC nameplates are off by default for most people, which would
 -- make the whole feature invisible. Offer it rather than forcing it.
+-- SetCVar returns nothing on success, so Compat:Guard's "did the pcall
+-- succeed" result was always non-nil and the old code printed failure
+-- text on every success. Call it directly and confirm by reading the CVar
+-- back instead. SetCVar is also blocked in combat.
 function Marker:EnableFriendlyPlates()
-    local ok = Compat:Guard(SetCVar, "nameplateShowFriends", 1)
-    local ok2 = Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 1)
-    if ok ~= nil or ok2 ~= nil then
+    if InCombatLockdown() then
+        ns.Print("Can't change nameplate settings in combat. Try again out of combat.")
+        return
+    end
+
+    pcall(SetCVar, "nameplateShowFriends", 1)
+    pcall(SetCVar, "nameplateShowFriendlyNPCs", 1)
+
+    local ok, cur = pcall(GetCVar, "nameplateShowFriends")
+    if ok and cur == "1" then
         ns.Print("Friendly nameplates on. NPC markers will show now.")
     else
         ns.Print("Could not change nameplate settings on this client.")
@@ -245,8 +256,13 @@ function Marker:EnableFriendlyPlates()
 end
 
 function Marker:DisableFriendlyPlates()
-    Compat:Guard(SetCVar, "nameplateShowFriends", 0)
-    Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 0)
+    if InCombatLockdown() then
+        ns.Print("Can't change nameplate settings in combat. Try again out of combat.")
+        return
+    end
+
+    pcall(SetCVar, "nameplateShowFriends", 0)
+    pcall(SetCVar, "nameplateShowFriendlyNPCs", 0)
     ns.Print("Friendly nameplates disabled.")
 end
 
@@ -278,7 +294,7 @@ Compat:RegisterEvents(mf, {
     "PLAYER_TARGET_CHANGED",
 })
 
-mf:SetScript("OnEvent", function(self, event, unit)
+mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
     if event == "NAME_PLATE_UNIT_ADDED" then
         CheckUnit(unit)
 
@@ -292,4 +308,7 @@ mf:SetScript("OnEvent", function(self, event, unit)
     elseif event == "PLAYER_TARGET_CHANGED" then
         CheckTarget()
     end
-end)
+end, function()
+    Marker.enabled = false
+    for plate in pairs(active) do HideMarkerOn(plate) end
+end))

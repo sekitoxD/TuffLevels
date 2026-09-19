@@ -177,10 +177,7 @@ function Progress:Build()
 
         r:SetScript("OnClick", function(self)
             if self.stepIndex then
-                ns.Core.index = self.stepIndex
-                ns.Core:Save()
-                if ns.UI then ns.UI:Refresh() end
-                if ns.Marker then ns.Marker:RescanAll() end
+                ns.Core:SetIndex(self.stepIndex, { pin = true })
                 Progress:Refresh()
             end
         end)
