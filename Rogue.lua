@@ -50,6 +50,26 @@ Rogue.seeded = {
       note = "Single biggest levelling speed increase in the game. Bank gold for it from the 30s." },
 }
 
+-- Community-sourced trainer spend/skip guidance (not independently
+-- verified - source: the "RogueAbilities" tab of a community "Rogue
+-- Master Sheet - Horde" Google Sheet, essential/situational/DO_NOT_TAKE
+-- flags per ability rank). Deliberately condensed rather than
+-- transcribed rank-by-rank, same reasoning as Rogue.seeded above: a
+-- full every-rank table is more likely to be silently wrong somewhere
+-- than a short summary is.
+Rogue.trainingNote =
+    "Community-sourced spend/skip list, not independently verified - " ..
+    "cross-check before trusting it blindly.\n\n" ..
+    "Worth training every rank as it becomes available: Sinister Strike, " ..
+    "Eviscerate, Slice and Dice, Kidney Shot, Cheap Shot, Ambush rank 1, " ..
+    "Vanish, Blind, Distract, Instant Poison and Crippling Poison.\n\n" ..
+    "Skip entirely while levelling - pure gold sinks unless your build " ..
+    "specifically calls for them: Garrote, Expose Armor, Mind-numbing " ..
+    "Poison, Deadly Poison, Wound Poison, and any rank past 1 of Feint, " ..
+    "Gouge, Kick, Sap or Rupture.\n\n" ..
+    "Hemorrhage is talent-specific - only worth training if you've actually " ..
+    "spent the Subtlety point for it."
+
 --------------------------------------------------------------------------
 -- Learned-ability tracking
 --------------------------------------------------------------------------
@@ -250,6 +270,10 @@ function Rogue:BuildTraining()
                 :format(Theme.hex.dim, e.level, Theme.hex.text, e.name))
         end
     end
+
+    table.insert(lines, "")
+    table.insert(lines, Theme.hex.accent .. "What to spend gold on|r")
+    table.insert(lines, Theme.hex.text .. self.trainingNote .. "|r")
 
     return table.concat(lines, "\n")
 end

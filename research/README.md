@@ -23,12 +23,20 @@ research/
   factions/
     horde-exclusive-quests.md
     alliance-exclusive-quests.md
+  professions/
+    cooking.md, firstaid.md, engineering.md, ... -- 1-300 leveling
+    guides for secondary/trade skills. Reference-only: there is no
+    in-addon profession tracking (no skill-level Compat wrapper, no
+    craft-keyed step type), so these exist purely for a human to read
+    while playing, same status as any other file in research/.
 ```
 
 Create `quests/<zone>.md` and `factions/*.md` files as you actually do
 that research — git doesn't track empty directories, and an empty
 scaffold file just invites rot. `classes/rogue.md` already exists
-(the addon's own `Rogue.lua` tab made it the first priority).
+(the addon's own `Rogue.lua` tab made it the first priority). Only
+create a `professions/<skill>.md` file for a skill someone actually
+researched — `Fishing` has none yet for exactly that reason.
 
 ## Workflow
 
