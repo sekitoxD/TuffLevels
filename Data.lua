@@ -192,6 +192,17 @@ function Data:ValidateRoute(route)
             table.insert(problems,
                 label .. ": has coords but no map - needs a zone name this client knows, or a uiMapID")
         end
+
+        if step.path then
+            for j, point in ipairs(step.path) do
+                if not (point.x and point.y) then
+                    table.insert(problems, ("%s: path point %d missing x/y"):format(label, j))
+                elseif not self:StepMap(point) then
+                    table.insert(problems,
+                        ("%s: path point %d has coords but no map"):format(label, j))
+                end
+            end
+        end
     end
 
     return problems, unknown, unresolved
@@ -212,6 +223,66 @@ function Data:StepMap(step)
         if id then return id end
     end
     return step.map
+end
+
+-- Real-world distance in yards from the player to a map/x/y point, using
+-- world positions rather than the fractional map-position estimate Arrow
+-- used before (that estimate scales with each zone's map size, not real
+-- distance). Returns nil if the position APIs aren't available or the
+-- player's world position can't be read - callers fall back to their own
+-- coarser estimate in that case.
+function Data:RealDistanceToStep(mapID, point)
+    if not (mapID and point.x and point.y
+            and C_Map.GetWorldPosFromMapPos and CreateVector2D and UnitPosition) then
+        return nil
+    end
+
+    local y1, x1 = Compat:Guard(UnitPosition, "player")
+    if not (y1 and x1) then return nil end
+
+    local vec = Compat:Guard(CreateVector2D, point.x / 100, point.y / 100)
+    if not vec then return nil end
+
+    local _, worldPos = Compat:Guard(C_Map.GetWorldPosFromMapPos, mapID, vec)
+    if not (worldPos and worldPos.GetXY) then return nil end
+
+    local wx, wy = worldPos:GetXY()
+    local dx, dy = wx - x1, wy - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+-- For steps with an authored `path` (ordered waypoints, possibly across
+-- several maps, for a multi-hop or cross-zone travel step), returns the
+-- next point still ahead instead of the step's own final destination -
+-- advances through the list as each point is actually reached. Falls back
+-- to the step's own map/x/y once the path is exhausted or absent.
+-- Returns mapID, x, y, isFinal.
+local PATH_POINT_REACHED_YARDS = 20
+
+function Data:EffectiveTarget(step)
+    if not step.path or #step.path == 0 then
+        return self:StepMap(step), step.x, step.y, true
+    end
+
+    step._pathIndex = step._pathIndex or 1
+    while step._pathIndex <= #step.path do
+        local point = step.path[step._pathIndex]
+        local mapID = self:StepMap(point)
+        local currentMap = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+
+        if mapID and currentMap == mapID then
+            local dist = self:RealDistanceToStep(mapID, point)
+            if dist and dist <= PATH_POINT_REACHED_YARDS then
+                step._pathIndex = step._pathIndex + 1
+            else
+                return mapID, point.x, point.y, false
+            end
+        else
+            return mapID, point.x, point.y, false
+        end
+    end
+
+    return self:StepMap(step), step.x, step.y, true
 end
 
 function Data:SetWaypoint(step)

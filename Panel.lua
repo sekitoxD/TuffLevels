@@ -169,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 628)
+    panel:SetSize(240, 706)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -269,15 +269,27 @@ function Panel:Build()
         ns.Arrow:ResetPosition()
     end)
 
-    MakeButton(panel, "Rogue", -524, function()
+    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -524, function()
+        ns.Arrow:ToggleColorblind() ; Panel:Refresh()
+    end)
+
+    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -550, function()
+        ns.Arrow:ToggleTextOnly() ; Panel:Refresh()
+    end)
+
+    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -576, function()
+        ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
+    end)
+
+    MakeButton(panel, "Rogue", -602, function()
         ns.Rogue:Show()
     end)
 
-    MakeButton(panel, "Help / About", -550, function()
+    MakeButton(panel, "Help / About", -628, function()
         Panel:ShowHelpDialog()
     end)
 
-    MakeButton(panel, "Close", -582, function() panel:Hide() end)
+    MakeButton(panel, "Close", -660, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -298,6 +310,13 @@ function Panel:Refresh()
 
     local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
     panel.platesBtn:SetText(cur == "1" and "Nameplates: on" or "Nameplates: off")
+
+    panel.cbBtn:SetText(ns.Arrow and ns.Arrow.colorblind
+        and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
+    panel.textOnlyBtn:SetText(ns.Arrow and ns.Arrow.textOnly
+        and "Arrow text-only mode: on" or "Arrow text-only mode: off")
+    panel.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom
+        and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
 end
 
 function Panel:Toggle()

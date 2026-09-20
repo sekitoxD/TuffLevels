@@ -545,19 +545,6 @@ local function HandleStepDetectionEvent(event, ...)
             awaitingHearth = false
             MarkCurrentStepEventDone("hearth")
         end
-
-        -- Coarse "reached the target zone" travel detection - not precise
-        -- yards, which needs the real-distance work Phase B1 hasn't done
-        -- yet. Good enough to auto-advance a travel step once you're on
-        -- the right map.
-        local step = Core:CurrentStep()
-        if step and step.type == "travel" and C_Map and C_Map.GetBestMapForUnit then
-            local mapID = Data:StepMap(step)
-            local current = Compat:Guard(C_Map.GetBestMapForUnit, "player")
-            if mapID and current == mapID then
-                step._eventDone = true
-            end
-        end
     end
 end
 
@@ -572,6 +559,31 @@ local function ThrottledReconcile()
         Core:Reconcile()
     end)
 end
+
+-- Travel-step completion needs real proximity, not just an event - the
+-- player can already be standing on the right map when the step becomes
+-- current (no zone-change event fires), or can simply walk into range
+-- without changing zones at all. A ticker checks periodically instead;
+-- it early-exits immediately whenever the current step isn't a pending
+-- travel step, so the common-case cost is one table/type check a second.
+local TRAVEL_RADIUS_YARDS = 15
+
+C_Timer.NewTicker(1, function()
+    local step = Core.active and Core:CurrentStep()
+    if not (step and step.type == "travel" and not step._eventDone) then return end
+
+    local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+    local stepMap = Data:StepMap(step)
+    if not (mapID and stepMap and mapID == stepMap) then return end
+
+    local dist = Data:RealDistanceToStep(mapID, step)
+    -- If real distance isn't available on this client, fall back to the
+    -- coarser "right map" signal rather than never completing at all.
+    if (dist and dist <= TRAVEL_RADIUS_YARDS) or not dist then
+        step._eventDone = true
+        ThrottledReconcile()
+    end
+end)
 
 f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     if event == "PLAYER_LOGIN" then

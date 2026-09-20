@@ -25,9 +25,11 @@
 --   Auto-detected without clicking Next: accept/turnin/complete/grind/level
 --   (quest log or player level), trainer (closing the trainer window),
 --   death (dying then reviving), hearth (casting Hearthstone then the zone
---   changing), travel (reaching the step's target map - coarse, not yards
---   yet), flightpath (mapID + node/name already known on this character).
---   flightpath needs mapID (uiMapID) plus node (numeric nodeID) or name.
+--   changing), travel (within ~15 real yards of the step's coordinates, or
+--   just the right map on a client where real-distance APIs aren't
+--   available), flightpath (mapID + node/name already known on this
+--   character). flightpath needs mapID (uiMapID) plus node (numeric
+--   nodeID) or name.
 --
 -- SECTIONS
 --   { type = "section", name = "Zone or area", levels = { 6, 12 } }
@@ -40,6 +42,15 @@
 --   class     optional filter, e.g. "ROGUE"
 --   minLevel  don't show this step below this level
 --   targetLevel  for grind/level steps
+--   path      optional ordered list of intermediate waypoints for a
+--             multi-hop or cross-zone travel step, e.g.
+--             { { zone = "Durotar", x = 50, y = 50 },
+--               { zone = "The Barrens", x = 10, y = 20 } }
+--             The arrow guides through each point in turn (advancing once
+--             you're within ~20 yards and on that point's map) before
+--             finally pointing at the step's own map/x/y. Without a path,
+--             a step whose target is on a different map than the player
+--             just shows "Different zone" instead of a bearing.
 --
 -- uiMapIDs (Classic Era):
 --   Durotar 1411 | Orgrimmar 1454 | The Barrens 1413
