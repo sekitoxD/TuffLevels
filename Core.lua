@@ -553,7 +553,8 @@ local function HandleStepDetectionEvent(event, ...)
         local step = Core:CurrentStep()
         if step and step.type == "travel" and C_Map and C_Map.GetBestMapForUnit then
             local mapID = Data:StepMap(step)
-            if mapID and C_Map.GetBestMapForUnit("player") == mapID then
+            local current = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+            if mapID and current == mapID then
                 step._eventDone = true
             end
         end
