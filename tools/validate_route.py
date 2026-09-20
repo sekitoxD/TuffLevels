@@ -48,8 +48,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extract_recording as lua  # noqa: E402  (Lua table parser)
 import qdb                       # noqa: E402  (DB access + mask decoding)
 
-STEP_TYPES = {"accept", "turnin", "complete", "grind", "level", "section",
-              "trainer", "death", "manual", "travel", "hearth", "note"}
+STEP_TYPES = {"accept", "turnin", "complete", "grind", "level", "xp", "section",
+              "trainer", "death", "manual", "travel", "hearth", "flightpath", "note"}
 QUEST_TYPES = ("accept", "turnin", "complete")
 
 # raceFile / classFile names (what Core.StepApplies compares) -> DB mask bit
@@ -265,10 +265,34 @@ def check_structure(route, lines, report):
             if not isinstance(step.get("quest"), int):
                 if not (isinstance(step.get("questName"), str) and step["questName"]):
                     report.add("ERROR", line, no, "%s step needs a numeric `quest` or a `questName`" % stype)
-        if stype == "grind" and not isinstance(step.get("targetLevel"), (int, float)):
-            report.add("ERROR", line, no, "grind step needs `targetLevel`")
+        if stype in ("grind", "level") and not isinstance(step.get("targetLevel"), (int, float)):
+            report.add("ERROR", line, no, "%s step needs `targetLevel`" % stype)
         if stype == "section" and not step.get("name"):
             report.add("WARN", line, no, "section step has no `name`")
+        if stype == "xp":
+            xp = step.get("xp")
+            if not (isinstance(xp, dict) and isinstance(xp.get("level"), (int, float))):
+                report.add("ERROR", line, no, "xp step needs xp = { level = n, pct = n }")
+            elif xp.get("pct") is not None and not (isinstance(xp["pct"], (int, float)) and 0 <= xp["pct"] <= 100):
+                report.add("ERROR", line, no, "xp.pct should be 0-100")
+        if stype == "flightpath" and not (step.get("mapID") and (step.get("node") or step.get("name"))):
+            report.add("ERROR", line, no, "flightpath step needs mapID and node or name")
+        if stype == "complete" and step.get("objective") is not None \
+                and not isinstance(step["objective"], (int, float)):
+            report.add("ERROR", line, no, "objective should be a number")
+        if step.get("skipIfLevel") is not None and not isinstance(step["skipIfLevel"], (int, float)):
+            report.add("ERROR", line, no, "skipIfLevel should be a number")
+        if "requires" in step:
+            req = step["requires"]
+            if not isinstance(req, list):
+                report.add("ERROR", line, no, "requires should be a list of step numbers")
+            else:
+                for idx in req:
+                    if not (isinstance(idx, int) and 1 <= idx <= len(route["steps"])):
+                        report.add("ERROR", line, no,
+                                    "requires references step %r, which isn't in this route" % (idx,))
+                    elif idx == no:
+                        report.add("ERROR", line, no, "requires references itself")
         for axis in ("x", "y"):
             v = step.get(axis)
             if isinstance(v, (int, float)) and not 0 <= v <= 100:

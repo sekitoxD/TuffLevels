@@ -185,8 +185,8 @@ function Data:ValidateRoute(route)
             end
         end
 
-        if step.type == "grind" and type(step.targetLevel) ~= "number" then
-            table.insert(problems, label .. ": grind step needs targetLevel")
+        if (step.type == "grind" or step.type == "level") and type(step.targetLevel) ~= "number" then
+            table.insert(problems, label .. ": " .. step.type .. " step needs targetLevel")
         end
 
         if step.type == "flightpath" and not (step.mapID and (step.node or step.name)) then

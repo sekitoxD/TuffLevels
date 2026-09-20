@@ -1,0 +1,15 @@
+# .pkgmeta - BigWigs packager (github.com/BigWigsMods/packager) config
+# for building release zips. All three .toc files ship together in one
+# folder by design (the client picks the one matching its own interface
+# version) - no per-flavor split needed here.
+
+package-as: TuFFlevels
+
+ignore:
+  - Architecture
+  - plans
+  - tools
+  - spec
+  - .github
+  - .luacheckrc
+  - .pkgmeta
