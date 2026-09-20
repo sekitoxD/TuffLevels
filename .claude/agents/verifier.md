@@ -26,3 +26,6 @@ Rules:
   it back rather than guessing.
 - Keep the report short: the verdict first, then the minimum evidence
   needed to support it.
+- If a check balloons well past roughly 100k tokens (a huge grep sweep, a
+  large route file), report what you've verified so far and flag that the
+  remainder needs a fresh pass rather than pushing through in one run.

@@ -8,6 +8,10 @@ TuFFlevels is a WoW addon (plain Lua + WoW API, no build step). It is a **step-e
 
 There is no build/lint/test tooling — this is Lua that only runs inside the WoW client. "Testing" a change means loading it in-game (`/reload`) and exercising it, or reasoning carefully through the code, since there is no headless runner.
 
+## Repo areas (this repo has two contributors with separate scopes)
+
+This file covers the **addon** — everything below is about the Lua source at the repo root, `Routes/`, and the route-authoring workflow in `CONTRIBUTING.md`. A second, separate area lives under `tools/`: `tools/qdb.py` / `tools/export_items.py` and the `tools/tuffweights` Rust project analyze quest/item data from a private cmangos MySQL database that only exists on that contributor's own network — it is not reachable from anyone else's machine. That area has its own `tools/CLAUDE.md` and `tools/tuffweights/CLAUDE.md`, which load automatically when a session is working inside those directories. Addon work never needs `qdb.py`, `export_items.py`, or `tools/tuffweights` — `tools/merge_routes.py`, `tools/extract_recording.py`, and `tools/validate_route.py --no-db` are the route-workflow tools described in `CONTRIBUTING.md`, and none of those three require database access.
+
 ## Multi-client targets and the Compat layer
 
 The addon ships **three TOC files** for three different WoW clients, all sharing the same Lua source:
@@ -68,6 +72,37 @@ Every file shares one addon-private namespace via `local ADDON, ns = ...`, and e
 When the work is a **grouped set of plans split into many pieces** (a `plans/<group>/` directory of numbered documents, e.g. `plans/optimal/`), the checkpoint lives **in that directory** as `plans/<group>/CHECKPOINT.md` — one file per group, overwritten on each save (git history is the record of earlier states). Do not put it in `.claude/checkpoints/`, and do not write a dated file or `LATEST.md` for it. Resuming work on the group starts by reading `plans/<group>/CHECKPOINT.md`.
 
 Standalone work that is not part of a plan group keeps using `.claude/checkpoints/<date>-<slug>.md` + `LATEST.md` (see the `checkpoint` skill). Group checkpoints follow the same structure as the skill's template and are commit-able like the plans beside them.
+
+## Delegating work to subagents
+
+Prefer splitting non-trivial work across parallel subagents over doing it
+serially in the main thread — a long-running main thread re-reads its own
+growing history on every turn, and that cache-read cost compounds with
+session length far faster than the cost of the work itself. Pick the model
+tier by role, not by habit:
+
+- **First-pass/mechanical work** (locating files, a quick fact check, the
+  static schema/`.toc` checks in the `route-check` skill) → the `scout` or
+  `verifier` agent (Haiku-tier). Route this kind of work to one of them
+  instead of doing it inline in the main thread.
+- **Auditing a plan before implementation** → `plan-auditor` (Opus-tier).
+- **Writing the implementation** → `implementer` (Sonnet-tier).
+- **Reviewing finished code after implementation** → `code-reviewer`
+  (Opus-tier).
+
+Each of these agents treats ~100k tokens of its own work as a soft budget:
+past that, it hands back a checkpoint of what's done/left rather than
+grinding on, so the caller can continue with a fresh agent instead of
+letting one session balloon. Apply the same discipline to the main thread
+itself — checkpoint (see the `checkpoint` skill) once a long session's own
+work is clearly ballooning, rather than continuing indefinitely in one
+context.
+
+When using a built-in agent type that has no fixed model (`Explore`,
+`general-purpose`, `Plan`) for something that's really first-pass/
+mechanical work, pass `model: "haiku"` explicitly on that `Agent()` call —
+there is no project-level default-subagent-model setting, so this has to
+be chosen per call.
 
 ## Conventions to follow when editing
 

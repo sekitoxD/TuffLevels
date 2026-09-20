@@ -27,6 +27,14 @@ tree: `git status --short -- Routes/` plus `git diff --stat -- Routes/`
 use those instead. If nothing under `Routes/` changed, say so and stop —
 don't go looking for unrelated problems.
 
+Steps 2–4 below are mechanical, rule-based checks with no design judgment
+involved — exactly the `verifier` custom agent's job (`.claude/agents/verifier.md`,
+Haiku-tier). Once the target files are known, delegate the schema,
+`RegisterRoute` metadata, and `.toc` checks to a `verifier` agent rather than
+running them inline, and use its report to write the final summary in step
+5. Only fall back to doing the checks directly if `verifier` isn't
+available in this session.
+
 ## 2. Per-file schema check
 
 For each step table (`{ type = "...", ... }`) in the file's `steps = { }`

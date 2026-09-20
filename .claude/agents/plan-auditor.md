@@ -42,3 +42,9 @@ manufacture a nitpick to pad the list — say what passed only as a one-line
 summary, not one bullet per clean step. End with a one-line verdict: safe
 to implement as-is, safe with the fixes listed, or needs rework before
 implementation starts.
+
+If the plan is large enough that auditing it properly will clearly run
+well past roughly 100k tokens of reading and reasoning, audit the
+highest-risk sections first, say explicitly which sections you didn't get
+to, and hand back a partial verdict rather than skimming everything
+shallowly to fit.

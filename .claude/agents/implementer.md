@@ -27,3 +27,8 @@ Rules:
   untested code works.
 - Report back concisely: what changed, which files, and anything the
   caller should double-check before trusting it.
+- If the task is large enough that finishing it properly will clearly run
+  well past roughly 100k tokens of your own work, stop at a natural
+  boundary (a completed file, a completed step), report exactly what's
+  done and what's left as a handoff, and let the caller decide whether to
+  continue with a fresh agent rather than grinding on in one long run.
