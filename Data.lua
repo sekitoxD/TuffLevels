@@ -64,7 +64,7 @@ end
 -- A "flightpath" step is identified by step.mapID (the uiMapID the node
 -- lives on) plus either step.node (a numeric nodeID) or step.name.
 function Data:IsFlightPathKnown(step)
-    if not (Compat.has.taxiMap and step.mapID) then return false end
+    if not (Compat.has.taxiMap and step.mapID and Enum.FlightPathState) then return false end
 
     local nodes = Compat:Guard(C_TaxiMap.GetAllTaxiNodes, step.mapID)
     if not nodes then return false end
