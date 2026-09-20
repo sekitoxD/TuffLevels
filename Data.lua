@@ -329,27 +329,51 @@ function Data:EffectiveTarget(step)
     return self:StepMap(step), step.x, step.y, true
 end
 
+-- Compat:Guard returns nil both when the wrapped call throws and when it
+-- succeeds but simply returns nothing - both waypoint APIs below are void
+-- on success, so a nil return can't tell "failed" from "worked". This
+-- checks Compat's error count instead, which only moves on an actual
+-- throw, so success reporting here is accurate either way.
+local function Attempt(fn, ...)
+    local before = Compat:ErrorCount()
+    local a, b, c = Compat:Guard(fn, ...)
+    return Compat:ErrorCount() == before, a, b, c
+end
+
 function Data:SetWaypoint(step)
     local mapID = self:StepMap(step)
     if not mapID or not step.x or not step.y then return false end
 
     if _G.TomTom and _G.TomTom.AddWaypoint then
-        _G.TomTom:AddWaypoint(mapID, step.x / 100, step.y / 100, {
+        local ok = Attempt(_G.TomTom.AddWaypoint, _G.TomTom, mapID, step.x / 100, step.y / 100, {
             title = step.note or step.name or "TuFFlevels",
             crazy = true,
             persistent = false,
         })
-        return true
+        if ok then return true end
+        -- TomTom threw - fall through and try the native pin instead of
+        -- just giving up, in case TomTom is present but broken.
     end
 
-    -- No TomTom: drop a native map pin instead.
+    -- No TomTom (or TomTom failed): drop a native map pin instead. Neither
+    -- call is guaranteed to exist with the exact signature this addon
+    -- expects on every client, so this goes through Compat:Guard like any
+    -- other WoW API call this addon isn't certain of - an unguarded throw
+    -- here previously aborted silently (WoW hides Lua errors by default)
+    -- and skipped every call after Data:SetWaypoint in Core:SetIndex/
+    -- Core:Reconcile, since this runs on every step change, not just the
+    -- Map button click.
     if C_Map and C_Map.SetUserWaypoint and UiMapPoint then
-        local point = UiMapPoint.CreateFromCoordinates(mapID, step.x / 100, step.y / 100)
-        C_Map.SetUserWaypoint(point)
-        if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
-            C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+        local pointOk, point = Attempt(UiMapPoint.CreateFromCoordinates, mapID, step.x / 100, step.y / 100)
+        if pointOk and point then
+            local setOk = Attempt(C_Map.SetUserWaypoint, point)
+            if setOk then
+                if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+                    Attempt(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
+                end
+                return true
+            end
         end
-        return true
     end
 
     return false
