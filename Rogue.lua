@@ -198,7 +198,7 @@ Rogue.deathNote =
 -- Window
 --------------------------------------------------------------------------
 
-local win, tabs, content
+local win, content
 local current = "training"
 
 local function SetText(text)
@@ -353,7 +353,9 @@ function Rogue:Show()
             b:SetScript("OnClick", function() current = mode ; Rogue:Refresh() end)
             return b
         end
-        tabs = {
+        -- Only the click handlers Tab() wires up matter here - nothing
+        -- reads the buttons back by reference afterward.
+        local _ = {
             Tab("Training", "training", 14),
             Tab("Upgrades", "upgrades", 128),
             Tab("Weapons", "weapons", 242),

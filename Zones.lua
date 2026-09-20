@@ -10,7 +10,6 @@
 -- Forever adds new zones. When those settle, add them here.
 
 local ADDON, ns = ...
-local Compat = ns.Compat
 
 local Zones = {}
 ns.Zones = Zones

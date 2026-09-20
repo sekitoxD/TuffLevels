@@ -29,16 +29,30 @@ ignore = { "211/ADDON" }
 -- would just flag this normal callback shape everywhere.
 unused_args = false
 
+-- Every widget-scoped callback naturally takes `self` (the widget it
+-- fires on) as its own first argument, nested inside a method that
+-- already has an outer `self` (the module) in scope - e.g. a button's
+-- OnClick inside `function Panel:Build(...)`. That's shadowing by
+-- luacheck's definition (431/432), but it's the correct, idiomatic name
+-- in both scopes, not a mistake; the same goes for short, reused local
+-- names like `b`/`db` across sibling closures. Real shadowing bugs are
+-- rare in a codebase this size and would show up as a wrong-value test
+-- failure, not silently through this check.
+ignore = { "211/ADDON", "431", "432" }
+
 -- Globals this addon itself creates. SLASH_TUFFLEVELS1-3 register the
--- slash command (a real Lua global assignment). TuFFlevelsFrame is the
--- one WoW-implicit frame-name global this addon references directly
--- elsewhere (Panel.lua, picking the tracker as an anchor) - every other
--- named frame CreateFrame() creates is only ever read back through its
--- own local variable, so luacheck never needs to know its global name;
--- WoW makes that name a global as an engine side effect invisible to
--- static analysis, not because the Lua source assigns it.
+-- slash command; SlashCmdList's own field (SlashCmdList["TUFFLEVELS"])
+-- is likewise assigned, not just read, so it needs full global (not
+-- read_globals) status too. TuFFlevelsFrame is the one WoW-implicit
+-- frame-name global this addon references directly elsewhere (Panel.lua,
+-- picking the tracker as an anchor) - every other named frame
+-- CreateFrame() creates is only ever read back through its own local
+-- variable, so luacheck never needs to know its global name; WoW makes
+-- that name a global as an engine side effect invisible to static
+-- analysis, not because the Lua source assigns it.
 globals = {
     "SLASH_TUFFLEVELS1", "SLASH_TUFFLEVELS2", "SLASH_TUFFLEVELS3",
+    "SlashCmdList",
 }
 
 -- The client API surface this addon calls. Read-only - nothing here
@@ -50,7 +64,7 @@ read_globals = {
 
     -- Frames / UI
     "CreateFrame", "UIParent", "GameTooltip", "DEFAULT_CHAT_FRAME",
-    "SlashCmdList",
+    "UiMapPoint",
 
     -- Namespaced API tables
     "C_Timer", "C_Map", "C_QuestLog", "C_GossipInfo", "C_SpellBook",
@@ -74,7 +88,7 @@ read_globals = {
 
     -- Misc client state
     "InCombatLockdown", "IsShiftKeyDown", "GetCVar", "SetCVar",
-    "CreateVector2D", "Enum", "GetZoneText", "time", "CreateColor",
+    "CreateVector2D", "Enum", "GetZoneText", "time", "date", "CreateColor",
 }
 
 -- busted (spec/*.lua) injects its own globals - describe/it/assert/

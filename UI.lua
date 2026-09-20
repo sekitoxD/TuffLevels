@@ -11,7 +11,6 @@ local UI = {}
 ns.UI = UI
 
 local frame
-local ROW_LIMIT = 4
 
 --------------------------------------------------------------------------
 -- Step presentation

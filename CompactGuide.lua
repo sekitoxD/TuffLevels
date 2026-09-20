@@ -236,11 +236,9 @@ local function ParseStepLine(line, lineNo)
             end
         end
 
-    elseif stepType == "trainer" or stepType == "death" or stepType == "manual" or stepType == "note" then
+    elseif stepType == "trainer" or stepType == "death" or stepType == "manual"
+        or stepType == "hearth" or stepType == "note" then
         if #positional > 0 then step.name = table.concat(positional, " ") end
-
-    elseif stepType == "hearth" then
-        -- no positional fields of its own; at=/name= (common keys) cover it
 
     else
         return nil, ("line %d: unknown step type '%s'"):format(lineNo, stepType)
