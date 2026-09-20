@@ -1,4 +1,4 @@
--- TuFFlevels / Routes/Horde1-60.lua
+-- TuFFlevels / Routes/Horde/Horde1-60.lua
 --
 -- The structural half of a 1-60 Orc/Troll route: every section, its level
 -- band, where to base, and where grinding beats questing.

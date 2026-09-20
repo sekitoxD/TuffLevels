@@ -1,6 +1,6 @@
 # This file is a worked example for CompactGuide.lua, not something the
 # addon loads (only .lua files in the .toc are). It's the seeded
-# Routes/Durotar.lua route rewritten in the compact syntax, line for
+# Routes/Horde/Durotar.lua route rewritten in the compact syntax, line for
 # line, to demonstrate the format compiles to the same step tables -
 # paste it into Menu > Write a route (text) to try it.
 

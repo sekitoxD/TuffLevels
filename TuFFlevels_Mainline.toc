@@ -28,8 +28,8 @@ SheetImport.lua
 Rogue.lua
 
 # -- existing seeded / skeleton routes ------------------------------------
-Routes\Durotar.lua
-Routes\Horde1-60.lua
+Routes\Horde\Durotar.lua
+Routes\Horde\Horde1-60.lua
 
 # -- Undead opening --------------------------------------------------------
 Routes\Horde\TirisfalStart.lua

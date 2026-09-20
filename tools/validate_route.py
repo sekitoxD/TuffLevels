@@ -10,7 +10,7 @@ of truth; nothing from the DB is copied into them.
 
 Usage:
     python tools/validate_route.py                    # every file under Routes/
-    python tools/validate_route.py Routes/Durotar.lua
+    python tools/validate_route.py Routes/Horde/Durotar.lua
     python tools/validate_route.py --no-db Routes/    # structure checks only
     python tools/validate_route.py --errors-only
 
