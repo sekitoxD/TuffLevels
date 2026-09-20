@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Forever / Retail.
 ## Author: sekitoxD
-## Version: 1.5.3
+## Version: 1.5.4
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: TomTom

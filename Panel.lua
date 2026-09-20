@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.5.3"
+local CHANGELOG_VERSION = "1.5.4"
 local CHANGELOG = {
+    "Recording is now off by default on a fresh install, same as every other opt-in feature - it's a route-authoring tool, not something a player following a route needs running from session one. Turn it on from Menu > Recording.",
     "Tagged all 36 repeated-name chain-link steps in the Tirisfal Start route (A New Plague, At War with the Scarlet Crusade, Arugal's Folly) as ambiguous so they resolve against your live quest log instead of risking a silent multi-step skip. Fixed 3 /tuff verify findings in the Solo route: an unidentified turn-in near Malaka'Jin is now an honest manual note instead of a broken empty quest name, and two hearth steps no longer carry a bogus placeholder coordinate.",
     "Removed the confusing duplicate 'Durotar (Orc/Troll)' sample route from Available Guides - it's superseded by the real generated Durotar leg. The sample file itself stays on disk (it's the schema-doc reference and a CI test fixture), just no longer loaded as a selectable route.",
     "Fixed SheetImport.lua tagging every imported step with minLevel from the sheet's level column - that HIDES a step below that level, so it was silently removing steps for anyone under the route's intended pace instead of just showing where the route expects you to be. Uses the same display-only atLevel field the generated ONSLAUGHT routes already use.",
@@ -101,14 +102,9 @@ function Panel:FirstRunSetup()
     Compat:Guard(SetCVar, "nameplateShowFriends", 1)
     Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 1)
 
-    -- Record from the start. If you're going to level anyway, there's no
-    -- reason to make you remember to switch it on first.
-    if ns.Recorder and not ns.Recorder.active then
-        ns.Recorder.active = true
-        db.recording = true
-        db.recordLog = db.recordLog or {}
-        ns.Recorder.log = db.recordLog
-    end
+    -- Recording is opt-in, off by default, same as Automation: it's a
+    -- route-authoring tool (Recorder.lua), not something a player just
+    -- following a route wants running from their very first session.
 
     return true
 end
@@ -139,12 +135,12 @@ function Panel:ShowWelcome()
     body:SetTextColor(unpack(ns.Theme.color.text))
     body:SetText(
         "Everything is switched on already. You don't need to type anything.\n\n" ..
-        "|cffffd100Just play.|r Level however you think is fastest. The addon is " ..
-        "recording every quest and location as you go.\n\n" ..
+        "|cffffd100Just play.|r Level however you think is fastest. The tracker follows " ..
+        "along and auto-advances as you go.\n\n" ..
         "A |cffffd100!|r or |cffffd100?|r will float over the head of any NPC your " ..
         "current step needs.\n\n" ..
-        "When you want to save what you've played as a route, click |cffffd100Menu|r " ..
-        "on the tracker and hit Export.")
+        "Want to record your own route instead of following one? Click |cffffd100Menu|r " ..
+        "on the tracker and hit Recording.")
 
     FitDialogToBody(w, body, 52, 60, 250)
 
