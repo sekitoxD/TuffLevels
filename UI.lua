@@ -273,8 +273,10 @@ function UI:Build()
     Btn("Menu", 56, "BOTTOM", 0, function() ns.Panel:Toggle() end)
     frame.mapBtn = Btn("Map", 56, "BOTTOM", 60, function()
         local step = ns.Core:CurrentStep()
-        if not (step and ns.Data:SetWaypoint(step)) then
-            ns.Print("This step has no map location.")
+        if step and ns.Data:SetWaypoint(step) then
+            ns.Print("Waypoint set.")
+        else
+            ns.Print("Couldn't set a waypoint - no TomTom and no native map pin support on this client.")
         end
     end)
     Btn("Next", 56, "BOTTOMRIGHT", -8, function() ns.Core:Advance() end)

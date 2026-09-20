@@ -23,8 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.4.0"
+local CHANGELOG_VERSION = "1.5.2"
 local CHANGELOG = {
+    "Removed the confusing duplicate 'Durotar (Orc/Troll)' sample route from Available Guides - it's superseded by the real generated Durotar leg. The sample file itself stays on disk (it's the schema-doc reference and a CI test fixture), just no longer loaded as a selectable route.",
+    "Fixed SheetImport.lua tagging every imported step with minLevel from the sheet's level column - that HIDES a step below that level, so it was silently removing steps for anyone under the route's intended pace instead of just showing where the route expects you to be. Uses the same display-only atLevel field the generated ONSLAUGHT routes already use.",
+    "Menu condensed from 26 buttons to ~13: occasional-use route setup/backup buttons moved into a new Content & Import submenu, display toggles moved into a new Display settings submenu, and Add a note here/Mark this spot now only show up while actively recording.",
+    "Fixed the Map button silently doing nothing on an enabled step: the native map-pin/TomTom calls weren't error-guarded and could throw without any visible feedback. Now reports success or failure explicitly.",
     "Added a Help / About section explaining auto progress and catch-up mode.",
     "Map button now greys out (with feedback) instead of silently doing nothing on steps with no coordinates.",
     "The SavedVariables-loss warning now mentions saved settings/theme, not just step progress.",
@@ -169,7 +173,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 758)
+    panel:SetSize(240, 480)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -202,91 +206,48 @@ function Panel:Build()
         ns.Zones:Show()
     end)
 
-    MakeButton(panel, "Import spreadsheet", -134, function()
-        ns.SheetImport:Show()
-    end)
-
-    MakeButton(panel, "Import a guide", -160, function()
-        ns.GuideImport:Show()
-    end)
-
-    MakeButton(panel, "Write a route (text)", -186, function()
-        ns.CompactGuide:Show()
-    end)
-
-    MakeButton(panel, "Recover past quests", -212, function()
-        ns.Import:Show()
-    end)
-
-    MakeButton(panel, "Save this as a route", -238, function()
-        ns.Recorder:ShowExport()
-    end)
-
-    MakeButton(panel, "Progress / completed", -264, function()
+    MakeButton(panel, "Progress / completed", -134, function()
         ns.Progress:Toggle()
     end)
 
-    MakeButton(panel, "Catch up on quests", -290, function()
+    MakeButton(panel, "Catch up on quests", -160, function()
         Panel:ShowCatchUpDialog()
     end)
 
-    MakeButton(panel, "Progress code", -316, function()
-        Panel:ShowProgressCode()
-    end)
-
-    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -342, function()
+    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -186, function()
         ns.Automation:Toggle() ; Panel:Refresh()
     end)
 
-    -- Recording extras
-    MakeButton(panel, "Add a note here", -368, function()
-        Panel:PromptNote()
-    end)
-
-    MakeButton(panel, "Mark this spot", -394, function()
-        ns.Recorder:AddMark("Travel")
-        Panel:Refresh()
-    end)
-
-    -- Display / options
-    panel.arrowBtn = MakeButton(panel, "Arrow", -420, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -212, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -446, function()
-        ns.Marker:ToggleMobs() ; Panel:Refresh()
-    end)
-
-    panel.markerBtn = MakeButton(panel, "NPC markers", -472, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -238, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -498, function()
-        local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
-        if cur == "1" then ns.Marker:DisableFriendlyPlates()
-        else ns.Marker:EnableFriendlyPlates() end
+    -- Recording extras - meaningless unless actively recording. Kept at a
+    -- fixed slot rather than reflowing the rest of the menu when toggled;
+    -- Panel:Refresh() drives whether they're shown.
+    panel.noteBtn = MakeButton(panel, "Add a note here", -264, function()
+        Panel:PromptNote()
+    end)
+
+    panel.markBtn = MakeButton(panel, "Mark this spot", -290, function()
+        ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
-    MakeButton(panel, "Colors", -524, function()
-        Panel:ShowColorPicker()
+    -- Content management and display settings both moved into their own
+    -- submenus (see Panel:ShowContentMenu / Panel:ShowDisplayMenu below) -
+    -- occasional-use buttons that don't need to sit in the main list.
+    MakeButton(panel, "Content & Import", -316, function()
+        Panel:ShowContentMenu()
     end)
 
-    MakeButton(panel, "Reset arrow position", -550, function()
-        ns.Arrow:ResetPosition()
-    end)
-
-    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -576, function()
-        ns.Arrow:ToggleColorblind() ; Panel:Refresh()
-    end)
-
-    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -602, function()
-        ns.Arrow:ToggleTextOnly() ; Panel:Refresh()
-    end)
-
-    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -628, function()
-        ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
+    MakeButton(panel, "Display settings", -342, function()
+        Panel:ShowDisplayMenu()
     end)
 
     -- Rogue.lua already refuses to do anything for any other class; this
@@ -294,7 +255,7 @@ function Panel:Build()
     -- that can never use it, closing the gap it would otherwise leave
     -- rather than just hiding it in place. Class never changes
     -- mid-session, so this is decided once here, not on every Refresh().
-    local y = -654
+    local y = -368
     local _, playerClass = UnitClass("player")
     if playerClass == "ROGUE" then
         MakeButton(panel, "Rogue", y, function()
@@ -321,21 +282,12 @@ function Panel:Refresh()
     panel.recBtn:SetText(rec and "Stop recording" or "Start recording")
     panel.status:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
 
+    panel.noteBtn:SetShown(rec)
+    panel.markBtn:SetShown(rec)
+
     panel.markerBtn:SetText(ns.Marker and ns.Marker.enabled
         and "NPC markers: on" or "NPC markers: off")
     panel.arrowBtn:SetText(ns.Arrow and ns.Arrow.enabled and "Arrow: on" or "Arrow: off")
-    panel.mobBtn:SetText(ns.Marker and ns.Marker.markMobs
-        and "Objective mobs: on" or "Objective mobs: off")
-
-    local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
-    panel.platesBtn:SetText(cur == "1" and "Nameplates: on" or "Nameplates: off")
-
-    panel.cbBtn:SetText(ns.Arrow and ns.Arrow.colorblind
-        and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
-    panel.textOnlyBtn:SetText(ns.Arrow and ns.Arrow.textOnly
-        and "Arrow text-only mode: on" or "Arrow text-only mode: off")
-    panel.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom
-        and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
 
     panel.autoBtn:SetText(ns.Automation and ns.Automation.enabled
         and "Auto accept/turn-in: on" or "Auto accept/turn-in: off")
@@ -351,6 +303,136 @@ function Panel:Toggle()
         panel:Show()
         self:Refresh()
     end
+end
+
+--------------------------------------------------------------------------
+-- Content & Import submenu
+--------------------------------------------------------------------------
+
+-- Occasional-use route setup/backup actions, split out of the main list.
+-- Rebuilt fresh on every open (same pattern as ShowRoutePicker/
+-- ShowCatchUpDialog below) rather than persisted and live-refreshed - none
+-- of these buttons have on/off state to keep in sync while the panel sits
+-- open, unlike the toggles on the main panel.
+function Panel:ShowContentMenu()
+    if self.contentMenu then self.contentMenu:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(240, 260)
+    f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
+    f:SetFrameStrata("DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Content & Import")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    MakeButton(f, "Import spreadsheet", -42, function()
+        ns.SheetImport:Show()
+    end)
+    MakeButton(f, "Import a guide", -68, function()
+        ns.GuideImport:Show()
+    end)
+    MakeButton(f, "Write a route (text)", -94, function()
+        ns.CompactGuide:Show()
+    end)
+    MakeButton(f, "Recover past quests", -120, function()
+        ns.Import:Show()
+    end)
+    MakeButton(f, "Save this as a route", -146, function()
+        ns.Recorder:ShowExport()
+    end)
+    MakeButton(f, "Progress code", -172, function()
+        Panel:ShowProgressCode()
+    end)
+
+    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    close:SetSize(100, 22)
+    close:SetPoint("BOTTOM", 0, 14)
+    close:SetText("Close")
+    close:SetScript("OnClick", function() f:Hide() end)
+
+    ns.Theme:SkinChildren(f)
+    self.contentMenu = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Display settings submenu
+--------------------------------------------------------------------------
+
+function Panel:ShowDisplayMenu()
+    if self.displayMenu then self.displayMenu:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(240, 320)
+    f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
+    f:SetFrameStrata("DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Display settings")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local mobBtn
+    mobBtn = MakeButton(f, ns.Marker and ns.Marker.markMobs
+        and "Objective mobs: on" or "Objective mobs: off", -42, function()
+        ns.Marker:ToggleMobs()
+        mobBtn:SetText(ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
+    end)
+
+    local platesBtn
+    local plateCur = Compat:Guard(GetCVar, "nameplateShowFriends")
+    platesBtn = MakeButton(f, plateCur == "1" and "Nameplates: on" or "Nameplates: off", -68, function()
+        local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
+        if cur == "1" then ns.Marker:DisableFriendlyPlates()
+        else ns.Marker:EnableFriendlyPlates() end
+        local now = Compat:Guard(GetCVar, "nameplateShowFriends")
+        platesBtn:SetText(now == "1" and "Nameplates: on" or "Nameplates: off")
+    end)
+
+    MakeButton(f, "Colors", -94, function()
+        Panel:ShowColorPicker()
+    end)
+
+    MakeButton(f, "Reset arrow position", -120, function()
+        ns.Arrow:ResetPosition()
+    end)
+
+    local cbBtn
+    cbBtn = MakeButton(f, ns.Arrow and ns.Arrow.colorblind
+        and "Arrow colorblind colors: on" or "Arrow colorblind colors: off", -146, function()
+        ns.Arrow:ToggleColorblind()
+        cbBtn:SetText(ns.Arrow.colorblind and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
+    end)
+
+    local textOnlyBtn
+    textOnlyBtn = MakeButton(f, ns.Arrow and ns.Arrow.textOnly
+        and "Arrow text-only mode: on" or "Arrow text-only mode: off", -172, function()
+        ns.Arrow:ToggleTextOnly()
+        textOnlyBtn:SetText(ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
+    end)
+
+    local tomtomBtn
+    tomtomBtn = MakeButton(f, ns.Arrow and ns.Arrow.deferToTomTom
+        and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off", -198, function()
+        ns.Arrow:ToggleDeferToTomTom()
+        tomtomBtn:SetText(ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
+    end)
+
+    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    close:SetSize(100, 22)
+    close:SetPoint("BOTTOM", 0, 14)
+    close:SetText("Close")
+    close:SetScript("OnClick", function() f:Hide() end)
+
+    ns.Theme:SkinChildren(f)
+    self.displayMenu = f
+    f:Show()
 end
 
 --------------------------------------------------------------------------

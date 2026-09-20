@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Classic Era.
 ## Author: sekitoxD
-## Version: 1.4.0
+## Version: 1.5.2
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom
@@ -28,7 +28,9 @@ SheetImport.lua
 Rogue.lua
 
 # -- existing seeded / skeleton routes ------------------------------------
-Routes\Horde\Durotar.lua
+# Durotar.lua no longer loaded here - superseded by the real generated
+# Solo\Durotar.lua leg below (plans/04-sheet-audit.md item 7). Kept on
+# disk only as the schema-doc reference and merge_routes.py CI fixture.
 Routes\Horde\Horde1-60.lua
 
 # -- Undead opening --------------------------------------------------------

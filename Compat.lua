@@ -553,6 +553,14 @@ function Compat:ErrorCount()
     return errorCount
 end
 
+-- Once true, Guard(fn, ...) stops calling fn at all and just returns nil -
+-- callers that infer success/failure from whether Guard's error count moved
+-- (rather than its return value, since some wrapped APIs are void on
+-- success) need this to tell "skipped" apart from "ran and succeeded".
+function Compat:ErrorBudgetExhausted()
+    return errorCount >= ERROR_BUDGET
+end
+
 --------------------------------------------------------------------------
 -- Per-module handler wrapping
 --------------------------------------------------------------------------

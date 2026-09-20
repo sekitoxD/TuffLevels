@@ -268,7 +268,12 @@ function SheetImport:Parse(text, routeName)
                 name = questText,
                 zone = zone,
                 location = location,
-                minLevel = level,
+                -- Display-only pacing hint, not a visibility gate: minLevel
+                -- HIDES a step below that level (StepApplies), which would
+                -- make an under-levelled character silently skip steps the
+                -- route hasn't actually run out of yet. atLevel just tells
+                -- UI.lua what level the route expects you to be at here.
+                atLevel = level,
                 logCount = logCount,
                 action = rawAction,
             }
@@ -493,7 +498,7 @@ function SheetImport:BuildRouteFile(route, name)
                 table.insert(parts, ("x = %.1f, y = %.1f"):format(s.x, s.y))
             end
             if s.approx then table.insert(parts, "approx = true") end
-            if s.minLevel then table.insert(parts, ("minLevel = %d"):format(s.minLevel)) end
+            if s.atLevel then table.insert(parts, ("atLevel = %d"):format(s.atLevel)) end
             if s.logCount then table.insert(parts, ("logCount = %d"):format(s.logCount)) end
             if s.targetLevel then table.insert(parts, ("targetLevel = %d"):format(s.targetLevel)) end
             if s.note then table.insert(parts, ('note = "%s"'):format(Esc(s.note))) end
