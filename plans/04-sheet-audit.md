@@ -260,6 +260,11 @@ the addon knows nothing about.
    mis-resolve the way F2 describes.
 6. ~~**`SheetImport.lua` still has the F4 bug**~~ **Fixed.** It now writes the sheet's level
    into `atLevel`, same as the generated routes, instead of `minLevel`.
-7. **`Routes/Durotar.lua` is still `sample = true` with unverified quest IDs**, and now
-   overlaps the real Durotar leg. It is never auto-selected, so it is harmless, but it is a
-   candidate for deletion once the generated route has been played.
+7. ~~**`Routes/Horde/Durotar.lua` ... candidate for deletion**~~ **Un-loaded, not deleted.**
+   Turns out the file is load-bearing as documentation/tooling, not just a leftover sample:
+   `.github/workflows/lint.yml`'s `merge_routes.py` smoke test merges it with itself and with
+   `Horde1-60.lua`, and `.claude/skills/route-check/SKILL.md` + `CLAUDE.md` cite its header
+   comment as the authoritative step-schema reference. Deleting it would have broken CI and
+   removed that reference. Instead, all three `.toc` files no longer load it, so it can't
+   register as a selectable route and clutter "Available Guides" - the file stays on disk
+   purely as schema documentation and the CI fixture.
