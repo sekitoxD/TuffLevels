@@ -128,74 +128,102 @@ Rogue.weapons = {
 -- Horde-obtainable only. Alliance-side rewards are left out rather than
 -- listed and caveated.
 --
--- class says how much effort a weapon deserves:
---   detour     - go out of your way for it: a fixed source (quest/vendor) that
---                adds a lasting DPS gain over what you would wear anyway
---   convenient - take it if you are already at the source (or it drops);
---                never spend extra time acquiring it
---   skip       - looked at and not worth acquiring
--- The gains quoted in the notes come from an offline DPS model (Classic Era
--- rules) measured against the best vendor/quest weapon at that level.
-Rogue.upgradeClasses = {
-    { key = "detour",     title = "Worth going out of your way for" },
-    { key = "convenient", title = "Worth it if convenient (don't chase)" },
-    { key = "skip",       title = "Not worth acquiring" },
+-- verdict says how the item is acquired and whether that is worth the effort.
+-- It is the same scale the offline DPS model (tools/tuffweights, Classic Era
+-- rules) uses for every weapon, armor piece, ring and cloak: how much DPS the
+-- item adds over the best gear you could plan on that is easier to get, and
+-- how you get it (vendor, solo quest, group quest, dungeon, drop).
+--   vendor        - buy it
+--   solo          - a quest you can do alone
+--   group_worth   - a group quest whose gain justifies the extra time
+--   group_formed  - a group quest, only if a group is already formed
+--   dungeon_very  - a dungeon run that clearly pays off
+--   dungeon_kinda - a dungeon run that pays off modestly
+--   dungeon_not   - a dungeon item too small or too unlikely to run for
+--   crafted       - needs a profession you already have
+--   open_drop     - open-world drop: use it if it drops, never farm it
+--   world_drop    - random world drop: luck only
+--   not_worth     - adds under 1%
+Rogue.verdicts = {
+    { key = "vendor",        title = "Vendor: pick it up" },
+    { key = "solo",          title = "Solo quest: do it" },
+    { key = "group_worth",   title = "Group quest: worth the extra time" },
+    { key = "group_formed",  title = "Group quest: only if a group is already formed" },
+    { key = "dungeon_very",  title = "Dungeon: very worth it" },
+    { key = "dungeon_kinda", title = "Dungeon: kinda worth it" },
+    { key = "dungeon_not",   title = "Dungeon: not worth it" },
+    { key = "crafted",       title = "Crafted: if you already have the profession" },
+    { key = "open_drop",     title = "Open-world drop: use it if it drops, never farm it" },
+    { key = "world_drop",    title = "World drop: luck only, never plan around it" },
+    { key = "not_worth",     title = "Not worth it" },
 }
 
+-- Verdicts that stay quiet on level-up and in the current-level highlight.
+Rogue.quietVerdicts = { dungeon_not = true, not_worth = true }
+
+-- Gains are the model's mean over the level window (peak in brackets) versus
+-- the best easier gear, best across builds. The baseline is thin below level
+-- 25, so early gains are overstated.
 Rogue.upgrades = {
-    -- detour
-    { class = "detour", level = 15, item = "Wingblade",
-      how = "Leaders of the Fang, Wailing Caverns",
-      note = "Largest jump on the list, roughly +17% over the best vendor/quest weapon for levels 15-20. A sword, and a group dungeon." },
-    { class = "detour", level = 21, item = "Outlaw Sabre",
-      how = "Baron Aquanis, Blackfathom Deeps (turn in in Ashenvale)",
-      note = "Roughly +14% for levels 21-24, then the gap closes. Elite kill, bring a group." },
-    { class = "detour", level = 33, item = "Sword of Omen",
-      how = "Into The Scarlet Monastery",
-      note = "Roughly +7% for levels 33-36. A sword, so it keeps Sword Specialization." },
-    { class = "detour", level = 39, item = "Vanquisher's Sword",
-      how = "Bring the Light / Bring the End, Razorfen Downs",
-      note = "A sword, which matters - see the spec note. Averages +3% across 37-48, peaking near +9%." },
-    { class = "detour", level = 45, item = "Thrash Blade",
-      how = "Corruption of Earth and Seed, Maraudon",
-      note = "Extra-attack proc. About +3.5% for levels 45-50." },
-
-    -- convenient
-    { class = "convenient", level = 4,  item = "Jagged Dagger",
+    -- solo
+    { verdict = "solo", level = 4,  item = "Jagged Dagger",
       how = "Quest chain starting with Report to Orgnil, Durotar (Skull Rock)",
-      note = "On the normal levelling path anyway. Needs roughly level 8 to actually solo, so take the chain early and finish it later." },
-    { class = "convenient", level = 10, item = "Blade of Cunning",
+      note = "On the normal levelling path anyway. Needs roughly level 8 to actually solo, so take the chain early and finish it later. Below the model's level-10 floor, so its gain is not measured." },
+    { verdict = "solo", level = 10, item = "Blade of Cunning",
       how = "Rogue class quest at 10",
-      note = "You do the class quest regardless. The model shows it roughly level with the other quest weapons at 10, not a big jump." },
-    { class = "convenient", level = 17, item = "Tail Spike",
-      how = "Drops from Skum, Wailing Caverns",
-      note = "Only about +1%. Worth having if you are in there for Wingblade." },
-    { class = "convenient", level = 19, item = "Shadowfang",
-      how = "Razorclaw the Butcher or Baron Silverlaine, Shadowfang Keep",
-      note = "About +4% for levels 19-22, up to +7% at the top. Only if you are already running Shadowfang Keep." },
-    { class = "convenient", level = 21, item = "Blackvenom Blade",
-      how = "Rohh the Silent, level 26 rare elite (about 25% drop)",
-      note = "About +5% for levels 21-24. Take it if you are passing that way, do not hunt it." },
-    { class = "convenient", level = 51, item = "Krol Blade",
-      how = "Level-63 Ahn'Qiraj-era Colossi or a rare world drop, Bind on Equip",
-      note = "Would be +5% through 59, but the drop sources are effectively unreachable while levelling. Equip one if it turns up; never plan around it." },
-    { class = "convenient", level = 54, item = "Ebon Hilt of Marduk",
-      how = "Marduk Blackpool, Scholomance",
-      note = "About +4% for levels 54-59. Only if you are already in Scholomance." },
-    { class = "convenient", level = 55, item = "Ironfoe",
-      how = "Emperor Dagran Thaurissan, Blackrock Depths (1% drop)",
-      note = "About +3.5% for levels 55-59, but a 1% drop. Only worth it if it drops during a run you were doing anyway." },
-    { class = "convenient", level = 58, item = "Dal'Rend's Sacred Charge",
-      how = "Warchief Rend Blackhand, Upper Blackrock Spire",
-      note = "About +5% at 58-59 and it carries into raiding, but only two levels of levelling use. Take it if you are in the Spire." },
-
-    -- skip
-    { class = "skip", level = 30, item = "Swinetusk Shank",
-      how = "Drops in Razorfen Kraul",
-      note = "Within noise of the vendor/quest options at 30. Not worth a run." },
-    { class = "skip", level = 35, item = "Tok'kar's Murloc Shanker",
+      note = "You do the class quest regardless. Only about +1% at 10: level with the other quest weapons, not a big jump." },
+    { verdict = "solo", level = 35, item = "Tok'kar's Murloc Shanker",
       how = "Threat From the Sea, Swamp of Sorrows",
-      note = "No measurable gain at 35. Do the quest only for its other rewards or XP." },
+      note = "About +3% for levels 35-43 (up to +4.5%) once the other vendor and quest weapons are counted. A 5-quest chain." },
+
+    -- dungeon_very
+    { verdict = "dungeon_very", level = 15, item = "Wingblade",
+      how = "Leaders of the Fang, Wailing Caverns",
+      note = "Largest jump on the list: about +14% for levels 11-28 (peak +23%). A sword, at the end of a 7-quest chain, and a group dungeon." },
+    { verdict = "dungeon_very", level = 21, item = "Outlaw Sabre",
+      how = "Baron Aquanis, Blackfathom Deeps (turn in in Ashenvale)",
+      note = "About +22% for levels 21-29 (peak +27%). Elite kill, bring a group." },
+    { verdict = "dungeon_very", level = 39, item = "Vanquisher's Sword",
+      how = "Bring the Light / Bring the End, Razorfen Downs",
+      note = "About +5% for levels 37-44, peaking near +10%. A sword, which matters - see the spec note." },
+
+    -- dungeon_kinda
+    { verdict = "dungeon_kinda", level = 33, item = "Sword of Omen",
+      how = "Into The Scarlet Monastery",
+      note = "About +4% for levels 33-44 (peak +8%). A sword, so it keeps Sword Specialization." },
+    { verdict = "dungeon_kinda", level = 45, item = "Thrash Blade",
+      how = "Corruption of Earth and Seed, Maraudon",
+      note = "Extra-attack proc. About +3% for levels 45-59." },
+    { verdict = "dungeon_kinda", level = 54, item = "Ebon Hilt of Marduk",
+      how = "Marduk Blackpool, Scholomance (about 7% drop)",
+      note = "About +7% for levels 54-59. Only if you are already in Scholomance." },
+    { verdict = "dungeon_kinda", level = 58, item = "Dal'Rend's Sacred Charge",
+      how = "Warchief Rend Blackhand, Upper Blackrock Spire (about 17% drop)",
+      note = "About +8% at 58-59 and it carries into raiding, but only two levels of levelling use. Take it if you are in the Spire." },
+
+    -- dungeon_not
+    { verdict = "dungeon_not", level = 17, item = "Tail Spike",
+      how = "Drops from Skum, Wailing Caverns (50%)",
+      note = "Only about +2% for levels 17-19. Worth having if you are in there for Wingblade." },
+    { verdict = "dungeon_not", level = 19, item = "Shadowfang",
+      how = "Shadowfang Keep bosses (a rare drop)",
+      note = "About +16% for levels 19-29 if you get one, but the database gives it roughly a 0.02% chance per boss. Equip it if it drops; do not run for it." },
+    { verdict = "dungeon_not", level = 55, item = "Ironfoe",
+      how = "Emperor Dagran Thaurissan, Blackrock Depths (1% drop)",
+      note = "About +6.5% for levels 55-59, but a 1% drop. Only worth it if it drops during a run you were doing anyway." },
+
+    -- open_drop
+    { verdict = "open_drop", level = 21, item = "Blackvenom Blade",
+      how = "Rohh the Silent, level 26 rare elite (about 25% drop)",
+      note = "About +7% for levels 21-28. Take it if you are passing that way, do not hunt it." },
+    { verdict = "open_drop", level = 51, item = "Krol Blade",
+      how = "Level-63 Ahn'Qiraj-era Colossi or a rare world drop, Bind on Equip",
+      note = "About +8% for 51-59, but the drop sources are effectively unreachable while levelling. Equip one if it turns up; never plan around it." },
+
+    -- not_worth
+    { verdict = "not_worth", level = 30, item = "Swinetusk Shank",
+      how = "Drops in Razorfen Kraul",
+      note = "Within noise of the other options at 30. Not worth a run." },
 }
 
 Rogue.specNote =
@@ -305,6 +333,13 @@ function Rogue:BuildWeapons()
     return table.concat(lines, "\n")
 end
 
+function Rogue:VerdictTitle(key)
+    for _, v in ipairs(self.verdicts) do
+        if v.key == key then return v.title end
+    end
+    return key
+end
+
 function Rogue:BuildUpgrades()
     local lines = {}
     local level = UnitLevel("player")
@@ -313,17 +348,17 @@ function Rogue:BuildUpgrades()
     table.insert(lines, Theme.hex.faint .. "Horde-obtainable only.|r")
     table.insert(lines, "")
 
-    for _, class in ipairs(self.upgradeClasses) do
+    for _, verdict in ipairs(self.verdicts) do
         local shown = false
         for _, u in ipairs(self.upgrades) do
-            if u.class == class.key then
+            if u.verdict == verdict.key then
                 if not shown then
-                    table.insert(lines, Theme.hex.accent .. class.title .. "|r")
+                    table.insert(lines, Theme.hex.accent .. verdict.title .. "|r")
                     table.insert(lines, "")
                     shown = true
                 end
                 local colour
-                if class.key == "skip" then colour = Theme.hex.faint
+                if self.quietVerdicts[verdict.key] then colour = Theme.hex.faint
                 elseif level >= u.level + 6 then colour = Theme.hex.faint
                 elseif level >= u.level then colour = Theme.hex.done
                 elseif level >= u.level - 4 then colour = Theme.hex.warn
@@ -471,10 +506,9 @@ rf:SetScript("OnEvent", Compat:Wrap("Rogue", function(self, event, ...)
             end
         end
         for _, u in ipairs(Rogue.upgrades) do
-            if u.level == newLevel and u.class ~= "skip" then
-                local label = u.class == "detour" and "Weapon worth a detour" or "Weapon, only if convenient"
+            if u.level == newLevel and not Rogue.quietVerdicts[u.verdict] then
                 ns.Print(("%s%s: %s|r - %s")
-                    :format(Theme.hex.bright, label, u.item, u.how))
+                    :format(Theme.hex.bright, Rogue:VerdictTitle(u.verdict), u.item, u.how))
             end
         end
         Rogue:Refresh()
