@@ -100,6 +100,27 @@ function Marker:WantedNPC()
     return step.npc, step.type
 end
 
+-- The nameplate icon only helps once the NPC is actually on screen. A
+-- chat line covers players who've left friendly nameplates off, or just
+-- want the name up front to scan for or /targetexact themselves - the
+-- addon can't create a secure targeting macro/keybind (CLAUDE.md: no
+-- secure snippets), so this is the unsecure equivalent RestedXP's
+-- targeting macro would otherwise cover. Only announces once per new
+-- wanted NPC, not on every nameplate-driven rescan.
+local lastAnnounced = nil
+
+function Marker:AnnounceWantedNPC()
+    local wanted = self:WantedNPC()
+    if wanted then
+        if wanted ~= lastAnnounced then
+            lastAnnounced = wanted
+            if ns.Print then ns.Print("Look for: |cffffd100" .. wanted .. "|r") end
+        end
+    else
+        lastAnnounced = nil
+    end
+end
+
 --------------------------------------------------------------------------
 -- Marker creation
 --------------------------------------------------------------------------
@@ -167,11 +188,22 @@ end
 -- Nameplate handling
 --------------------------------------------------------------------------
 
+-- Test hook for G1 (instance safety) - flip this via /tuff debugrestrict to
+-- exercise the restricted-state code path without needing to actually be
+-- in an instance or on a client with secret values active.
+Marker.debugForceRestricted = false
+
+local function IsRestricted()
+    return Marker.debugForceRestricted or Compat:IsInInstance() or Compat:HasSecretRestrictions()
+end
+Marker.IsRestricted = IsRestricted
+
 local function CheckUnit(unit)
     if not unit then return end
+    if IsRestricted() or Compat:IsUnitIdentitySecret(unit) then return end
 
     local name = Compat:Guard(UnitName, unit)
-    if not name then return end
+    if not name or Compat:IsSecretValue(name) then return end
 
     local plate = Compat:Guard(C_NamePlate.GetNamePlateForUnit, unit)
     if not plate then return end
@@ -199,9 +231,17 @@ end
 -- The wanted NPC changes whenever the step advances, so re-scan every
 -- visible nameplate rather than waiting for one to spawn.
 function Marker:RescanAll()
+    self:AnnounceWantedNPC()
+
     for plate in pairs(active) do
         HideMarkerOn(plate)
     end
+
+    -- Pause entirely rather than just refusing new matches: in an
+    -- instance, or under Midnight-style secret-value restrictions,
+    -- nameplate matching isn't worth the risk of touching a value the
+    -- client won't let us read safely.
+    if IsRestricted() then return end
 
     if not (C_NamePlate and C_NamePlate.GetNamePlates) then return end
     local plates = Compat:Guard(C_NamePlate.GetNamePlates)
@@ -221,8 +261,10 @@ end
 local function CheckTarget()
     local wanted = Marker:WantedNPC()
     if not wanted then return end
+    if IsRestricted() or Compat:IsUnitIdentitySecret("target") then return end
     local name = Compat:Guard(UnitName, "target")
-    if name and name:lower() == wanted:lower() then
+    if not name or Compat:IsSecretValue(name) then return end
+    if name:lower() == wanted:lower() then
         ns.Print("|cff00ff00Correct NPC targeted:|r " .. name)
     end
 end
@@ -292,6 +334,7 @@ local _, missingEvents = Compat:RegisterEvents(mf, {
     "NAME_PLATE_UNIT_ADDED",
     "NAME_PLATE_UNIT_REMOVED",
     "PLAYER_TARGET_CHANGED",
+    "PLAYER_ENTERING_WORLD",
 })
 if ns.Core and ns.Core.missingEvents then
     for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
@@ -310,6 +353,14 @@ mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
 
     elseif event == "PLAYER_TARGET_CHANGED" then
         CheckTarget()
+
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        -- Fires on every zone/instance transition (including login) - the
+        -- prompt trigger for pausing/resuming markers around instance
+        -- boundaries, rather than waiting for the next unrelated
+        -- step-change-driven RescanAll to notice. `self` here is the
+        -- event frame (mf), not the Marker module - call it by name.
+        Marker:RescanAll()
     end
 end, function()
     Marker.enabled = false

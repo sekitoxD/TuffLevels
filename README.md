@@ -48,8 +48,8 @@ The Classic globals are gone — `GetItemInfo`, `GetSpellInfo`, `UnitAura`, `Get
 Three beta bugs the addon handles:
 
 - **Unknown events abort the file.** `RegisterEvent` on an event the client doesn't know throws and kills everything after it. All registration goes through `Compat:RegisterEvents`, which pcalls each one and reports rejects via `/tuff client`.
-- **SavedVariables are never restored.** The client writes on exit and doesn't read back, so progress resets each launch. Can't be fixed in Lua — the addon warns on login and `/tuff where` + `/tuff goto <n>` let you restore manually.
-- **100-error cap.** After 100 Lua errors the client stops delivering them to any handler, masking every other addon's real errors. `Compat:Guard` self-limits to 10.
+- **SavedVariables are never restored.** The client writes on exit and doesn't read back, so progress resets on every launch AND every `/reload` (both re-execute all addon Lua from scratch). Can't be fixed in Lua — the addon warns on login, offers to jump back to where quest flags say you actually are, and `/tuff code`/`/tuff goto <n>` let you carry or restore a position manually.
+- **100-error cap.** After 100 Lua errors the client stops delivering them to any handler, masking every other addon's real errors. `Compat:Guard` self-limits to 20.
 
 `ReloadUI()` is protected — type `/reload`.
 
@@ -67,9 +67,15 @@ Three beta bugs the addon handles:
 | `/tuff load <name>` | Switch route |
 | `/tuff verify` | Validate the active route against the database |
 | `/tuff capture` | Dump your quest log as pasteable route steps |
+| `/tuff guide` | Import a community guide (Guidelime format) |
+| `/tuff write` | Author a route in the compact line-based syntax |
 | `/tuff where` | Print current step number |
 | `/tuff goto <n>` | Jump to a step (progress recovery); pauses auto-advance |
 | `/tuff resume` | Un-pause after Back/goto and let auto-advance continue |
+| `/tuff catchup [confirm]` | Scan forward and jump to the furthest already-done step |
+| `/tuff code [<code>]` | Print a portable progress code, or restore one |
+| `/tuff pace` | Open the run-splits export (section times, XP/hour) |
+| `/tuff help` | Open the in-addon Help / About dialog |
 | `/tuff client` | Flavor, interface, rejected events, database status |
 | `/tuff errors` | Suppressed error count |
 | `/tuff reset` | Back to step 1 |
@@ -89,23 +95,35 @@ This is the actual work. The engine is done; the route is not.
 
 `capture` exists because hand-looking-up 800 quest IDs is the thing that kills projects like this. Let the client tell you the IDs.
 
+Two ways to skip hand-writing Lua tables: `/tuff write` opens an in-addon compact text editor (one line per step — `CompactGuide.lua`'s header has the format), or import an existing spreadsheet/community guide via the menu. Outside the game, `python tools/validate_route.py Routes/` runs the same structural checks as `/tuff verify` plus offline quest-DB checks (race/class/level/prerequisite order) against a local cmangos database — the CI workflow runs it in `--no-db` (structure-only) mode on every push.
+
+**Crowd-sourcing a route from more than one recording.** Two people recording the same zone will disagree here and there. `python tools/merge_routes.py A.lua B.lua -o Merged.lua` groups their steps by quest ID, takes the median of the coordinates, keeps whichever order was most common, and prints a conflict report — it's a merging aid, not an authority; see `CONTRIBUTING.md` for the full workflow (record → export → merge if needed → verify → PR) and what still needs a human read-through afterward.
+
 **Step types:**
 
 | Type | Auto-advances when |
 |---|---|
 | `accept` | quest enters your log |
 | `turnin` | quest flagged complete |
-| `complete` | objectives done, not yet handed in |
+| `complete` | objectives done (or one specific `objective = n`), not yet handed in |
 | `grind` / `level` | you reach `targetLevel` |
-| `travel` / `hearth` / `manual` / `note` | never — user clicks Next |
+| `xp` | you reach `xp = { level = n, pct = n }` |
+| `trainer` | closing the trainer window |
+| `death` | dying then reviving |
+| `hearth` | casting Hearthstone, then the zone changes |
+| `travel` | within ~15 real yards of the step's coordinates (or just the right map, on a client without real-distance APIs) |
+| `flightpath` | the node (`mapID` + `node` or `name`) is already known |
+| `manual` / `note` | never — user clicks Next |
 
-Steps filter by `races`, `class`, and `minLevel`, so one file can serve Orc and Troll with occasional divergences rather than maintaining two.
+Steps filter by `races`, `class`, `minLevel`, and `skipIfLevel` (hides/skips once you're past that level — the inverse of `minLevel`), so one file can serve Orc and Troll with occasional divergences rather than maintaining two. `optional = true` marks a step as skippable — it's shown dimmed in the Progress list but never blocks auto-advance. `requires = { n, ... }` gates a step on other step numbers in the same route also being done, for dependencies that aren't just "the step right before it." A step's `path` (an ordered list of intermediate waypoints, possibly across zones) is what the arrow guides through before finally pointing at the step's own coordinates — see `Routes/Horde/Durotar.lua`'s header comment for the authoritative field-by-field reference, or write routes in the compact text syntax instead (`/tuff write`, see `CompactGuide.lua`'s header) rather than hand-writing Lua tables.
+
+Auto accept/turn-in (opt-in, off by default — toggle on the tracker or in the menu) and per-section pace tracking with personal-best splits (always on, no toggle needed) both build on this same step data — see "Known constraints" below and `Pace.lua`'s header.
 
 ---
 
 ## Known constraints
 
-**No auto-accept or auto-turn-in yet.** Not implemented. Whether the required calls (`AcceptQuest`, `CompleteQuest`, `GetQuestReward`, gossip selection) work from an event handler without a hardware event on Forever is under investigation — RestedXP advertises these features on Forever, so "blocked on every client" was an unverified guess, not a confirmed limitation. Display and tracking work today regardless of the outcome.
+**Auto-accept and auto-turn-in are implemented, opt-in, off by default.** Confirmed live that `AcceptQuest`/`GetQuestReward` work from a plain event handler with no hardware event on the Forever beta. `Automation.lua` only ever acts on the quest matching your current step, never guesses a reward when there's a real choice, and Shift bypasses it for a single dialog. Toggle it on the tracker itself or in the menu — see `Automation.lua`'s header for the exact rules.
 
 **Interface versions.** Mainline TOC lists `16001, 120100` — Forever first. Bump when either client patches.
 

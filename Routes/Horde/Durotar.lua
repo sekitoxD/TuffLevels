@@ -1,4 +1,4 @@
--- TuFFlevels / Routes/Durotar.lua
+-- TuFFlevels / Routes/Horde/Durotar.lua
 --
 -- ############################ READ THIS ############################
 -- The quest IDs below are UNVERIFIED. They are structurally correct
@@ -15,11 +15,40 @@
 -- ###################################################################
 --
 -- STEP FORMAT
---   type      "accept" | "turnin" | "complete" | "grind" | "travel"
---             | "hearth" | "manual" | "note"
+--   type      "accept" | "turnin" | "complete" | "grind" | "level" | "xp"
+--             | "section" | "trainer" | "death" | "manual" | "travel"
+--             | "hearth" | "flightpath" | "note"
 --   quest     numeric quest ID (accept/turnin/complete)
 --   name      fallback display name if no database is installed
 --   npc       NPC to talk to - puts a marker over their head
+--
+--   Auto-detected without clicking Next: accept/turnin/complete/grind/level/xp
+--   (quest log, player level, or XP), trainer (closing the trainer window),
+--   death (dying then reviving), hearth (casting Hearthstone then the zone
+--   changing), travel (within ~15 real yards of the step's coordinates, or
+--   just the right map on a client where real-distance APIs aren't
+--   available), flightpath (mapID + node/name already known on this
+--   character). flightpath needs mapID (uiMapID) plus node (numeric
+--   nodeID) or name.
+--
+--   objective  on a "complete" step: 1-based index into the quest's own
+--              objective list - done when that one objective finishes,
+--              not the whole quest. Omit to require every objective.
+--   xp         on an "xp" step: { level = n, pct = n }. Done once the
+--              player reaches that level, or is already past it - pct is
+--              how far into that level's XP bar (0-100), default 0.
+--   optional   true: shown dimmed in the Progress list, never blocks
+--              auto-advance whether it's done or not - a take-it-or-leave
+--              -it extra, not a gate.
+--   skipIfLevel  hides and auto-skips this step once the player reaches
+--              this level (opposite of minLevel, which hides it below one).
+--   requires   list of OTHER step numbers (this route's array position,
+--              1-based) that must also be done before this step counts as
+--              done - lets a step depend on something earlier that isn't
+--              immediately before it (e.g. an optional step it actually
+--              needs). Re-numbering or reordering steps in this file
+--              changes what these numbers point at, so update them
+--              together with any edit that shifts step positions.
 --
 -- SECTIONS
 --   { type = "section", name = "Zone or area", levels = { 6, 12 } }
@@ -32,6 +61,15 @@
 --   class     optional filter, e.g. "ROGUE"
 --   minLevel  don't show this step below this level
 --   targetLevel  for grind/level steps
+--   path      optional ordered list of intermediate waypoints for a
+--             multi-hop or cross-zone travel step, e.g.
+--             { { zone = "Durotar", x = 50, y = 50 },
+--               { zone = "The Barrens", x = 10, y = 20 } }
+--             The arrow guides through each point in turn (advancing once
+--             you're within ~20 yards and on that point's map) before
+--             finally pointing at the step's own map/x/y. Without a path,
+--             a step whose target is on a different map than the player
+--             just shows "Different zone" instead of a bearing.
 --
 -- uiMapIDs (Classic Era):
 --   Durotar 1411 | Orgrimmar 1454 | The Barrens 1413

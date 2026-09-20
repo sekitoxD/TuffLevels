@@ -20,7 +20,6 @@
 -- Tag reference: github.com/max-ri/Guidelime/wiki/WriteAGuide
 
 local ADDON, ns = ...
-local Compat = ns.Compat
 
 local GuideImport = {}
 ns.GuideImport = GuideImport

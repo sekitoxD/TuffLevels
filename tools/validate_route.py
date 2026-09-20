@@ -10,7 +10,7 @@ of truth; nothing from the DB is copied into them.
 
 Usage:
     python tools/validate_route.py                    # every file under Routes/
-    python tools/validate_route.py Routes/Durotar.lua
+    python tools/validate_route.py Routes/Horde/Durotar.lua
     python tools/validate_route.py --no-db Routes/    # structure checks only
     python tools/validate_route.py --errors-only
 
@@ -48,8 +48,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extract_recording as lua  # noqa: E402  (Lua table parser)
 import qdb                       # noqa: E402  (DB access + mask decoding)
 
-STEP_TYPES = {"accept", "turnin", "complete", "grind", "level", "section",
-              "trainer", "death", "manual", "travel", "hearth", "note"}
+STEP_TYPES = {"accept", "turnin", "complete", "grind", "level", "xp", "section",
+              "trainer", "death", "manual", "travel", "hearth", "flightpath", "note"}
 QUEST_TYPES = ("accept", "turnin", "complete")
 
 # raceFile / classFile names (what Core.StepApplies compares) -> DB mask bit
@@ -265,10 +265,34 @@ def check_structure(route, lines, report):
             if not isinstance(step.get("quest"), int):
                 if not (isinstance(step.get("questName"), str) and step["questName"]):
                     report.add("ERROR", line, no, "%s step needs a numeric `quest` or a `questName`" % stype)
-        if stype == "grind" and not isinstance(step.get("targetLevel"), (int, float)):
-            report.add("ERROR", line, no, "grind step needs `targetLevel`")
+        if stype in ("grind", "level") and not isinstance(step.get("targetLevel"), (int, float)):
+            report.add("ERROR", line, no, "%s step needs `targetLevel`" % stype)
         if stype == "section" and not step.get("name"):
             report.add("WARN", line, no, "section step has no `name`")
+        if stype == "xp":
+            xp = step.get("xp")
+            if not (isinstance(xp, dict) and isinstance(xp.get("level"), (int, float))):
+                report.add("ERROR", line, no, "xp step needs xp = { level = n, pct = n }")
+            elif xp.get("pct") is not None and not (isinstance(xp["pct"], (int, float)) and 0 <= xp["pct"] <= 100):
+                report.add("ERROR", line, no, "xp.pct should be 0-100")
+        if stype == "flightpath" and not (step.get("mapID") and (step.get("node") or step.get("name"))):
+            report.add("ERROR", line, no, "flightpath step needs mapID and node or name")
+        if stype == "complete" and step.get("objective") is not None \
+                and not isinstance(step["objective"], (int, float)):
+            report.add("ERROR", line, no, "objective should be a number")
+        if step.get("skipIfLevel") is not None and not isinstance(step["skipIfLevel"], (int, float)):
+            report.add("ERROR", line, no, "skipIfLevel should be a number")
+        if "requires" in step:
+            req = step["requires"]
+            if not isinstance(req, list):
+                report.add("ERROR", line, no, "requires should be a list of step numbers")
+            else:
+                for idx in req:
+                    if not (isinstance(idx, int) and 1 <= idx <= len(route["steps"])):
+                        report.add("ERROR", line, no,
+                                    "requires references step %r, which isn't in this route" % (idx,))
+                    elif idx == no:
+                        report.add("ERROR", line, no, "requires references itself")
         for axis in ("x", "y"):
             v = step.get(axis)
             if isinstance(v, (int, float)) and not 0 <= v <= 100:
@@ -459,9 +483,24 @@ def validate_file(path, db, errors_only):
     totals = [0, 0, 0]
     try:
         routes = parse_routes(path)
-    except (lua.LuaParseError, OSError) as e:
-        print("%s: could not parse: %s" % (path, e))
+    except OSError as e:
+        print("%s: could not read: %s" % (path, e))
         return 1, 0, 0
+    except lua.LuaParseError as e:
+        # This parser only understands literal table data, not real Lua
+        # (no variables, loops, function calls). A file like
+        # Routes/Horde/Solo/Register.lua legitimately builds `steps` from
+        # a loop over other files' contributions - WoW's actual Lua
+        # interpreter runs that fine, only this offline tool's simplified
+        # parser can't. Unbalanced braces mean the file is actually
+        # broken (WoW's interpreter would fail too); anything else here
+        # just means "not a literal table", which isn't necessarily wrong.
+        if "unbalanced braces" in str(e):
+            print("%s: could not parse: %s" % (path, e))
+            return 1, 0, 0
+        print("%s: not a literal step table (probably built with real Lua "
+              "code - not checkable by this tool, not necessarily wrong): %s" % (path, e))
+        return 0, 1, 0
     if not routes:
         print("%s: no ns.RegisterRoute call found" % path)
         return 0, 1, 0

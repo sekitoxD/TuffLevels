@@ -1,0 +1,54 @@
+name: Lint
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  luacheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+      - uses: leafo/gh-actions-luarocks@v4
+      - name: Install luacheck
+        run: luarocks install luacheck
+      - name: Run luacheck
+        run: luacheck .
+
+  validate-routes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Validate route structure (no DB - offline structural checks only)
+        run: python tools/validate_route.py --no-db Routes/
+      - name: Smoke-test merge_routes.py
+        # No fixture-based test suite for this tool yet - this at least
+        # exercises it against two real route files on every push/PR
+        # (a trivial self-merge, and a merge of two genuinely different
+        # routes to hit the "missing from"/conflict-reporting paths) and
+        # confirms the merged output is itself well-formed Lua.
+        run: |
+          python tools/merge_routes.py Routes/Horde/Durotar.lua Routes/Horde/Durotar.lua -o /tmp/self_merge.lua
+          python tools/validate_route.py --no-db /tmp/self_merge.lua
+          python tools/merge_routes.py Routes/Horde/Durotar.lua Routes/Horde/Horde1-60.lua -o /tmp/cross_merge.lua
+          python tools/validate_route.py --no-db /tmp/cross_merge.lua
+
+  busted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.1"
+      - uses: leafo/gh-actions-luarocks@v4
+      - name: Install busted
+        run: luarocks install busted
+      - name: Run specs
+        run: busted spec/

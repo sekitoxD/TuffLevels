@@ -169,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 602)
+    panel:SetSize(240, 758)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -210,70 +210,105 @@ function Panel:Build()
         ns.GuideImport:Show()
     end)
 
-    MakeButton(panel, "Recover past quests", -186, function()
+    MakeButton(panel, "Write a route (text)", -186, function()
+        ns.CompactGuide:Show()
+    end)
+
+    MakeButton(panel, "Recover past quests", -212, function()
         ns.Import:Show()
     end)
 
-    MakeButton(panel, "Save this as a route", -212, function()
+    MakeButton(panel, "Save this as a route", -238, function()
         ns.Recorder:ShowExport()
     end)
 
-    MakeButton(panel, "Progress / completed", -238, function()
+    MakeButton(panel, "Progress / completed", -264, function()
         ns.Progress:Toggle()
     end)
 
-    MakeButton(panel, "Catch up on quests", -264, function()
+    MakeButton(panel, "Catch up on quests", -290, function()
         Panel:ShowCatchUpDialog()
     end)
 
+    MakeButton(panel, "Progress code", -316, function()
+        Panel:ShowProgressCode()
+    end)
+
+    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -342, function()
+        ns.Automation:Toggle() ; Panel:Refresh()
+    end)
+
     -- Recording extras
-    MakeButton(panel, "Add a note here", -290, function()
+    MakeButton(panel, "Add a note here", -368, function()
         Panel:PromptNote()
     end)
 
-    MakeButton(panel, "Mark this spot", -316, function()
+    MakeButton(panel, "Mark this spot", -394, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
     -- Display / options
-    panel.arrowBtn = MakeButton(panel, "Arrow", -342, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -420, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -368, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -446, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -394, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -472, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -420, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -498, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
     end)
 
-    MakeButton(panel, "Colors", -446, function()
+    MakeButton(panel, "Colors", -524, function()
         Panel:ShowColorPicker()
     end)
 
-    MakeButton(panel, "Reset arrow position", -472, function()
+    MakeButton(panel, "Reset arrow position", -550, function()
         ns.Arrow:ResetPosition()
     end)
 
-    MakeButton(panel, "Rogue", -498, function()
-        ns.Rogue:Show()
+    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -576, function()
+        ns.Arrow:ToggleColorblind() ; Panel:Refresh()
     end)
 
-    MakeButton(panel, "Help / About", -524, function()
+    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -602, function()
+        ns.Arrow:ToggleTextOnly() ; Panel:Refresh()
+    end)
+
+    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -628, function()
+        ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
+    end)
+
+    -- Rogue.lua already refuses to do anything for any other class; this
+    -- just keeps the button from cluttering the menu for the 8 classes
+    -- that can never use it, closing the gap it would otherwise leave
+    -- rather than just hiding it in place. Class never changes
+    -- mid-session, so this is decided once here, not on every Refresh().
+    local y = -654
+    local _, playerClass = UnitClass("player")
+    if playerClass == "ROGUE" then
+        MakeButton(panel, "Rogue", y, function()
+            ns.Rogue:Show()
+        end)
+        y = y - 26
+    end
+
+    MakeButton(panel, "Help / About", y, function()
         Panel:ShowHelpDialog()
     end)
+    y = y - 32
 
-    MakeButton(panel, "Close", -556, function() panel:Hide() end)
+    MakeButton(panel, "Close", y, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -294,6 +329,16 @@ function Panel:Refresh()
 
     local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
     panel.platesBtn:SetText(cur == "1" and "Nameplates: on" or "Nameplates: off")
+
+    panel.cbBtn:SetText(ns.Arrow and ns.Arrow.colorblind
+        and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
+    panel.textOnlyBtn:SetText(ns.Arrow and ns.Arrow.textOnly
+        and "Arrow text-only mode: on" or "Arrow text-only mode: off")
+    panel.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom
+        and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
+
+    panel.autoBtn:SetText(ns.Automation and ns.Automation.enabled
+        and "Auto accept/turn-in: on" or "Auto accept/turn-in: off")
 end
 
 function Panel:Toggle()
@@ -495,6 +540,114 @@ function Panel:ShowCatchUpDialog()
 end
 
 --------------------------------------------------------------------------
+-- Resume prompt (shown automatically at login, not from a button)
+--------------------------------------------------------------------------
+
+-- Same scan/jump as the Catch-up dialog above, but triggered unprompted
+-- when login finds the tracker sitting at step 1 while quest flags say
+-- otherwise (SavedVariables loss, or quests done outside the addon).
+function Panel:ShowResumePrompt(furthest)
+    if self.resumeBox then self.resumeBox:Hide() end
+
+    local Core = ns.Core
+    if not Core.active then return end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(360, 150)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Welcome back")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOPLEFT", 20, -46)
+    body:SetPoint("TOPRIGHT", -20, -46)
+    body:SetJustifyH("LEFT")
+    body:SetSpacing(4)
+    body:SetTextColor(unpack(ns.Theme.color.text))
+    body:SetText(("You're at step 1, but quests up to step %d of %d already look done.\nJump the tracker to step %d?"):format(
+        furthest, #Core.active.steps, furthest))
+
+    FitDialogToBody(f, body, 46, 60, 150)
+
+    local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    confirm:SetSize(100, 22)
+    confirm:SetPoint("BOTTOM", -55, 16)
+    confirm:SetText("Jump")
+    confirm:SetScript("OnClick", function()
+        Core:CatchUp(true)
+        f:Hide()
+        Panel:Refresh()
+    end)
+
+    local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    cancel:SetSize(100, 22)
+    cancel:SetPoint("BOTTOM", 55, 16)
+    cancel:SetText("Not now")
+    cancel:SetScript("OnClick", function() f:Hide() end)
+
+    self.resumeBox = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Progress code
+--------------------------------------------------------------------------
+
+-- A short, copy-pasteable stand-in for SavedVariables when those can't be
+-- relied on: encodes route + step with a typo-catching checksum.
+function Panel:ShowProgressCode()
+    local Core = ns.Core
+    local code = Core:GetProgressCode()
+    if not code then
+        ns.Print("No route loaded.")
+        return
+    end
+
+    if self.codeBox then self.codeBox:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(360, 150)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Progress code")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local help = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    help:SetPoint("TOP", 0, -42)
+    help:SetTextColor(unpack(ns.Theme.color.dim))
+    help:SetText("Ctrl+C to copy. Restore later with /tuff code <code>")
+
+    local edit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    edit:SetSize(300, 24)
+    edit:SetPoint("TOP", 0, -68)
+    edit:SetAutoFocus(true)
+    edit:SetText(code)
+    edit:HighlightText()
+    edit:SetScript("OnEscapePressed", function() f:Hide() end)
+    edit:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
+
+    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    ok:SetSize(100, 22)
+    ok:SetPoint("BOTTOM", 0, 16)
+    ok:SetText("Close")
+    ok:SetScript("OnClick", function() f:Hide() end)
+
+    self.codeBox = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
 -- Help
 --------------------------------------------------------------------------
 
@@ -530,7 +683,20 @@ function Panel:ShowHelpDialog()
         "quests you've already completed, without moving anything.\n" ..
         "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
         "The |cffffd100Catch up on quests|r button on this menu does the same " ..
-        "thing with a confirm dialog instead of typing commands.")
+        "thing with a confirm dialog instead of typing commands.\n\n" ..
+        "|cffffd100Auto accept/turn-in|r (off by default, toggle top-left on the " ..
+        "tracker or in this menu) accepts and turns in quests for you, but only " ..
+        "the ones matching your current step, and never guesses when a turn-in " ..
+        "has more than one reward to choose from. Hold Shift to skip it for a " ..
+        "single dialog without turning it off.\n\n" ..
+        "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
+        "how long your current section is taking versus your best time for it, " ..
+        "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
+        "/tuff pace) gives you a copyable summary of the run.\n\n" ..
+        "|cffffd100Write a route (text)|r (or /tuff write) is a quicker way to " ..
+        "author a route than a Lua table - one line per step, e.g. " ..
+        "|cffa0a0a0accept 4641 npc=Kaltunk at=1411,42.6,68.8|r. See " ..
+        "CompactGuide.lua's header for the full format.")
 
     FitDialogToBody(f, body, 46, 60, 160)
 

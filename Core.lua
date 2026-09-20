@@ -60,8 +60,11 @@ end
 
 Core.ResolveQuest = ResolveQuest
 
--- Returns true if this step is already satisfied.
-local function IsStepDone(step)
+-- Returns true if this step's own condition is satisfied, ignoring
+-- `requires` - split out so the requires-gate below can call back into
+-- IsStepDone for prerequisite steps without re-running their own gate
+-- twice.
+local function StepOwnConditionDone(step)
     local t = step.type
 
     -- name-based steps need an ID before anything can be checked
@@ -81,6 +84,10 @@ local function IsStepDone(step)
         return Data:IsQuestComplete(step.quest)
 
     elseif t == "complete" then
+        if step.objective then
+            return Data:IsQuestObjectiveDone(step.quest, step.objective)
+                or Data:IsQuestComplete(step.quest)
+        end
         -- Objectives done but not handed in yet.
         return Data:IsQuestReadyToTurnIn(step.quest) or Data:IsQuestComplete(step.quest)
 
@@ -90,20 +97,56 @@ local function IsStepDone(step)
     elseif t == "level" then
         return Data:PlayerLevel() >= step.targetLevel
 
+    elseif t == "xp" then
+        local target = step.xp
+        if not target or not target.level then return false end
+        local level = Data:PlayerLevel()
+        if level > target.level then return true end
+        if level < target.level then return false end
+        local xp = Compat:Guard(UnitXP, "player") or 0
+        local xpMax = Compat:Guard(UnitXPMax, "player") or 0
+        if xpMax <= 0 then return false end
+        return (xp / xpMax * 100) >= (target.pct or 0)
+
     elseif t == "section" then
         -- a header, not a task
         return true
 
-    elseif t == "trainer" or t == "death" then
-        -- no detectable condition; user advances
-        return false
+    elseif t == "trainer" or t == "death" or t == "hearth" or t == "travel" then
+        -- Event-driven: the watcher below tags the step table directly
+        -- when it sees the matching event fire while this step is current.
+        return step._eventDone == true
 
-    elseif t == "manual" or t == "travel" or t == "hearth" or t == "note" then
+    elseif t == "flightpath" then
+        return Data:IsFlightPathKnown(step)
+
+    elseif t == "manual" or t == "note" then
         -- No detectable condition. User clicks to advance.
         return false
     end
 
     return false
+end
+
+-- Wraps the step's own condition with an optional `requires` gate: a list
+-- of OTHER step indices (in this same route) that must also be done first.
+-- `visited` guards against a circular requires chain (an authoring
+-- mistake, not a contrived case - fail closed rather than blow the stack).
+local function IsStepDone(step, visited)
+    if not StepOwnConditionDone(step) then return false end
+    if not step.requires then return true end
+
+    visited = visited or {}
+    if visited[step] then return false end
+    visited[step] = true
+
+    for _, idx in ipairs(step.requires) do
+        local reqStep = Core.active and Core.active.steps[idx]
+        if reqStep and not IsStepDone(reqStep, visited) then
+            return false
+        end
+    end
+    return true
 end
 
 Core.IsStepDone = IsStepDone
@@ -125,6 +168,10 @@ local function StepApplies(step)
     end
 
     if step.minLevel and Data:PlayerLevel() < step.minLevel then
+        return false
+    end
+
+    if step.skipIfLevel and Data:PlayerLevel() >= step.skipIfLevel then
         return false
     end
 
@@ -210,7 +257,10 @@ function Core:Reconcile()
             if guard > 5000 then break end   -- paranoia
 
             local step = self.active.steps[self.index]
-            if not StepApplies(step) or IsStepDone(step) then
+            -- `optional` never blocks auto-advance, done or not - it's a
+            -- take-it-or-leave-it extra, not a gate. It's still visible
+            -- (dimmed) in the Progress checklist either way.
+            if not StepApplies(step) or IsStepDone(step) or step.optional then
                 self.index = self.index + 1
                 moved = true
             else
@@ -233,6 +283,7 @@ function Core:Reconcile()
         if step then Data:SetWaypoint(step) end
         if ns.Marker then ns.Marker:RescanAll() end
         if ns.Panel then ns.Panel:Refresh() end
+        if ns.Pace then ns.Pace:OnStepAdvance() end
     end
 end
 
@@ -270,7 +321,7 @@ function Core:PreviewCatchUp()
     local furthest = 1
     for i = 1, #steps do
         local step = steps[i]
-        if not StepApplies(step) or IsStepDone(step) then
+        if not StepApplies(step) or IsStepDone(step) or step.optional then
             furthest = i + 1
         else
             break
@@ -305,6 +356,65 @@ function Core:CatchUp(confirmed)
 end
 
 --------------------------------------------------------------------------
+-- Progress codes
+--------------------------------------------------------------------------
+
+-- SavedVariables can't be relied on to carry progress across a reload on
+-- Forever, so this gives a portable alternative: a short, copy-pasteable
+-- string encoding route + step, with a checksum to catch typos (not
+-- cryptographic - just cheap corruption detection).
+local function SanitizeRouteName(name)
+    return (name:gsub("%s+", "_"):gsub("[^%w_]", ""))
+end
+
+local function Checksum(raw)
+    local sum = 0
+    for i = 1, #raw do
+        sum = (sum + raw:byte(i) * i) % 9973
+    end
+    return sum
+end
+
+function Core:GetProgressCode()
+    if not self.active then return nil end
+    local sanitized = SanitizeRouteName(self.active.name)
+    local sum = Checksum(self.active.name .. "#" .. self.index)
+    return ("%s-%d-%04d"):format(sanitized, self.index, sum)
+end
+
+-- Returns true on success, or false plus a reason string.
+function Core:ApplyProgressCode(code)
+    if not code or code == "" then return false, "empty code" end
+
+    local sanitized, index, sum = code:match("^(.-)%-(%d+)%-(%d+)$")
+    index, sum = tonumber(index), tonumber(sum)
+    if not (sanitized and index and sum) then
+        return false, "couldn't parse that code"
+    end
+
+    local match
+    for name, route in pairs(self.routes) do
+        if SanitizeRouteName(name) == sanitized then
+            match = route
+            break
+        end
+    end
+    if not match then
+        return false, "no installed route matches that code"
+    end
+
+    if Checksum(match.name .. "#" .. index) ~= sum then
+        return false, "checksum mismatch - check for a typo"
+    end
+
+    self.active = match
+    self.pinned = false
+    self:SetIndex(index)
+    self:Reconcile()
+    return true
+end
+
+--------------------------------------------------------------------------
 -- Route selection
 --------------------------------------------------------------------------
 
@@ -315,6 +425,7 @@ function Core:LoadRoute(name)
     self.active = route
     self.pinned = false
     self.index = 1
+    if ns.Pace then ns.Pace:OnRouteLoad() end
     self:Reconcile()
     self:Save()
     if ns.UI then ns.UI:Refresh() end
@@ -429,8 +540,61 @@ local _, missingEvents = Compat:RegisterEvents(f, {
     "QUEST_LOG_UPDATE",
     "UNIT_QUEST_LOG_CHANGED",
     "PLAYER_LEVEL_UP",
+    "TRAINER_CLOSED",
+    "PLAYER_DEAD",
+    "PLAYER_ALIVE",
+    "PLAYER_UNGHOST",
+    "UNIT_SPELLCAST_SUCCEEDED",
+    "ZONE_CHANGED_NEW_AREA",
 })
 Core.missingEvents = missingEvents
+
+-- Auto-detection for the manual-only step types that don't have a live
+-- "is this done" query the way quests do. Tags the CURRENT step's own
+-- table (not a side index) so IsStepDone can read it directly; only ever
+-- set while that step is actually current, so it can't mark a step done
+-- out of order.
+local HEARTHSTONE_SPELL_ID = 8690
+
+local function MarkCurrentStepEventDone(stepType)
+    local step = Core:CurrentStep()
+    if step and step.type == stepType then
+        step._eventDone = true
+    end
+end
+
+-- "hearth" is a two-part sequence (cast succeeds, then the zone actually
+-- changes once the teleport resolves) so it needs a pending flag rather
+-- than completing on the cast event alone.
+local awaitingHearth = false
+local awaitingRevive = false
+
+local function HandleStepDetectionEvent(event, ...)
+    if event == "TRAINER_CLOSED" then
+        MarkCurrentStepEventDone("trainer")
+
+    elseif event == "PLAYER_DEAD" then
+        awaitingRevive = true
+
+    elseif event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+        if awaitingRevive then
+            awaitingRevive = false
+            MarkCurrentStepEventDone("death")
+        end
+
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, _, spellID = ...
+        if unit == "player" and spellID == HEARTHSTONE_SPELL_ID then
+            awaitingHearth = true
+        end
+
+    elseif event == "ZONE_CHANGED_NEW_AREA" then
+        if awaitingHearth then
+            awaitingHearth = false
+            MarkCurrentStepEventDone("hearth")
+        end
+    end
+end
 
 -- QUEST_LOG_UPDATE fires constantly. Throttle reconciliation so we're not
 -- walking the route table dozens of times a second during heavy questing.
@@ -444,6 +608,31 @@ local function ThrottledReconcile()
     end)
 end
 
+-- Travel-step completion needs real proximity, not just an event - the
+-- player can already be standing on the right map when the step becomes
+-- current (no zone-change event fires), or can simply walk into range
+-- without changing zones at all. A ticker checks periodically instead;
+-- it early-exits immediately whenever the current step isn't a pending
+-- travel step, so the common-case cost is one table/type check a second.
+local TRAVEL_RADIUS_YARDS = 15
+
+C_Timer.NewTicker(1, function()
+    local step = Core.active and Core:CurrentStep()
+    if not (step and step.type == "travel" and not step._eventDone) then return end
+
+    local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+    local stepMap = Data:StepMap(step)
+    if not (mapID and stepMap and mapID == stepMap) then return end
+
+    local dist = Data:RealDistanceToStep(mapID, step)
+    -- If real distance isn't available on this client, fall back to the
+    -- coarser "right map" signal rather than never completing at all.
+    if (dist and dist <= TRAVEL_RADIUS_YARDS) or not dist then
+        step._eventDone = true
+        ThrottledReconcile()
+    end
+end)
+
 f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         if ns.Theme then ns.Theme:LoadSaved() end
@@ -451,7 +640,20 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         Compat:LoadNameCache()
         Core:Load()
 
+        if ns.Automation then ns.Automation:Load() end
+        if ns.Pace then ns.Pace:StartRun() end
         if ns.UI then ns.UI:Build() ; ns.UI:Refresh() end
+
+        -- Sitting at step 1 with quest flags saying otherwise means either
+        -- SavedVariables lost the real position (Forever) or the player
+        -- played ahead outside the addon. Offer the same catch-up scan the
+        -- menu button runs, instead of silently sitting at step 1.
+        if Core.active and Core.index == 1 then
+            local furthest = Core:PreviewCatchUp()
+            if furthest and furthest > Core.index and ns.Panel then
+                C_Timer.After(3, function() ns.Panel:ShowResumePrompt(furthest) end)
+            end
+        end
 
         -- Configure itself rather than making the user type commands.
         if ns.Panel then
@@ -474,6 +676,8 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         if ns.Arrow then ns.Arrow:Build() end
         if ns.Marker then C_Timer.After(1, function() ns.Marker:RescanAll() end) end
     else
+        HandleStepDetectionEvent(event, ...)
+
         -- Anything that isn't login is a quest event, so the cached view of
         -- the quest log is stale from here on.
         Compat:InvalidateLogIndex()
@@ -513,6 +717,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     elseif cmd == "guide" then
         ns.GuideImport:Show()
+
+    elseif cmd == "write" then
+        if ns.CompactGuide then ns.CompactGuide:Show() end
 
     elseif cmd == "rogue" then
         ns.Rogue:Show()
@@ -653,8 +860,22 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "catchup" then
         Core:CatchUp(arg:lower() == "confirm")
 
+    elseif cmd == "code" then
+        if arg == "" then
+            local code = Core:GetProgressCode()
+            if code then Print("Progress code: " .. code)
+            else Print("No route loaded.") end
+        else
+            local ok, reason = Core:ApplyProgressCode(arg)
+            if ok then Print("Restored to step " .. Core.index .. ".")
+            else Print("Couldn't apply that code: " .. reason) end
+        end
+
     elseif cmd == "help" then
         if ns.Panel then ns.Panel:ShowHelpDialog() end
+
+    elseif cmd == "pace" then
+        if ns.Pace then ns.Pace:ShowExport() end
 
     elseif cmd == "client" then
         Print(("Flavor: %s  |  Interface: %d  |  Mainline: %s"):format(
@@ -687,9 +908,20 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Core:Reconcile()
         Print("Reset to step 1.")
 
+    elseif cmd == "debugrestrict" then
+        -- Test hook for the instance-safety guard (G1): flips a forced
+        -- restricted state so it can be checked without actually being
+        -- in an instance or on a client with secret values active.
+        if ns.Marker then
+            ns.Marker.debugForceRestricted = not ns.Marker.debugForceRestricted
+            ns.Marker:RescanAll()
+            Print("Marker restricted-mode simulation " ..
+                (ns.Marker.debugForceRestricted and "ON (markers paused)" or "off"))
+        end
+
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
-        Print("          verify | capture | client | errors | reset | help")
+        Print("          verify | capture | client | errors | reset | help | code [<code>] | pace | write")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")

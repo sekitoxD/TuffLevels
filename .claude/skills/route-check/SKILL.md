@@ -30,7 +30,7 @@ don't go looking for unrelated problems.
 ## 2. Per-file schema check
 
 For each step table (`{ type = "...", ... }`) in the file's `steps = { }`
-list, check against the authoritative schema (`Routes/Durotar.lua` header
+list, check against the authoritative schema (`Routes/Horde/Durotar.lua` header
 comment + `Core.lua`'s `IsStepDone`/`StepApplies`, `Data.lua`'s
 `ValidateRoute` — re-read these if unsure, don't rely on memory):
 

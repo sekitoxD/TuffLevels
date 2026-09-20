@@ -11,7 +11,6 @@ local UI = {}
 ns.UI = UI
 
 local frame
-local ROW_LIMIT = 4
 
 --------------------------------------------------------------------------
 -- Step presentation
@@ -23,6 +22,7 @@ local VERB = {
     complete = "Do",
     grind    = "Grind",
     level    = "Reach",
+    xp       = "Reach",
     travel   = "Go to",
     hearth   = "Hearth",
     trainer  = "Train",
@@ -41,6 +41,7 @@ local VERB_COLOR_KEY = {
     turnin   = "bright",
     complete = "accent",
     grind    = "ember",
+    xp       = "ember",
     travel   = "dim",
     hearth   = "accent",
     trainer  = "warn",
@@ -52,6 +53,9 @@ local VERB_COLOR_KEY = {
 local function StepLabel(step)
     if step.type == "grind" or step.type == "level" then
         return "level " .. (step.targetLevel or "?")
+    end
+    if step.type == "xp" and step.xp then
+        return ("level %s, %s%% XP"):format(step.xp.level or "?", step.xp.pct or 0)
     end
 
     local name = step.questName or step.name
@@ -149,6 +153,26 @@ function UI:Build()
         if ns.Panel then ns.Panel:ShowChangelogDialog() end
     end)
     frame.newsBtn = newsBtn
+
+    -- opt-in auto accept/turn-in toggle - kept visible on the tracker
+    -- itself, not just buried in the menu, since it changes real
+    -- gameplay behavior and should be obvious whether it's on.
+    local autoBtn = CreateFrame("Button", nil, frame)
+    autoBtn:SetSize(70, 12)
+    autoBtn:SetPoint("TOPLEFT", 6, -6)
+    autoBtn.text = autoBtn:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    autoBtn.text:SetAllPoints()
+    autoBtn.text:SetJustifyH("LEFT")
+    autoBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Auto accept/turn-in matching quests. Hold Shift to skip it once.")
+        GameTooltip:Show()
+    end)
+    autoBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    autoBtn:SetScript("OnClick", function()
+        if ns.Automation then ns.Automation:Toggle() end
+    end)
+    frame.autoBtn = autoBtn
 
     -- section header bar
     local header = CreateFrame("Frame", nil, frame)
@@ -306,6 +330,11 @@ function UI:Refresh()
 
     if frame.newsBtn then
         frame.newsBtn:SetShown(ns.Panel and ns.Panel:HasUnseenChangelog())
+    end
+
+    if frame.autoBtn then
+        local on = ns.Automation and ns.Automation.enabled
+        frame.autoBtn.text:SetText(on and Theme:Bright("Auto: on") or Theme:Dim("Auto: off"))
     end
 
     if not Core.active then

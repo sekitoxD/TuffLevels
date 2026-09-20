@@ -1,0 +1,51 @@
+# This file is a worked example for CompactGuide.lua, not something the
+# addon loads (only .lua files in the .toc are). It's the seeded
+# Routes/Horde/Durotar.lua route rewritten in the compact syntax, line for
+# line, to demonstrate the format compiles to the same step tables -
+# paste it into Menu > Write a route (text) to try it.
+
+#name Durotar (Orc/Troll)
+#faction Horde
+#races Orc,Troll
+#levels 1-12
+#author sekitoxD
+
+section Valley of Trials 1-6
+
+note name="Valley of Trials" note="Orc and Troll share this route start to finish. Same quests, same order."
+
+accept 4641 name="Your Place In The World" npc=Kaltunk at=1411,42.6,68.8 note="Kaltunk, right in front of you at spawn."
+
+turnin 4641 name="Your Place In The World" npc=Gornek at=1411,43.4,68.0 note="Gornek, inside the big hut."
+
+accept 4642 name="Cutting Teeth" npc=Gornek at=1411,43.4,68.0 note="Same NPC. Kill 10 Mottled Boars just outside."
+
+turnin 4642 name="Cutting Teeth" npc=Gornek at=1411,43.4,68.0
+
+accept 4643 name=Sarkoth npc=Gornek at=1411,43.4,68.0 note="Cave to the southwest. Pull Sarkoth away from the scorpid adds."
+
+turnin 4643 name=Sarkoth npc=Gornek at=1411,43.4,68.0
+
+grind 5 at=1411,44.0,66.0 note="Only if you're short. Boars and scorpids around the valley."
+
+section Leaving the Valley 5-8
+
+accept 4402 name="Vanquish the Betrayers" at=1411,43.4,68.0
+
+accept 788 name="Vile Familiars" at=1411,43.2,67.5 note="Pick up alongside Betrayers - same area, kill them together."
+
+turnin 788 name="Vile Familiars" at=1411,43.2,67.5
+
+turnin 4402 name="Vanquish the Betrayers" at=1411,43.4,68.0
+
+accept 4483 name="Report to Sen'jin Village" at=1411,43.4,68.0 note="Breadcrumb out of the valley. Take it before you leave."
+
+section Sen'jin and Razor Hill 8-12
+
+travel 1411,55.4,74.4 name="Run to Sen'jin Village" note="Southeast along the road. Grab the Razor Hill flight path on the way if you pass it."
+
+turnin 4483 name="Report to Sen'jin Village" at=1411,55.4,74.4
+
+grind 10 at=1411,55.0,74.0 note="Sen'jin and Razor Hill quest cluster. Fill in with whatever's up."
+
+note name="End of seeded route" note="Route continues into Razor Hill and the Barrens. Extend this file or add Routes/Barrens.lua."

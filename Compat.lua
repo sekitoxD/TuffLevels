@@ -45,6 +45,64 @@ Compat.isClassic   = (flavor == "classic")
 -- Are we on a client with Midnight-era restrictions?
 Compat.restricted  = isMainline and (C_Secrets ~= nil or C_RestrictedActions ~= nil)
 
+-- Capability flags, not client-flavor guesses. Feature code should ask
+-- Compat.has.x rather than Compat.isForever/isMainline/etc, so a feature
+-- degrades correctly if a future client build adds or drops an API,
+-- instead of silently breaking because it only checked the flavor name.
+-- has.questDB is set later by Data:DetectProvider(), once it knows whether
+-- a provider actually attached (Data.lua is the only file allowed to touch
+-- QuestieDB directly, so this file can't determine that value itself).
+Compat.has = {
+    specs       = GetSpecialization ~= nil,
+    secretValues = Compat.restricted,
+    taxiMap     = C_TaxiMap ~= nil,
+    questDB     = false,
+}
+
+--------------------------------------------------------------------------
+-- Secret values / instance restrictions
+--------------------------------------------------------------------------
+
+-- NOTE: C_Secrets.HasSecretRestrictions/ShouldUnitIdentityBeSecret and the
+-- issecretvalue() global are from Midnight's patch 12.0.0 API notes, not
+-- verified against this session's actual client - same caveat as the
+-- QuestieDB/flightpath assumptions elsewhere in this addon. Every call
+-- here already degrades to "not restricted" if the API isn't present, so
+-- a wrong guess just means the (already-optional) safety check no-ops,
+-- not that anything breaks.
+
+-- Broadly: is the client currently restricting addon access to some Lua
+-- values at all, regardless of which unit is involved?
+function Compat:HasSecretRestrictions()
+    if C_Secrets and C_Secrets.HasSecretRestrictions then
+        if self:Guard(C_Secrets.HasSecretRestrictions) then return true end
+    end
+    if C_RestrictedActions and C_RestrictedActions.IsAddOnRestrictionActive then
+        if self:Guard(C_RestrictedActions.IsAddOnRestrictionActive) then return true end
+    end
+    return false
+end
+
+-- Narrowly: would THIS unit's identity (name) specifically come back as
+-- an opaque secret value right now?
+function Compat:IsUnitIdentitySecret(unit)
+    if not (C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret) then return false end
+    return self:Guard(C_Secrets.ShouldUnitIdentityBeSecret, unit) == true
+end
+
+-- Belt-and-suspenders: is this specific already-read value itself secret
+-- (opaque, not safely comparable/stringable), independent of whether we
+-- expected it to be.
+function Compat:IsSecretValue(value)
+    if not _G.issecretvalue then return false end
+    local ok, result = pcall(_G.issecretvalue, value)
+    return ok and result == true
+end
+
+function Compat:IsInInstance()
+    return self:Guard(IsInInstance) == true
+end
+
 --------------------------------------------------------------------------
 -- Safe event registration
 --------------------------------------------------------------------------
@@ -176,6 +234,67 @@ function Compat:GetQuestLogInfo(index)
     if not (C_QuestLog and C_QuestLog.GetInfo) then return nil end
     local ok, result = pcall(C_QuestLog.GetInfo, index)
     return ok and result or nil
+end
+
+--------------------------------------------------------------------------
+-- Gossip quest lists
+--------------------------------------------------------------------------
+
+-- NOTE: C_GossipInfo.GetActiveQuests/GetAvailableQuests's returned table
+-- shape (title/questID/... fields) is from memory, not verified against
+-- this session's client - same caveat as the QuestieDB/flightpath
+-- assumptions elsewhere in this addon. Confirm live before relying on it
+-- for anything higher-stakes than the automation opt-in it backs today.
+--
+-- Both paths return a list of { title = string, questID = number|nil,
+-- index = number|nil } - questID is set on the modern path (exact match),
+-- index on the legacy Classic Era path (title-text match only).
+function Compat:GossipActiveQuests()
+    local out = {}
+    if C_GossipInfo and C_GossipInfo.GetActiveQuests then
+        local list = self:Guard(C_GossipInfo.GetActiveQuests) or {}
+        for _, entry in ipairs(list) do
+            table.insert(out, { title = entry.title, questID = entry.questID })
+        end
+        return out
+    end
+    local n = self:Guard(_G.GetNumActiveQuests) or 0
+    for i = 1, n do
+        table.insert(out, { title = self:Guard(_G.GetActiveTitle, i), index = i })
+    end
+    return out
+end
+
+function Compat:GossipAvailableQuests()
+    local out = {}
+    if C_GossipInfo and C_GossipInfo.GetAvailableQuests then
+        local list = self:Guard(C_GossipInfo.GetAvailableQuests) or {}
+        for _, entry in ipairs(list) do
+            table.insert(out, { title = entry.title, questID = entry.questID })
+        end
+        return out
+    end
+    local n = self:Guard(_G.GetNumAvailableQuests) or 0
+    for i = 1, n do
+        table.insert(out, { title = self:Guard(_G.GetAvailableTitle, i), index = i })
+    end
+    return out
+end
+
+function Compat:SelectGossipActiveQuest(entry)
+    if C_GossipInfo and C_GossipInfo.SelectActiveQuest and entry.questID then
+        self:Guard(C_GossipInfo.SelectActiveQuest, entry.questID)
+    elseif entry.index then
+        self:Guard(_G.SelectActiveQuest, entry.index)
+    end
+end
+
+function Compat:SelectGossipAvailableQuest(entry)
+    if C_GossipInfo and C_GossipInfo.SelectAvailableQuest and entry.questID then
+        self:Guard(C_GossipInfo.SelectAvailableQuest, entry.questID)
+    elseif entry.index then
+        self:Guard(_G.SelectAvailableQuest, entry.index)
+    end
 end
 
 -- The modern C_SpellBook API takes an Enum.SpellBookSpellBank value

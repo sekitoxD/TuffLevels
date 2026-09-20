@@ -20,7 +20,6 @@
 --   Map        path order marker
 
 local ADDON, ns = ...
-local Compat = ns.Compat
 local Theme = ns.Theme
 
 local SheetImport = {}

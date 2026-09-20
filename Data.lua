@@ -40,6 +40,7 @@ function Data:DetectProvider()
         end
     end
 
+    Compat.has.questDB = (provider ~= nil)
     return provider
 end
 
@@ -49,6 +50,32 @@ end
 
 function Data:ProviderName()
     return provider or "none"
+end
+
+--------------------------------------------------------------------------
+-- Flight points
+--------------------------------------------------------------------------
+
+-- NOTE: TaxiNodeInfo field names (state, Enum.FlightPathState.Known) are
+-- from memory, not verified against this session's client - same caveat
+-- as the QuestieDB assumptions above. Confirm with /tuff verify or a live
+-- flightpath step before shipping a route that relies on this.
+--
+-- A "flightpath" step is identified by step.mapID (the uiMapID the node
+-- lives on) plus either step.node (a numeric nodeID) or step.name.
+function Data:IsFlightPathKnown(step)
+    if not (Compat.has.taxiMap and step.mapID and Enum.FlightPathState) then return false end
+
+    local nodes = Compat:Guard(C_TaxiMap.GetAllTaxiNodes, step.mapID)
+    if not nodes then return false end
+
+    for _, node in ipairs(nodes) do
+        if (step.node and node.nodeID == step.node)
+            or (step.name and node.name == step.name) then
+            return node.state == Enum.FlightPathState.Known
+        end
+    end
+    return false
 end
 
 --------------------------------------------------------------------------
@@ -99,6 +126,17 @@ function Data:IsQuestReadyToTurnIn(questID)
     return Compat:IsQuestObjectivesComplete(questID)
 end
 
+-- Is objective n (1-based, in the order the quest log lists them) of this
+-- quest finished? Lets a "complete" step gate on one specific objective
+-- rather than the whole quest.
+function Data:IsQuestObjectiveDone(questID, n)
+    if not (C_QuestLog and C_QuestLog.GetQuestObjectives) then return false end
+    local objectives = Compat:Guard(C_QuestLog.GetQuestObjectives, questID)
+    if type(objectives) ~= "table" then return false end
+    local obj = objectives[n]
+    return obj ~= nil and obj.finished == true
+end
+
 function Data:PlayerLevel()
     return UnitLevel("player")
 end
@@ -147,8 +185,45 @@ function Data:ValidateRoute(route)
             end
         end
 
-        if step.type == "grind" and type(step.targetLevel) ~= "number" then
-            table.insert(problems, label .. ": grind step needs targetLevel")
+        if (step.type == "grind" or step.type == "level") and type(step.targetLevel) ~= "number" then
+            table.insert(problems, label .. ": " .. step.type .. " step needs targetLevel")
+        end
+
+        if step.type == "flightpath" and not (step.mapID and (step.node or step.name)) then
+            table.insert(problems, label .. ": flightpath step needs mapID and node or name")
+        end
+
+        if step.type == "complete" and step.objective ~= nil and type(step.objective) ~= "number" then
+            table.insert(problems, label .. ": objective should be a number")
+        end
+
+        if step.type == "xp" then
+            local xp = step.xp
+            if type(xp) ~= "table" or type(xp.level) ~= "number" then
+                table.insert(problems, label .. ": xp step needs xp = { level = n, pct = n }")
+            elseif xp.pct ~= nil and (type(xp.pct) ~= "number" or xp.pct < 0 or xp.pct > 100) then
+                table.insert(problems, label .. ": xp.pct should be 0-100")
+            end
+        end
+
+        if step.skipIfLevel ~= nil and type(step.skipIfLevel) ~= "number" then
+            table.insert(problems, label .. ": skipIfLevel should be a number")
+        end
+
+        if step.requires then
+            if type(step.requires) ~= "table" then
+                table.insert(problems, label .. ": requires should be a list of step numbers")
+            else
+                for _, idx in ipairs(step.requires) do
+                    if type(idx) ~= "number" or idx < 1 or idx > #route.steps then
+                        table.insert(problems,
+                            ("%s: requires references step %s, which isn't in this route"):format(
+                                label, tostring(idx)))
+                    elseif idx == i then
+                        table.insert(problems, label .. ": requires references itself")
+                    end
+                end
+            end
         end
 
         if step.x and (step.x < 0 or step.x > 100) then
@@ -160,6 +235,17 @@ function Data:ValidateRoute(route)
         if (step.x or step.y) and not self:StepMap(step) then
             table.insert(problems,
                 label .. ": has coords but no map - needs a zone name this client knows, or a uiMapID")
+        end
+
+        if step.path then
+            for j, point in ipairs(step.path) do
+                if not (point.x and point.y) then
+                    table.insert(problems, ("%s: path point %d missing x/y"):format(label, j))
+                elseif not self:StepMap(point) then
+                    table.insert(problems,
+                        ("%s: path point %d has coords but no map"):format(label, j))
+                end
+            end
         end
     end
 
@@ -181,6 +267,66 @@ function Data:StepMap(step)
         if id then return id end
     end
     return step.map
+end
+
+-- Real-world distance in yards from the player to a map/x/y point, using
+-- world positions rather than the fractional map-position estimate Arrow
+-- used before (that estimate scales with each zone's map size, not real
+-- distance). Returns nil if the position APIs aren't available or the
+-- player's world position can't be read - callers fall back to their own
+-- coarser estimate in that case.
+function Data:RealDistanceToStep(mapID, point)
+    if not (mapID and point.x and point.y
+            and C_Map.GetWorldPosFromMapPos and CreateVector2D and UnitPosition) then
+        return nil
+    end
+
+    local y1, x1 = Compat:Guard(UnitPosition, "player")
+    if not (y1 and x1) then return nil end
+
+    local vec = Compat:Guard(CreateVector2D, point.x / 100, point.y / 100)
+    if not vec then return nil end
+
+    local _, worldPos = Compat:Guard(C_Map.GetWorldPosFromMapPos, mapID, vec)
+    if not (worldPos and worldPos.GetXY) then return nil end
+
+    local wx, wy = worldPos:GetXY()
+    local dx, dy = wx - x1, wy - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+-- For steps with an authored `path` (ordered waypoints, possibly across
+-- several maps, for a multi-hop or cross-zone travel step), returns the
+-- next point still ahead instead of the step's own final destination -
+-- advances through the list as each point is actually reached. Falls back
+-- to the step's own map/x/y once the path is exhausted or absent.
+-- Returns mapID, x, y, isFinal.
+local PATH_POINT_REACHED_YARDS = 20
+
+function Data:EffectiveTarget(step)
+    if not step.path or #step.path == 0 then
+        return self:StepMap(step), step.x, step.y, true
+    end
+
+    step._pathIndex = step._pathIndex or 1
+    while step._pathIndex <= #step.path do
+        local point = step.path[step._pathIndex]
+        local mapID = self:StepMap(point)
+        local currentMap = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+
+        if mapID and currentMap == mapID then
+            local dist = self:RealDistanceToStep(mapID, point)
+            if dist and dist <= PATH_POINT_REACHED_YARDS then
+                step._pathIndex = step._pathIndex + 1
+            else
+                return mapID, point.x, point.y, false
+            end
+        else
+            return mapID, point.x, point.y, false
+        end
+    end
+
+    return self:StepMap(step), step.x, step.y, true
 end
 
 function Data:SetWaypoint(step)

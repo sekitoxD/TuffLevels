@@ -207,16 +207,25 @@ function Recorder:BuildRouteText(routeName)
     local function add(line) table.insert(out, line) end
 
     local _, race = UnitRace("player")
+    local _, class = UnitClass("player")
     local faction = UnitFactionGroup("player")
     local firstLevel = self.log[1] and self.log[1].level or 1
     local lastLevel  = self.log[#self.log] and self.log[#self.log].level or 60
+    local recordedAt = date("%Y-%m-%d")
 
-    add("-- Recorded with TuFFlevels on " .. date("%Y-%m-%d"))
+    add("-- Recorded with TuFFlevels on " .. recordedAt)
     add("-- Every quest ID and coordinate below came from the game client.")
     add("")
     add("local ADDON, ns = ...")
     add("")
     add(('ns.RegisterRoute("%s", {'):format(EscapeLua(routeName)))
+    -- format: bumped only if this export shape changes in a way
+    -- tools/merge_routes.py needs to know about - lets it warn on an
+    -- export from a mismatched addon version rather than misreading it.
+    add("    format  = 1,")
+    add(('    client  = "%s %d",'):format(Compat.flavor, Compat.tocVersion))
+    add(('    recordedAt = "%s",'):format(recordedAt))
+    add(('    class   = "%s",'):format(class or "?"))
     add(('    faction = "%s",'):format(faction or "Horde"))
     add(('    races   = { "%s" },'):format(race or "Orc"))
     add(('    levels  = { %d, %d },'):format(firstLevel, lastLevel))
