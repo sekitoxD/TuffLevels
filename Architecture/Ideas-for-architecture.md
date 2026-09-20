@@ -1,0 +1,8 @@
+always audit plans currently given and in the future. review the impact and performance hit and the time it takes for development.
+1. fix issue with color palate not staying when you reload or login in again after closing game down. determine what the best solution to a fix if needed is required 
+2. fix issue with why quest tracking seems to have broke and no longer displays current kill count for mobs or items gathered. Determine weather an issue is caused with partially completing a quest and reloading. and if so determine the best way to fix this.
+3. add a section in the menu explaining auto progress/ completed. it should detail how to properly get about using the catchup mode and what commands can start it, if any. 
+4. stop recording and save this as a route options are still in the menu. determine if removing them or hiding them is appropriate with previous plans implemented.
+5. map button on the addon is not working as showing clicking it does nothing. determine what the best solution is and determine if a fix is needed.
+6. rework the current layout to represent picture shown (check picture) keep current color plans intact and allow them to continue working with new idea. attempt to change question mark to display class chosen instead of a red ? next to section currently on (do not use a hearthstone as a picture). if using icons of class currently using the guide proves to be to difficult just use the rogue class icon as the default 
+7. by default the guide should be on the left hand side and not in the middle of the screen. continue to allow the introduction of the addon to be displayed in the middle, also add current changes in a minimal and non intrusive way.
