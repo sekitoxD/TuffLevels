@@ -82,6 +82,14 @@ def _mode(values):
 
 def merge_quest_steps(inputs, conflicts):
     """{(quest, type): (avg_fractional_position, merged_step)}."""
+    # Fields merged by explicit mode/median logic below, with conflict
+    # detection - everything else on a step is carried through verbatim
+    # (see the loop over `entries[0][1]` near the end) rather than only
+    # ever emitting this fixed set, so nothing (races, class, minLevel,
+    # skipIfLevel, optional, requires, path, objective, xp, mapID, node,
+    # or any future field) is silently dropped from the merged output.
+    HANDLED = {"type", "quest", "name", "npc", "map", "note", "x", "y"}
+
     groups = {}
     for path, _, steps in inputs:
         n = max(1, len(steps))
@@ -91,14 +99,21 @@ def merge_quest_steps(inputs, conflicts):
             qid = step.get("quest")
             if not isinstance(qid, int):
                 continue
-            groups.setdefault((qid, step["type"]), []).append((path, step, i / n))
+            # `complete` steps may legitimately repeat for the same quest
+            # with a different `objective` (Phase E1) - keying on quest+
+            # type alone would collapse two genuinely different steps
+            # (different objectives, different locations) into one.
+            key = (qid, step["type"], step.get("objective"))
+            groups.setdefault(key, []).append((path, step, i / n))
 
     all_paths = {path for path, _, _ in inputs}
     merged = {}
 
     for key, entries in groups.items():
-        qid, stype = key
+        qid, stype, objective = key
         who = "%s quest %d" % (stype, qid)
+        if objective is not None:
+            who += " objective %s" % objective
         present_in = {path for path, _, _ in entries}
 
         missing_from = all_paths - present_in
@@ -141,6 +156,16 @@ def merge_quest_steps(inputs, conflicts):
                     "%s: coordinates vary by more than 5 (x: %.1f-%.1f, y: %.1f-%.1f) - "
                     "median used, double check" % (who, min(xs), max(xs), min(ys), max(ys)))
 
+        # Anything not explicitly merged above: first non-None value seen
+        # wins. These fields (races, class, minLevel, requires, etc.) are
+        # far more likely to be uniformly present/absent across an honest
+        # recording than independently disagreed-upon per person, so
+        # mode/conflict-detection isn't worth building out for them too.
+        for _, s, _ in entries:
+            for k, v in s.items():
+                if k not in HANDLED and k not in step and v is not None:
+                    step[k] = v
+
         position = statistics.mean(p for _, _, p in entries)
         merged[key] = (position, step)
 
@@ -156,6 +181,54 @@ def merge_other_steps(inputs):
     n = max(1, len(steps))
     return [(i / n, step) for i, step in enumerate(steps)
             if isinstance(step, dict) and step.get("type") not in QUEST_TYPES]
+
+
+def _serialize_value(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return ("%g" % value) if value == value else "0"  # NaN guard, shouldn't occur
+    if isinstance(value, str):
+        return '"%s"' % lua._escape_lua(value)
+    if isinstance(value, list):
+        return "{ " + ", ".join(_serialize_value(v) for v in value) + " }"
+    if isinstance(value, dict):
+        int_keys = [k for k in value if isinstance(k, int)]
+        if int_keys and sorted(int_keys) == list(range(1, len(value) + 1)):
+            return "{ " + ", ".join(_serialize_value(value[k]) for k in sorted(int_keys)) + " }"
+        parts = []
+        for k, v in value.items():
+            if isinstance(k, str) and k.isidentifier():
+                parts.append("%s = %s" % (k, _serialize_value(v)))
+            else:
+                parts.append("[%s] = %s" % (_serialize_value(k), _serialize_value(v)))
+        return "{ " + ", ".join(parts) + " }"
+    return "nil"
+
+
+# Preferred key order for a readable diff; any field not listed here still
+# gets emitted (see build_merged_route), just after these.
+_STEP_KEY_ORDER = [
+    "type", "quest", "questName", "name", "npc", "zone", "map", "x", "y",
+    "note", "targetLevel", "xp", "objective", "levels", "path",
+    "mapID", "node", "minLevel", "skipIfLevel", "optional", "requires",
+    "races", "class",
+]
+
+
+def _serialize_step(step):
+    parts = []
+    seen = set()
+    for key in _STEP_KEY_ORDER:
+        if key in step and step[key] is not None:
+            parts.append("%s = %s" % (key, _serialize_value(step[key])))
+            seen.add(key)
+    for key, value in step.items():
+        if key not in seen and value is not None:
+            parts.append("%s = %s" % (key, _serialize_value(value)))
+    return "{ " + ", ".join(parts) + " }"
 
 
 def build_merged_route(inputs, route_name):
@@ -182,25 +255,9 @@ def build_merged_route(inputs, route_name):
     lines.append("    steps = {")
 
     for step in ordered_steps:
-        parts = ['type = "%s"' % step.get("type", "note")]
-        if step.get("quest") is not None:
-            parts.append("quest = %d" % step["quest"])
-        if step.get("name"):
-            parts.append('name = "%s"' % lua._escape_lua(step["name"]))
-        if step.get("npc"):
-            parts.append('npc = "%s"' % lua._escape_lua(step["npc"]))
-        if step.get("map") is not None:
-            parts.append("map = %s" % step["map"])
-        if step.get("x") is not None and step.get("y") is not None:
-            parts.append("x = %s, y = %s" % (step["x"], step["y"]))
-        if step.get("note"):
-            parts.append('note = "%s"' % lua._escape_lua(step["note"]))
-        if step.get("targetLevel") is not None:
-            parts.append("targetLevel = %s" % step["targetLevel"])
-        if step.get("levels"):
-            lv = step["levels"]
-            parts.append("levels = { %s, %s }" % (lv[0], lv[1]))
-        lines.append("        { " + ", ".join(parts) + " },")
+        if not isinstance(step, dict):
+            continue
+        lines.append("        " + _serialize_step(step) + ",")
 
     lines.append("    },")
     lines.append("})")
