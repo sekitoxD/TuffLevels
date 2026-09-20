@@ -258,8 +258,8 @@ the addon knows nothing about.
    decide which number is right.
 5. **Tag the Tirisfal chain links `ambiguous`** (T4). Until that is done those steps can
    mis-resolve the way F2 describes.
-6. **`SheetImport.lua` still has the F4 bug** — it writes the sheet's level into `minLevel`.
-   Any future paste-import through that window inherits the hiding behaviour.
+6. ~~**`SheetImport.lua` still has the F4 bug**~~ **Fixed.** It now writes the sheet's level
+   into `atLevel`, same as the generated routes, instead of `minLevel`.
 7. **`Routes/Durotar.lua` is still `sample = true` with unverified quest IDs**, and now
    overlaps the real Durotar leg. It is never auto-selected, so it is harmless, but it is a
    candidate for deletion once the generated route has been played.
