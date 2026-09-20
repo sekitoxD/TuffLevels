@@ -27,3 +27,9 @@ SavedVariables/
 # Claude Code personal settings/hooks (not shared with the team)
 .claude/settings.local.json
 .claude/hooks/
+
+# tuffweights: DB-derived scratch data (GPL, never commit) and Rust build output
+tools/.cache/
+tools/out/
+tools/tuffweights/target/
+tools/tuffweights/out/

@@ -1,0 +1,176 @@
+# Classic Era 1.12 ruleset for the rogue leveling calculator.
+#
+# Every number here is a game constant or a tunable assumption; no item, quest or
+# ability data lives here (those come from the DB at run time). A few constants are
+# aggregates from the cmangos DB (base stats, mob armor medians) are NOT stored here:
+# the exporter writes them to the gitignored items export and the tool merges them in. Attack table, crit curve, armor formula and item proc
+# rate are cited to cmangos source; talent values were checked against cmangos
+# spell_template. Lines tagged `assumption` are modelling choices, not game data.
+#
+# The Forever transition is a sibling file (rules/forever.toml) with different
+# talents/weapon types. Keep game rules here, never in the Rust code.
+
+name = "era-1.12"
+
+# Weapon types a Classic Era rogue may equip. Axes are exported but excluded:
+# Era rogues cannot use them (Forever can). Two-handers are never candidates.
+usable_weapon_types = ["dagger", "sword", "mace", "fist"]
+dual_wield_level = 10        # Dual Wield is a level 10 trainer skill
+max_level = 60
+
+# Spell ids to ignore when picking the highest ability rank (later-patch ranks
+# the 1.12 DB snapshot still carries). 31016 = Eviscerate Rank 9 (TBC).
+exclude_spells = [31016]
+
+[fight]
+# One typical leveling fight, in seconds, and what the rogue starts it with.
+seconds = 20.0               # assumption; short fights favor burst, long favor sustained
+start_energy = 100.0
+energy_per_sec = 10.0        # 20 energy per 2s tick. Classic 1.12
+mob_level_delta = 0          # leveling mobs sit near your level; run +1/+2 too
+# Mob armor by level is not stored here: it is a DB aggregate (GPL rule), so
+# tools/export_items.py writes it to the `world` section of the items export.
+mob_armor_c0 = 400.0         # armor DR = A / (A + c0 + c1*attackerLevel) capped at 75%. Confirmed: cmangos Unit::CalcArmorReducedDamage (0.1A/(8.5L+40))
+mob_armor_c1 = 85.0
+energy_cap = 100.0
+gcd = 1.0                    # rogue global cooldown; the model decides once per gcd
+magic_taken_factor = 0.9     # average resist on proc spell damage  # assumption
+
+[player]
+ap_per_level = 2.0           # rogue melee AP = 2*level + Str + Agi - 20 (Classic AP formulas wiki)
+ap_flat = -20.0
+ap_per_str = 1.0
+ap_per_agi = 1.0
+crit_base_pct = 0.0          # cmangos applies no base crit for melee (agility/ratio only)
+# Agility needed for 1% melee crit, by level. cmangos Player::GetMeleeCritFromAgility linearly
+# interpolates rogue 2.2 (level 1) to 29.0 (level 60); 29 at 60 also matches public guides. The
+# real client DBC (gtChanceToMeleeCrit) is not public and one forum post measured 3.5 at level 1,
+# so the mid curve stays the least certain constant; see the sensitivity check in the run notes.
+crit_agi_per_pct = [[1, 2.2], [60, 29.0]]
+# Unbuffed base Str/Agi by level also come from the items export (`world`).
+
+[reference_gear]
+# What the rest of a leveling character's gear supplies besides the weapons,
+# per level. Only weapon-vs-weapon differences matter for ranking, but Agi/AP
+# affect how much a weapon's own stats are worth.  # assumption
+str_per_level = 0.35
+agi_per_level = 0.45
+ap_per_level = 0.0
+crit_pct = 0.0
+hit_pct = 0.0
+
+[combat]
+# Attack table against a mob `diff` skill points above your weapon skill.
+# Source for the whole attack table: cmangos mangos-classic src/game/Entities/Unit.cpp
+# (CalculateEffectiveMissChance / CalculateEffectiveDodgeChance / CalculateEffectiveCritChance /
+# CalculateEffectiveGlanceChance / CalculateGlanceAmount), read 2026-09-19. `diff` = mob defense
+# (5*level) minus your weapon skill. The 1.12 wiki pages (vanilla-wow-archive) 402 to fetchers.
+miss_base_pct = 5.0
+miss_per_skill_below = 0.04  # diff <= 0 (you out-skill the mob): 5 + 0.04*diff
+miss_per_skill_low = 0.1     # 0 < diff <= 10: 5 + 0.1*diff
+miss_high_offset = 1.0       # diff > 10: 5 + 1.0 + 0.6*(diff-10) -> 6% at +2 levels, 9% at +3 (10*0.1, then 0.2+0.4 per point)
+miss_per_skill_high = 0.6
+dual_wield_miss_pct = 19.0   # extra white-hit miss while dual wielding
+dodge_base_pct = 5.0
+dodge_per_skill = 0.1        # NPC dodge: 5 + 0.1*diff for diff > 0 ...
+dodge_per_skill_below = 0.04 # ... and 5 + 0.04*diff when you out-skill the mob
+glance_base_pct = 10.0       # glancing chance = 10 + 2*diff (max 40)
+glance_per_skill = 2.0
+glance_max_pct = 40.0
+crit_suppression_per_skill = 0.2    # cmangos: vs NPCs crit changes by 0.2 per skill point of (your skill - mob defense), both signs (1% per level)
+crit_mult = 2.0
+oh_damage_mult = 0.5         # base off-hand penalty
+normalized_speed_dagger = 1.7
+normalized_speed_other = 2.4
+evis_ap_per_cp = 0.03
+builder_miss_energy_refund = 0.8   # a missed/dodged special refunds 80% energy
+default_item_ppm = 1.0       # procs with no listed ppm: cmangos uses speed*1.8% per MH hit (speed*1.6% OH), i.e. ~1.08 / 0.96 ppm
+
+# Racial weapon skill bonuses (rogue-relevant only).
+[racial_skill.human]
+sword = 5
+mace = 5
+[racial_skill.dwarf]
+mace = 5
+[racial_skill.orc]
+axe = 5
+
+# ----------------------------------------------------------------------------
+# Talents. `max` ranks; per-rank effect fields (all optional). Tier gating is
+# ignored: a build spends `level - 9` points in the order it lists them.
+# ----------------------------------------------------------------------------
+[talents.improved_sinister_strike]
+max = 2
+ss_energy_reduction = [3.0, 5.0]   # total per rank (spell_template 13732 / 13863)
+
+[talents.precision]
+max = 5
+hit_pct = 1.0
+
+[talents.dual_wield_specialization]
+max = 5
+oh_dmg_pct = 10.0            # +10% of base OH damage per rank (50% -> 75% at 5/5)
+
+[talents.aggression]
+max = 3
+special_dmg_pct = 2.0        # Sinister Strike and Eviscerate
+
+[talents.sword_specialization]
+max = 5
+sword_extra_attack_pct = 1.0
+
+[talents.mace_specialization]
+max = 5
+mace_skill = 1.0             # +1 mace skill per rank (patch 1.12); stun not valued
+
+[talents.dagger_specialization]
+max = 5
+crit_pct_dagger = 1.0
+
+[talents.fist_weapon_specialization]
+max = 5
+crit_pct_fist = 1.0
+
+[talents.malice]
+max = 5
+crit_pct = 1.0
+
+[talents.improved_eviscerate]
+max = 3
+evis_dmg_pct = 5.0
+
+[talents.lethality]
+max = 5
+crit_dmg_add = 0.06          # extra crit multiplier on Sinister Strike/Backstab per rank
+
+[talents.opportunity]
+max = 5
+bs_dmg_pct = 4.0             # Backstab and Ambush
+
+[talents.deadliness]
+max = 5
+ap_pct = 2.0
+
+[talents.adrenaline_rush]
+max = 1
+energy_bonus_avg = 0.05      # +100% energy for 15s every 5 min = 5% average
+
+[talents.blade_flurry]
+max = 1
+haste_bonus_avg = 0.025      # +20% speed for 15s every 2 min = 2.5% average
+
+# Spell duration by SpellDuration.dbc index, in seconds. The DB stores only the index,
+# so each entry is calibrated from spells whose duration is known: 1 Blind (10s), 8 Serpent Sting /
+# Immolate / Sprint (15s), 9 Sunder Armor / Expose Armor (30s), 18 Polymorph / Scorpid Sting /
+# Banish (20s), 27 Mace Stun Effect / Hammer of Justice (3s), 29 Corruption / Stormstrike /
+# Deadly Poison (12s), 32 Shield Bash / Challenging Shout (6s), 63 Sap R1 (25s).
+# Only DoT procs on weapons are valued from this table; an index not listed leaves the proc unscored.
+[spell_duration_s]
+1 = 10.0
+8 = 15.0
+9 = 30.0
+18 = 20.0
+27 = 3.0
+29 = 12.0
+32 = 6.0
+63 = 25.0
