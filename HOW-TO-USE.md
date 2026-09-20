@@ -78,7 +78,7 @@ Under **Menu**:
 | **Mark this spot** | Drops a travel waypoint exactly where you stand |
 | **NPC markers** | Turn the head icons off |
 | **Friendly nameplates** | Toggle, in case they interfere with something else |
-| **Choose route** | Switch between installed routes |
+| **Available Guides** | Switch between installed routes |
 
 ---
 
@@ -230,7 +230,7 @@ Do each tab separately — they're separate routes.
 
 ## The 1-60 skeleton
 
-**Menu > Choose route > Horde 1-60 (Orc/Troll).**
+**Menu > Available Guides > Horde 1-60 (Orc/Troll).**
 
 25 sections covering every zone from the Valley of Trials to 60, with level
 bands, which hub to base in, and where quest density drops off enough that
@@ -280,7 +280,7 @@ Then open `TuFFlevels.toc` in Notepad and add one line at the bottom:
 Routes\MyDurotar.lua
 ```
 
-Type `/reload` in game. It'll show up under **Menu > Choose route**.
+Type `/reload` in game. It'll show up under **Menu > Available Guides**.
 
 That's the only place you touch a file, and it's copy and paste.
 

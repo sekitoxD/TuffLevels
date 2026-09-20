@@ -95,7 +95,7 @@ function UI:Build()
 
     frame = CreateFrame("Frame", "TuFFlevelsFrame", UIParent)
     frame:SetSize(330, 250)
-    frame:SetPoint("CENTER", UIParent, "CENTER", 340, 80)
+    frame:SetPoint("LEFT", UIParent, "LEFT", 20, 0)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
@@ -137,6 +137,19 @@ function UI:Build()
     end)
     countBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
+    -- small, dim "what's new" badge - only shown once per changelog version
+    local newsBtn = CreateFrame("Button", nil, frame)
+    newsBtn:SetSize(70, 12)
+    newsBtn:SetPoint("TOPRIGHT", -6, -6)
+    newsBtn.text = newsBtn:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    newsBtn.text:SetAllPoints()
+    newsBtn.text:SetJustifyH("RIGHT")
+    newsBtn.text:SetText(Theme:Dim("What's new"))
+    newsBtn:SetScript("OnClick", function()
+        if ns.Panel then ns.Panel:ShowChangelogDialog() end
+    end)
+    frame.newsBtn = newsBtn
+
     -- section header bar
     local header = CreateFrame("Frame", nil, frame)
     header:SetPoint("TOPLEFT", 6, -20)
@@ -164,7 +177,9 @@ function UI:Build()
     local portrait = header:CreateTexture(nil, "ARTWORK")
     portrait:SetSize(20, 20)
     portrait:SetPoint("LEFT", 5, 0)
-    portrait:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    local tex, l, r, t2, b = ns.Compat:ClassIcon()
+    portrait:SetTexture(tex)
+    portrait:SetTexCoord(l, r, t2, b)
     frame.portrait = portrait
 
     local prev = CreateFrame("Button", nil, header)
@@ -232,9 +247,11 @@ function UI:Build()
         if ns.Arrow and ns.Arrow.Toggle then ns.Arrow:Toggle() end
     end)
     Btn("Menu", 56, "BOTTOM", 0, function() ns.Panel:Toggle() end)
-    Btn("Map", 56, "BOTTOM", 60, function()
+    frame.mapBtn = Btn("Map", 56, "BOTTOM", 60, function()
         local step = ns.Core:CurrentStep()
-        if step then ns.Data:SetWaypoint(step) end
+        if not (step and ns.Data:SetWaypoint(step)) then
+            ns.Print("This step has no map location.")
+        end
     end)
     Btn("Next", 56, "BOTTOMRIGHT", -8, function() ns.Core:Advance() end)
 
@@ -287,12 +304,17 @@ function UI:Refresh()
     if not frame then return end
     local Core = ns.Core
 
+    if frame.newsBtn then
+        frame.newsBtn:SetShown(ns.Panel and ns.Panel:HasUnseenChangelog())
+    end
+
     if not Core.active then
         frame.sectionText:SetText(Theme:Ember("No route loaded"))
-        frame.current:SetText(Theme:Dim("Menu > Choose route"))
+        frame.current:SetText(Theme:Dim("Menu > Available Guides"))
         frame.previous:SetText("")
         frame.upcoming:SetText("")
         frame.stepCount:SetText("")
+        frame.mapBtn:Disable()
         return
     end
 
@@ -335,7 +357,14 @@ function UI:Refresh()
     if not step then
         frame.current:SetText(Theme:Bright("Route complete."))
         frame.upcoming:SetText("")
+        frame.mapBtn:Disable()
         return
+    end
+
+    if ns.Data:StepMap(step) and step.x and step.y then
+        frame.mapBtn:Enable()
+    else
+        frame.mapBtn:Disable()
     end
 
     -- current step

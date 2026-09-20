@@ -23,8 +23,8 @@ The addon ships **three TOC files** for three different WoW clients, all sharing
 
 Three Forever-specific bugs `Compat.lua` works around (don't "fix" these by removing the workaround):
 - **Unknown events abort the whole file.** `RegisterEvent` on an event the client doesn't recognize throws and kills every line after it in that file. All event registration must go through `Compat:RegisterEvents(frame, events)`, which `pcall`s each one individually and reports rejects via `/tuff client`.
-- **SavedVariables never restore on login** (client writes on exit, doesn't read back). Can't be fixed in Lua; `Compat:InitSavedVar` keeps an in-session cache so a mid-session `/reload` doesn't lose data, and `Compat:SavedVarsAreBroken()` drives a login warning.
-- **100-error cap per session** — after that the client stops delivering Lua errors to *any* addon. `Compat:Guard(fn, ...)` self-limits to 10 errors so this addon can't mask other addons' real errors.
+- **SavedVariables never restore on login** (client writes on exit, doesn't read back) — this hits `/reload` too, not just a full relaunch, since `/reload` re-executes every addon's Lua from scratch just like a relaunch does. Can't be fixed in Lua; `Compat:InitSavedVar`'s in-session cache only dedupes repeated calls within one continuous Lua session, it does not survive `/reload`. `Compat:SavedVarsAreBroken()` drives a login warning that says so.
+- **100-error cap per session** — after that the client stops delivering Lua errors to *any* addon. `Compat:Guard(fn, ...)` self-limits (currently 20 errors) so this addon can't mask other addons' real errors.
 
 No secure snippets are used anywhere (`loadstring_untainted` is absent on Forever beta; `WrapScript`/`RunAttribute`/state drivers all throw there) — keep it that way.
 

@@ -199,21 +199,23 @@ end
 -- would immediately undo it by skipping straight past the step the player
 -- just navigated to.
 function Core:Reconcile()
-    if not self.active or self.pinned then return end
+    if not self.active then return end
 
     local moved = false
-    local guard = 0
 
-    while self.index <= #self.active.steps do
-        guard = guard + 1
-        if guard > 5000 then break end   -- paranoia
+    if not self.pinned then
+        local guard = 0
+        while self.index <= #self.active.steps do
+            guard = guard + 1
+            if guard > 5000 then break end   -- paranoia
 
-        local step = self.active.steps[self.index]
-        if not StepApplies(step) or IsStepDone(step) then
-            self.index = self.index + 1
-            moved = true
-        else
-            break
+            local step = self.active.steps[self.index]
+            if not StepApplies(step) or IsStepDone(step) then
+                self.index = self.index + 1
+                moved = true
+            else
+                break
+            end
         end
     end
 
@@ -393,8 +395,8 @@ function Core:Load()
     -- so progress silently resets. Warn instead of quietly losing it.
     if Compat:SavedVarsAreBroken() then
         C_Timer.After(5, function()
-            Print("|cffffff00Progress saving is not working on this client.|r")
-            Print("Your step number is shown on the tracker - note it before logging out.")
+            Print("|cffffff00Progress and saved settings are not restored on this client.|r")
+            Print("This includes your step number and color theme, and it resets on /reload too, not just on logout - note your step before either.")
         end)
     end
 
@@ -456,7 +458,17 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
             local firstRun = ns.Panel:FirstRunSetup()
             ns.Panel:Build()
             if firstRun then
-                C_Timer.After(2, function() ns.Panel:ShowWelcome() end)
+                if Compat:SavedVarsAreBroken() then
+                    -- "First run" can't be remembered on this client (same
+                    -- SavedVariables bug as everything else), so the modal
+                    -- welcome popup would reopen every /reload forever.
+                    -- A one-line, easy-to-ignore reminder instead.
+                    C_Timer.After(2, function()
+                        Print("TuFFlevels is ready - just play, it's tracking as you go. See Menu > Help / About.")
+                    end)
+                else
+                    C_Timer.After(2, function() ns.Panel:ShowWelcome() end)
+                end
             end
         end
         if ns.Arrow then ns.Arrow:Build() end
@@ -641,6 +653,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "catchup" then
         Core:CatchUp(arg:lower() == "confirm")
 
+    elseif cmd == "help" then
+        if ns.Panel then ns.Panel:ShowHelpDialog() end
+
     elseif cmd == "client" then
         Print(("Flavor: %s  |  Interface: %d  |  Mainline: %s"):format(
             Compat.flavor, Compat.tocVersion, tostring(Compat.isMainline)))
@@ -651,7 +666,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
                 table.concat(Core.missingEvents, ", ") .. "|r")
         end
         if Compat:SavedVarsAreBroken() then
-            Print("|cffffff00SavedVariables are not being restored on this client.|r")
+            Print("|cffffff00SavedVariables (progress, saved settings, color theme) are not being restored on this client.|r")
         end
 
     elseif cmd == "errors" then
@@ -674,7 +689,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
-        Print("          verify | capture | client | errors | reset")
+        Print("          verify | capture | client | errors | reset | help")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")

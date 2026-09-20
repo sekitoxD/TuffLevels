@@ -11,6 +11,75 @@ ns.Panel = Panel
 
 local panel
 
+-- Grows a dialog to fit its body text instead of letting the Close/Confirm
+-- row overlap it - body has no bottom anchor, so GetStringHeight reflects
+-- the wrapped text height after SetText. Frame stays centered since
+-- SetPoint("CENTER") re-centers around the new size automatically.
+local function FitDialogToBody(f, body, topOffset, bottomReserve, minHeight)
+    f:SetHeight(math.max(minHeight, topOffset + body:GetStringHeight() + bottomReserve))
+end
+
+--------------------------------------------------------------------------
+-- Changelog
+--------------------------------------------------------------------------
+
+local CHANGELOG_VERSION = "1.4.0"
+local CHANGELOG = {
+    "Added a Help / About section explaining auto progress and catch-up mode.",
+    "Map button now greys out (with feedback) instead of silently doing nothing on steps with no coordinates.",
+    "The SavedVariables-loss warning now mentions saved settings/theme, not just step progress.",
+    "Tracker now defaults to the left side of the screen on a fresh install.",
+}
+
+function Panel:ShowChangelogDialog()
+    if self.changelogBox then self.changelogBox:Hide() end
+
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    db.lastSeenChangelogVersion = CHANGELOG_VERSION
+    if ns.UI and ns.UI.Refresh then ns.UI:Refresh() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(400, 240)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("What's new - " .. CHANGELOG_VERSION)
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOPLEFT", 20, -46)
+    body:SetPoint("TOPRIGHT", -20, -46)
+    body:SetJustifyH("LEFT")
+    body:SetSpacing(6)
+    body:SetTextColor(unpack(ns.Theme.color.text))
+
+    local lines = {}
+    for _, entry in ipairs(CHANGELOG) do
+        table.insert(lines, "- " .. entry)
+    end
+    body:SetText(table.concat(lines, "\n"))
+
+    FitDialogToBody(f, body, 46, 60, 160)
+
+    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    ok:SetSize(100, 22)
+    ok:SetPoint("BOTTOM", 0, 16)
+    ok:SetText("Close")
+    ok:SetScript("OnClick", function() f:Hide() end)
+
+    self.changelogBox = f
+    f:Show()
+end
+
+function Panel:HasUnseenChangelog()
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    return db.lastSeenChangelogVersion ~= CHANGELOG_VERSION
+end
+
 --------------------------------------------------------------------------
 -- First run
 --------------------------------------------------------------------------
@@ -72,6 +141,8 @@ function Panel:ShowWelcome()
         "When you want to save what you've played as a route, click |cffffd100Menu|r " ..
         "on the tracker and hit Export.")
 
+    FitDialogToBody(w, body, 52, 60, 250)
+
     local ok = CreateFrame("Button", nil, w, "UIPanelButtonTemplate")
     ok:SetSize(120, 24)
     ok:SetPoint("BOTTOM", 0, 18)
@@ -98,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 576)
+    panel:SetSize(240, 602)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -122,65 +193,68 @@ function Panel:Build()
     panel.status:SetPoint("TOP", 0, -64)
     panel.status:SetTextColor(unpack(ns.Theme.color.dim))
 
-    MakeButton(panel, "Progress / completed", -82, function()
-        ns.Progress:Toggle()
+    -- Guides / routes
+    panel.routeBtn = MakeButton(panel, "Available Guides", -82, function()
+        Panel:ShowRoutePicker()
     end)
 
-    MakeButton(panel, "Rogue", -108, function()
-        ns.Rogue:Show()
-    end)
-
-    MakeButton(panel, "Where to go next", -134, function()
+    MakeButton(panel, "Where to go next", -108, function()
         ns.Zones:Show()
     end)
 
-    MakeButton(panel, "Import spreadsheet", -160, function()
+    MakeButton(panel, "Import spreadsheet", -134, function()
         ns.SheetImport:Show()
     end)
 
-    MakeButton(panel, "Import a guide", -186, function()
+    MakeButton(panel, "Import a guide", -160, function()
         ns.GuideImport:Show()
     end)
 
-    MakeButton(panel, "Recover past quests", -212, function()
+    MakeButton(panel, "Recover past quests", -186, function()
         ns.Import:Show()
     end)
 
-    MakeButton(panel, "Save this as a route", -238, function()
+    MakeButton(panel, "Save this as a route", -212, function()
         ns.Recorder:ShowExport()
     end)
 
-    MakeButton(panel, "Add a note here", -264, function()
+    MakeButton(panel, "Progress / completed", -238, function()
+        ns.Progress:Toggle()
+    end)
+
+    MakeButton(panel, "Catch up on quests", -264, function()
+        Panel:ShowCatchUpDialog()
+    end)
+
+    -- Recording extras
+    MakeButton(panel, "Add a note here", -290, function()
         Panel:PromptNote()
     end)
 
-    MakeButton(panel, "Mark this spot", -290, function()
+    MakeButton(panel, "Mark this spot", -316, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
-    panel.arrowBtn = MakeButton(panel, "Arrow", -316, function()
+    -- Display / options
+    panel.arrowBtn = MakeButton(panel, "Arrow", -342, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -342, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -368, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -368, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -394, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -394, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -420, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
-    end)
-
-    panel.routeBtn = MakeButton(panel, "Choose route", -420, function()
-        Panel:ShowRoutePicker()
     end)
 
     MakeButton(panel, "Colors", -446, function()
@@ -191,11 +265,15 @@ function Panel:Build()
         ns.Arrow:ResetPosition()
     end)
 
-    MakeButton(panel, "Catch up on quests", -498, function()
-        Panel:ShowCatchUpDialog()
+    MakeButton(panel, "Rogue", -498, function()
+        ns.Rogue:Show()
     end)
 
-    MakeButton(panel, "Close", -530, function() panel:Hide() end)
+    MakeButton(panel, "Help / About", -524, function()
+        Panel:ShowHelpDialog()
+    end)
+
+    MakeButton(panel, "Close", -556, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -413,6 +491,56 @@ function Panel:ShowCatchUpDialog()
     end
 
     self.catchUpBox = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Help
+--------------------------------------------------------------------------
+
+function Panel:ShowHelpDialog()
+    if self.helpBox then self.helpBox:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(420, 280)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Auto progress & catch-up")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOPLEFT", 20, -46)
+    body:SetPoint("TOPRIGHT", -20, -46)
+    body:SetJustifyH("LEFT")
+    body:SetSpacing(4)
+    body:SetTextColor(unpack(ns.Theme.color.text))
+    body:SetText(
+        "The tracker auto-advances on its own. Accepting, completing and " ..
+        "turning in a quest all move the current step forward without you " ..
+        "doing anything - that's why there's no manual \"done\" button.\n\n" ..
+        "|cffffd100Catch-up mode|r is for when you're ahead of the tracker - you " ..
+        "already did some of the quests it hasn't caught up to yet (e.g. you " ..
+        "loaded a route mid-level, or skipped steps).\n\n" ..
+        "|cffffd100/tuff catchup|r previews how far forward it can scan based on " ..
+        "quests you've already completed, without moving anything.\n" ..
+        "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
+        "The |cffffd100Catch up on quests|r button on this menu does the same " ..
+        "thing with a confirm dialog instead of typing commands.")
+
+    FitDialogToBody(f, body, 46, 60, 160)
+
+    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    ok:SetSize(100, 22)
+    ok:SetPoint("BOTTOM", 0, 16)
+    ok:SetText("Close")
+    ok:SetScript("OnClick", function() f:Hide() end)
+
+    self.helpBox = f
     f:Show()
 end
 

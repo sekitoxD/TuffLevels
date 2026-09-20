@@ -70,11 +70,15 @@ end
 --------------------------------------------------------------------------
 
 -- Forever beta bug: the client WRITES SavedVariables on exit but never
--- reads them back. Every addon starts from defaults each launch.
+-- reads them back. This happens on /reload too, not just a full client
+-- relaunch - /reload tears down and re-executes every addon's Lua from
+-- scratch, so nothing addon-side survives it either way.
 --
 -- We can't fix that from inside Lua. What we can do is fail loudly instead
--- of silently losing someone's route progress 40 levels in, and keep an
--- in-session copy so a /reload inside one session doesn't lose anything.
+-- of silently losing someone's route progress 40 levels in. sessionCache
+-- below only dedupes repeated InitSavedVar calls within one continuous
+-- Lua session (e.g. multiple files reading TuFFlevelsDB before anything
+-- else has touched it) - it does NOT persist across /reload or relaunch.
 
 local sessionCache = {}
 
@@ -201,6 +205,24 @@ function Compat:SetResizeBounds(frame, minW, minH, maxW, maxH)
     end
     if frame.SetMinResize then pcall(frame.SetMinResize, frame, minW, minH) end
     if frame.SetMaxResize then pcall(frame.SetMaxResize, frame, maxW, maxH) end
+end
+
+--------------------------------------------------------------------------
+-- Class icon, for the tracker portrait
+--------------------------------------------------------------------------
+
+-- Fallback icon if the class-circle atlas/table isn't available on this
+-- client - a known-present Classic icon, not a class portrait, but never a
+-- broken texture.
+local FALLBACK_ICON = "Interface\\Icons\\Ability_Rogue_Eviscerate"
+
+function Compat:ClassIcon()
+    local ok, _, token = pcall(UnitClass, "player")
+    if ok and token and _G.CLASS_ICON_TCOORDS and _G.CLASS_ICON_TCOORDS[token] then
+        local c = _G.CLASS_ICON_TCOORDS[token]
+        return "Interface\\TargetingFrame\\UI-Classes-Circles", c[1], c[2], c[3], c[4]
+    end
+    return FALLBACK_ICON, 0, 1, 0, 1
 end
 
 --------------------------------------------------------------------------
@@ -392,7 +414,7 @@ end
 -- is spewing, it will mask every other addon's real errors. Self-limit.
 
 local errorCount = 0
-local ERROR_BUDGET = 10
+local ERROR_BUDGET = 20
 
 function Compat:Guard(fn, ...)
     if errorCount >= ERROR_BUDGET then return end
