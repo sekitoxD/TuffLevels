@@ -333,8 +333,11 @@ end
 -- succeeds but simply returns nothing - both waypoint APIs below are void
 -- on success, so a nil return can't tell "failed" from "worked". This
 -- checks Compat's error count instead, which only moves on an actual
--- throw, so success reporting here is accurate either way.
+-- throw - except once the session error budget is exhausted, Guard stops
+-- calling fn at all and the count can't move either way, so that case is
+-- checked explicitly rather than read as a false success.
 local function Attempt(fn, ...)
+    if Compat:ErrorBudgetExhausted() then return false end
     local before = Compat:ErrorCount()
     local a, b, c = Compat:Guard(fn, ...)
     return Compat:ErrorCount() == before, a, b, c
