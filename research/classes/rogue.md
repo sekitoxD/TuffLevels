@@ -86,8 +86,8 @@ is usually the level the quest itself is designed for/rewards XP as).
 | 20 | Torek's Assault | Ashenvale Forest | Sword | Quest lvl 24; +2 str +2 agi |
 | 25 | Baron Aquanis | Blackfathom Depths (dungeon) | Sword | Quest lvl 30, elite; +15 AP, 2.7 speed |
 | 30 | Call to Arms | Arathi Highlands | Dagger | Quest lvl 40, elite; 1.89 speed, +7 agi |
-| 39 | Seed of Life | Maraudon (dungeon) | "Thrash Blade" (unique-named item) | Quest lvl 51 |
-| 40 | A Hero's Welcome | Feralas | Dagger | Quest lvl 46; 1.8 speed, +6 agi +3 stam |
+| 45 | Corruption of Earth and Seed | Maraudon (dungeon) | Thrash Blade (other choice: a bow) | Quest lvl 51. The source put this note on the Seed of Life row, one row low; the local DB has the reward on this quest |
+| 40 | A Hero's Welcome | Feralas | Dagger | Quest lvl 46; 1.8 speed, +6 agi +3 stam. **Alliance-only in the local DB**, so not a Horde option despite the source listing it |
 | 45 | Zapped Giants | Feralas | Sword | Quest lvl 48; +6 agi +5 stam |
 | 38 | Challenge Overlord Mok'Morokk | Dustwallow Marsh | Dagger | Quest lvl 45, elite; +8 str |
 | 35 | Threat From the Sea | Swamp of Sorrows | Dagger | Quest lvl 43; +6 agi +3 stam |
@@ -105,18 +105,18 @@ Format: Quest (quest lvl, elite/dungeon flag / required lvl) — reward.
 - **Razorfen Kraul (dungeon)**: Willix the Importer (30/22) — ring +6 agi.
 - **Razorfen Downs (dungeon)**: Extinguishing the Idol (37/32) — ring +10 stam +4 spirit.
 - **Stonetalon Mountains 15-27**: Earthen Arise (20 elite/14) — wrist +2 agi +2 stam. Bloodfury Bloodline (26 elite/18) — cloak +4 agi +3 stam. Gerenzo Wrenchwhistle (27/16) — boots +5 str +5 stam. The Den (29 elite/20) — chest +2 str +9 agi.
-- **Ashenvale Forest 18-30**: Vorsha the Lasher (23/20) — ring +3 stam +2 spirit. King of the Foulweald (26/21) — chest +7 agi +6 stam. Warsong Supplies (27/22) — boots +8 agi +6 stam. Je'neu of the Earthen Ring (27/23) — belt +4 agi +3 stam +12 AP. Raene's Cleansing (30/18) — good vendor gear. Answered Questions (30/25) — bow, possible ranged upgrade.
+- **Ashenvale Forest 18-30**: Vorsha the Lasher (23/20) — ring +3 stam +2 spirit. King of the Foulweald (26/21) — chest +7 agi +6 stam. Warsong Supplies (27/22) — boots +8 agi +6 stam. Je'neu of the Earthen Ring (27/23) — belt +4 agi +3 stam +12 AP. Raene's Cleansing (30/18) — good vendor gear. Answered Questions (30/25) — bow, possible ranged upgrade. *(Both of these last two are Alliance-only in the local DB.)*
 - **Blackfathom Depths (dungeon)**: Allegiance to the Old Gods (26/17) — ring +3 str +3 agi.
-- **Thousand Needles 25-35**: Protect Kanati Greycloud (28/23) — wrist +5 agi. Arikara (28 elite/24) — vendor gear, good XP. Wanted - Arnak Grimtotem (29/25) — chest +4 agi +9 stam +3 spirit. Free at Last (29/25) — belt +5 stam +12 AP. Final Passage (36/25) — good XP, possible vendor gear. Safety First (41/29) — gloves +8 agi +9 stam.
+- **Thousand Needles 25-35**: Protect Kanati Greycloud (28/23) — wrist +5 agi. Arikara (28 elite/24) — vendor gear, good XP. Wanted - Arnak Grimtotem (29/25) — chest +4 agi +9 stam +3 spirit. Free at Last (29/25) — belt +5 stam +12 AP. Final Passage (36/25) — good XP, possible vendor gear. *(Its reward is actually Windstorm Hammer, a mace the tuffweights model rates highly for L25-29; the chain is four "Test of Lore" quests then this one, one of which needs an item inside Scarlet Monastery. See `plans/05-rogue-sheet-comparison.md`.)* Safety First (41/29) — gloves +8 agi +9 stam.
 - **Desolace 30-40**: Centaur Bounty (31/30) — gloves +7 agi +7 stam. Bodyguard for Hire (35/30) — ring +8 stam. Clam Bait (35/31) — belt +5 stam +16 AP. Khan Hratha (42 elite/30) — belt +8 agi +9 stam.
-- **Maraudon (dungeon)**: Vyletongue Corruption (47/41) — head +15 agi +10 stam. The Pariah's Instructions (48/39) — belt +15 agi. Legends of Maraudon (49/41) — trinket (item unspecified in source).
-- **Feralas 40-50**: A Grim Discovery (45/37) — cloak +8 stam +10 AP. Rescue OOX-22/FE! (45/40) — shoulders +10 str +10 agi. The Mark of Quality (46/40) — boots +11 agi +6 stam, or gloves +10 str +9 agi. Improved Quality (48/40) — chest +6 str +7 agi +15 stam. Wandering Shay (49/44) — belt +14 str +3 stam. Weapons of Spirit (50/40) — vendor gear.
+- **Maraudon (dungeon)**: *the source's notes here sit one row below the quest they describe; corrected against the local DB.* Twisted Evils (47/41) — head +15 agi +10 stam (or a robe). Vyletongue Corruption (47/41) — belt +15 agi (or a ring). The Pariah's Instructions (48/39) — trinket (Mark of the Chosen). Legends of Maraudon (49/41) — no gear reward in the DB.
+- **Feralas 40-50**: A Grim Discovery (45/37) — cloak +8 stam +10 AP. Rescue OOX-22/FE! (45/40) — shoulders +10 str +10 agi. The Mark of Quality (46/40) — boots +11 agi +6 stam, or gloves +10 str +9 agi. Improved Quality (48/40) — chest +6 str +7 agi +15 stam. Wandering Shay (49/44) — belt +14 str +3 stam *(Alliance-only in the local DB)*. Weapons of Spirit (50/40) — vendor gear.
 - **Zul'Farrak (dungeon)**: Divino-matic Rod (47/40) — ring +13 agi +5 stam. Gahz'rilla (50/40) — riding trinket (source notes the precursor mallet quest is hard to get).
 - **Un'Goro Crater 48-55**: The Bait for Lar'korwi (56/48) — chest +4 agi +23 stam.
-- **Felwood 48-55**: Runecloth quest (req 40) — shoulders +18 agi.
+- **Felwood 48-55**: Runecloth quest (source says req 40; the local DB says 50) — shoulders +18 agi.
 - **Stranglethorn Vale 30-45**: Tiger Mastery (37/28) — gloves +7 str +8 agi. Excelsior (38 elite/31) — boots +7 str +9 agi. Panther Mastery (43 elite/28) — pants +10 agi +11 stam.
 - **Badlands 35-45**: Forbidden Knowledge (40/30) — good PVP item. This Is Going to Be Hard (45/35) — run-speed trinket, 30 min cooldown. Broken Alliances (50 elite/40) — chest +3 str +23 agi +5 stam.
-- **Searing Gorge 43-50**: (unnamed "Incendosaurs?" quest, 49/45) — PVP trinket that removes bleed. WANTED: Overseer Maltorius (50 elite/45) — chest +18 agi +8 stam. Rise, Obsidion! (52 elite/40) — head +16 agi +10 stam +3 spirit.
+- **Searing Gorge 43-50**: (unnamed "Incendosaurs?" quest, 49/45) — PVP trinket that removes bleed. WANTED: Overseer Maltorius (50 elite/45) — chest +18 agi +8 stam. Rise, Obsidion! (52 elite/40) — head +16 agi +10 stam +3 spirit *(Alliance-only in the local DB)*.
 - **Western Plaguelands 51-58**: The Last Barov (60 elite/52) — "great" PVP trinket. Alas, Andorhal (60 elite/50) — decent trinket.
 - **Eastern Plaguelands 53-60**: Duskwing, Oh How I Hate Thee (60/56) — shoulder +17 agi +6 stam. The Scarlet Oracle, Demetria (60 elite/56) — stat bow: +2 str +3 agi +9 stam.
 

@@ -219,6 +219,12 @@ level is the item's or quest's minimum level.
 | 40-44 | **Gryphon Rider's Stormhammer** (9651) | 31.5 | **Alliance only** | Quest "Saving Sharpbeak" (2994, min 40): kill Vile Priestess Hexx at the top of Jintha'Alor (Hinterlands) for the key to Sharpbeak's cage; Gryphon Master Talonaxe. Reward choice with Gryphon Rider's Leggings | Slow (2.7) mace, rank 1 for the fist, mace and sword builds at 40-44. Elite quest, probably a group |
 | 40-47 | **Lifeforce Dirk** (10750) | 35.9 | Both | Quest "The God Hakkar" (3528, min 40, level 53): bring the Filled Egg of Hakkar to Yeh'kinya, Tanaris. Chain: requires "The Ancient Egg" (4787). Other choices: Avenguard Helm, Gemburst Circlet | Fast (1.6) dagger, +11 Sta. Rank 3 for dagger assassination, top 5 for the other builds at 40-43. How the egg gets filled was not checked in the DB |
 | 55-59 | **Mirah's Song** (15806) | 40.0 | Both | Quest "Kirtonos the Herald" (5384, min 55, level 60): Scholomance, place Blood of Innocents in the brazier and kill Kirtonos; Eva Sarkhoff. Needs "Krastinov's Bag of Horrors" (5515) turned in first. Other choices: Penelope's Rose (off-hand) | Sword, 1.8 speed, +9 Agi +9 Str. Group content (Scholomance); rank 2 for combat swords at 55-59 |
+| 35-38 | **Black Water Hammer** (4511) | 22.2 | Both | Quest "Deep Sea Salvage" (662, min 35, level 40): bring the Maiden's Folly and Spirit of Silverpine charts and logs to First Mate Nilzlix, Arathi Highlands. Chain: requires "Land Ho!" (663, min 35) | Slow (2.7) mace, +7 Str. Solo quest, +3.9% mean over 35-38 for the mace builds (a short window). BoP |
+| 44-48 | **Belgrom's Hammer** (11120) | 32.9 | **Horde only** | Quest "Betrayed" (3507, min 44, level 56): the last of four "Betrayed" quests (3504-3507). Belgrom Rockmaul (Orgrimmar) sends a letter to Ag'tor Bloodfist in Azshara; you then kill Magus Rimtori and bring her head back to Belgrom. Other choice: Pyrestone Orb (off-hand) | Slow (2.8) mace, +10 Str; +5.3% mean over 44-48 for the mace builds. Solo by the quest flags; the chain runs Orgrimmar - Azshara - Orgrimmar. BoP |
+
+One armor reward is in the same class as these: **Spirit Hunter Headdress** (6720), leather head, armor 85, +10 Agi +9 Spi,
+from "Frostmaw" (1136, **Horde only**, min 26, level 37; chain "Melor Sends Word" 1130, "Steelsnap" 1131, then Frostmaw; Melor
+Stonehoof, Thunder Bluff). Solo, +2.4% mean over 26-41 (peak +3.3%) in `worth.md`, a long window for a head slot.
 
 ### Opportunistic: use it if it drops, do not farm it
 
@@ -230,6 +236,21 @@ level is the item's or quest's minimum level.
 | Widowmaker (4091) | 42-46 | 31.6 | World drop, and the "Solid Chest" gameobjects; +8 Agi +7 Str |
 | Bloodrazor (809) | 45-50 | 37.0 | World drop, ~0.002%; its bleed proc adds ~1 DPS |
 | Shadowblade (2163) | 48-54 | 38.9 | World drop; fast (1.4) dagger |
+
+### Utility (not scored)
+
+The calculator scores damage only, so bags and other utility are invisible to it. Bag rewards a rogue can take (slots and
+quests checked in the DB; all are BoP quest rewards):
+
+| Bag | Slots | Quest (ID) | Faction | Min lvl | Notes |
+|---|---|---|---|---|---|
+| Captain Sander's Booty Bag (3343) | 8 | "Captain Sander's Hidden Treasure" (140), end of a 4-quest chain (136, 138, 139, 140) | Both | 10 | Also gives a Silver Bar, a shirt and a belt (Captain Sander's Sash) |
+| Deviate Hide Pack (918) | 10 | "Deviate Hides" (1486): 20 Deviate Hides to Nalpak in the Wailing Caverns | Both | 13 | Choose one against Slick Deviate Leggings; Nalpak stands inside the Wailing Caverns |
+| Explorer's Knapsack (11324) | 14 | "Cortello's Riddle" (626), third of three (624, 625, 626); ends at Cortello's Treasure in Stranglethorn Vale | Both | 35 | Guaranteed reward, no choice |
+| Thawpelt Sack (9587) | 14 | "The Platinum Discs" (2440 Horde / 2439 Alliance): starts at the Discs of Norgannon in Uldaman (2278), then 2280, then the voucher turn-in at Bena Winterhoof, Thunder Bluff (Horde) | Both (separate quests) | 40 | Guaranteed reward beside a choice of 5 Superior Healing or 5 Greater Mana Potions |
+
+The other Explorer's Knapsack ids (10683: 16 slots, 16057: 12 slots) are not quest rewards. Nifty Stopwatch, Luffa and Carrot on a
+Stick appear on the community sheet as utility rewards; their effects were not checked here.
 
 ### Do not plan around (in the model's shortlist, but not obtainable in practice)
 
@@ -298,10 +319,10 @@ Satyr's Lash and others).
 
 ### Quest-reward picks (choose-one quests)
 
-`tuffweights rewards` scores the choose-one rewards of 387 quests (rogue-usable items only) as percent DPS over the baseline that
+`tuffweights rewards` scores the choose-one rewards of 385 quests (rogue-usable items only) as percent DPS over the baseline that
 matches the quest's effort, and prints the same verdict beside each pick. A quest is scored at the best of the start, middle and end
 of the levels you can do it at. 73 quests have a clear pick; for the rest choose the sturdiest item (armor, then Stamina) or the
-highest vendor price. The non-weapon picks below were checked with `tools/qdb.py` (quest ID, faction, minimum level, reward list).
+highest vendor price. Quests behind a reputation gate (their own or an earlier quest in the chain, 15 of them: Argent Dawn, Timbermaw Hold, Zandalar Tribe, Brood of Nozdormu, Ironforge) are left out, like a reputation-gated vendor; the Argent Dawn "Epic Armaments of Battle" items (Medallion of the Dawn, Bracers of Subterfuge) therefore no longer show as plain solo quests. A pick's verdict uses the item's window from `worth.md` when that window covers the level it was scored at, so an item that is an upgrade for only a few levels no longer reads "very worth it" here and "kinda" there. The non-weapon picks below were checked with `tools/qdb.py` (quest ID, faction, minimum level, reward list).
 Percent is the gain at its best level; the vendor/solo baseline is thin early, so small early gains are overstated.
 
 | Quest (ID) | Faction | Min lvl | Pick | Gain | Verdict |
@@ -313,9 +334,9 @@ Percent is the gain at its best level; the vendor/solo baseline is thin early, s
 | Return to Apothecary Zinge (864) | Horde | 38 | Loreskin Shoulders | +1.4% | Solo quest: do it |
 | Oran's Gratitude (8273) | Horde | 42 | Undercity Reservist's Cap | +1.4% | Solo quest: do it |
 | Bone-Bladed Weapons (4300) | Horde | 48 | White Bone Band (over the off-hand fist) | +1.9% | Solo quest: do it |
-| Tremors of the Earth (717) / Broken Alliances (793), elite | Alliance / Horde | 40 | Blazewind Breastplate | +2.5% | Group quest: worth the extra time |
-| The Defias Brotherhood (166), Deadmines, 7-quest chain | Alliance | 14 | Tunic of Westfall | +4.6% | Dungeon: very worth it |
-| Rig Wars (2841) / The Grand Betrayal (2929), Gnomeregan | Horde / Alliance | 25 | Triprunner Dungarees | +4.5% | Dungeon: very worth it |
+| Tremors of the Earth (717) / Broken Alliances (793), elite | Alliance / Horde | 40 | Blazewind Breastplate | +2.5% | Group quest: only if a group is already formed |
+| The Defias Brotherhood (166), Deadmines, 7-quest chain | Alliance | 14 | Tunic of Westfall | +4.6% | Dungeon: kinda worth it |
+| Rig Wars (2841) / The Grand Betrayal (2929), Gnomeregan | Horde / Alliance | 25 | Triprunner Dungarees | +4.5% | Dungeon: kinda worth it |
 | The Azure Key (8236), Rogue-only, needs "Encoded Fragments" (8235) | Both | 50 | Ebon Mask (over Duskbat Drape) | +2.1% | Dungeon: kinda worth it |
 | Shadowshard Fragments (7068 H / 7070 A), Maraudon | Both | 38 | Zealous Shadowshard Pendant | +1.4% | Dungeon: not worth it |
 | Divino-matic Rod (2768) | Both | 40 | Masons Fraternity Ring | +1.7% | Dungeon: not worth it |
