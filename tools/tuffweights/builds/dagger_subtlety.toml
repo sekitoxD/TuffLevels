@@ -1,0 +1,21 @@
+name = "dagger_subtlety"
+description = "Subtlety dagger: Opportunity boosts Backstab; positioning matters."
+weapon_types = ["dagger", "sword", "mace", "fist"]
+position_fraction = 0.6      # assumption
+talents = [
+  "dagger_specialization", "precision", "dual_wield_specialization",
+  "opportunity", "malice", "lethality", "deadliness",
+]
+
+# Priority list: first entry whose condition holds and whose energy is affordable.
+# Backstab needs the mob facing away; `position_fraction` says how often that is.
+[[rotation]]
+ability = "eviscerate"
+when = "cp >= 5"
+
+[[rotation]]
+ability = "backstab"
+when = "positional"
+
+[[rotation]]
+ability = "sinister_strike"

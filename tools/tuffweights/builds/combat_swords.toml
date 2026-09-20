@@ -1,0 +1,16 @@
+name = "combat_swords"
+description = "Combat, sword weapon spec. The standard solo leveling build."
+weapon_types = ["sword", "dagger", "mace", "fist"]
+position_fraction = 1.0
+talents = [
+  "improved_sinister_strike", "precision", "dual_wield_specialization",
+  "aggression", "sword_specialization", "adrenaline_rush", "blade_flurry",
+]
+
+# Priority list: first entry whose condition holds and whose energy is affordable.
+[[rotation]]
+ability = "eviscerate"
+when = "cp >= 5"
+
+[[rotation]]
+ability = "sinister_strike"

@@ -1,0 +1,21 @@
+name = "dagger_assassination"
+description = "Assassination/Combat dagger: Backstab when behind, Sinister Strike otherwise."
+weapon_types = ["dagger", "sword", "mace", "fist"]
+position_fraction = 0.6      # share of the fight spent behind the mob  # assumption
+talents = [
+  "malice", "dagger_specialization", "lethality", "improved_eviscerate",
+  "precision", "dual_wield_specialization",
+]
+
+# Priority list: first entry whose condition holds and whose energy is affordable.
+# Backstab needs the mob facing away; `position_fraction` says how often that is.
+[[rotation]]
+ability = "eviscerate"
+when = "cp >= 5"
+
+[[rotation]]
+ability = "backstab"
+when = "positional"
+
+[[rotation]]
+ability = "sinister_strike"

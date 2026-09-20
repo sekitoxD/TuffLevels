@@ -1,0 +1,16 @@
+name = "combat_maces"
+description = "Combat, mace weapon spec (+mace skill in 1.12)."
+weapon_types = ["mace", "sword", "dagger", "fist"]
+position_fraction = 1.0
+talents = [
+  "improved_sinister_strike", "precision", "dual_wield_specialization",
+  "aggression", "mace_specialization", "adrenaline_rush", "blade_flurry",
+]
+
+# Priority list: first entry whose condition holds and whose energy is affordable.
+[[rotation]]
+ability = "eviscerate"
+when = "cp >= 5"
+
+[[rotation]]
+ability = "sinister_strike"
