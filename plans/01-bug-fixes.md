@@ -95,19 +95,56 @@ fix rather than reopening this plan.
 **Dev time:** ~20-30 minutes of played time (mostly the 10-minute error-spam
 watch and one delivered-quest turn-in for the recording-recovery check).
 
-| # | Check | Command | What it confirms |
-|---|---|---|---|
-| V1 | Arrow bearing | Walk toward a known coordinate | `Compat.Atan2` (1.1) points correctly regardless of which branch it took |
-| V2 | Back sticks | Accept/complete/turn in a quest, hit Back, do a quest action | `Core.pinned` (1.2) actually blocks `Reconcile` from re-advancing |
-| V3 | No error spam | 10 minutes of normal play | `Compat:Wrap` (1.3) per-module budgets hold under real event traffic |
-| V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat |
-| V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path |
-| V6 | Which TOC loads | `/tuff client` | 3.4's `16001`-first ordering is actually what Forever picks up |
-| V7 | QuestieDB adapter (Classic Era only, if available) | `/tuff verify` on the Durotar route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct |
-| V8 | Rogue spellbook scan (rogue character) | Run the scan from the Rogue tab | `Compat:GetSpellBookName` (1.8) returns real names |
+| # | Check | Command | What it confirms | Result (2026-09-20) |
+|---|---|---|---|---|
+| V6 | Which TOC loads | `/tuff client` | 3.4's `16001`-first ordering is actually what Forever picks up | **PASS** |
+| V1 | Arrow bearing | Walk toward a known coordinate | `Compat.Atan2` (1.1) points correctly regardless of which branch it took | **PASS** — continues tracking the target while moving |
+| V2 | Back sticks | Accept/complete/turn in a quest, hit Back, do a quest action | `Core.pinned` (1.2) actually blocks `Reconcile` from re-advancing | **PASS** — stays put, does not snap forward |
+| V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat | **FAIL** — reports "Could not change nameplate settings on this client." even out of combat. See "New finding" below |
+| V3 | No error spam | 10 minutes of normal play | `Compat:Wrap` (1.3) per-module budgets hold under real event traffic | **PASS** — no errors over the session |
+| V8 | Rogue spellbook scan (rogue character) | Run the scan from the Rogue tab | `Compat:GetSpellBookName` (1.8) returns real names | **PASS** — real spell names returned |
+| V7 | QuestieDB adapter, if Questie is available | `/tuff verify` on a route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct | **PASS (mechanism)** — DB loaded, adapter validated a 2781-step route without erroring; 2 quest IDs (788, 804) reported "not found in database" in that route's data, which is a data-completeness note about that specific (non-shipped, imported) route, not an adapter bug. Client used for this check wasn't confirmed — see "Open question" below |
+| V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path | **INCOMPLETE** — recording toggle on/off confirmed working, but the relog + `extract_recording.py` comparison wasn't run this session. Re-test needed |
+
+### New finding: V4, nameplate CVar toggle fails out of combat
+
+`Marker:EnableFriendlyPlates` (`Marker.lua:309-325`) always hit its failure branch:
+`pcall(GetCVar, "nameplateShowFriends")` succeeded (`ok == true`) but the immediate
+readback never equals `"1"`. The `Compat:Guard`-return bug that 1.6 fixed is not back —
+this is a new, narrower problem. Leading hypothesis, based on this same codebase's own
+precedent (`Compat:GetItemSellPrice` in `Compat.lua:248-261` already has to prefer
+`C_Item.GetItemInfo` over the global `GetItemInfo`, which the CLAUDE.md load-order notes
+say Forever drops): the global `SetCVar`/`GetCVar` pair may likewise be deprecated in
+favor of a `C_CVar.SetCVar`/`C_CVar.GetCVar` namespace on Forever, and the old globals
+either no-op or lag a frame instead of throwing — which is exactly what "pcall succeeds,
+but the value never changes" looks like.
+
+**Before writing a fix**, one live diagnostic would nail it down instead of guessing:
+`/run print(C_CVar and C_CVar.GetCVar and C_CVar.GetCVar("nameplateShowFriends"), GetCVar("nameplateShowFriends"))`
+right after toggling. If `C_CVar.GetCVar` reports the value changed while the global
+`GetCVar` still shows the old one, that confirms the hypothesis and the fix is a
+`Compat:SetCVarSafe`/`GetCVarSafe` pair preferring `C_CVar.*` when present, mirroring
+`Compat:GetItemSellPrice`'s existing pattern. Scoped separately from this plan per its
+own rule below — small, isolated to `Marker.lua`'s two functions plus a new `Compat`
+shim.
+
+### Open question: which client was V7 run on
+
+The screenshot for V7 also printed "Progress and saved settings are not restored on
+this client," which `Compat:SavedVarsAreBroken()` (per `CLAUDE.md`) is meant to be a
+**Forever-specific** warning. If V7 (QuestieDB + Questie) was actually run on Forever
+rather than Classic Era, that's notable on two counts: Questie apparently still loads
+something there despite `CLAUDE.md` stating no quest DB exists for Forever, and the
+SavedVariables warning firing there is expected, not new. If it was run on Classic Era,
+the warning firing there would be a real finding, since Classic Era isn't supposed to
+have that bug at all. Needs one line of confirmation from whoever ran it.
 
 ## Done when
 
 - [x] `luacheck` passes with no warnings — CI green.
 - [x] `busted` passes — CI green.
-- [ ] V1-V8 above confirmed live and any resulting findings resolved.
+- [x] V1, V2, V3, V6, V8 confirmed live — all pass.
+- [ ] V4 — real bug found, fix scoped above, not yet implemented (waiting on one
+      diagnostic command before writing it, to avoid a second guess-and-retest cycle).
+- [ ] V5 — recording toggle confirmed, end-to-end recovery re-test still needed.
+- [ ] V7 — mechanism confirmed; which client it ran on needs confirming.

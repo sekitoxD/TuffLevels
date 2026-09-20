@@ -109,15 +109,47 @@ code. `plans/01-bug-fixes.md` was rewritten in place to state this plainly: Phas
 remaining task (an in-game confirmation pass), and the "Order of work"/Phase 4
 sections collapsed since they're now moot.
 
+## Live verification results (2026-09-20, same day)
+
+The user ran the in-game pass and reported back. Results recorded in
+`plans/01-bug-fixes.md`'s results table:
+
+- **V1, V2, V3, V6, V8 — PASS.** Arrow tracks correctly, Back stays pinned, no
+  error spam over the session, `/tuff client` reports correctly, rogue spellbook
+  scan returns real names.
+- **V4 (nameplate CVar toggle) — FAIL, new finding.** `Marker:EnableFriendlyPlates`
+  reports "Could not change nameplate settings on this client." even out of
+  combat. Leading hypothesis (not yet confirmed): global `SetCVar`/`GetCVar` may be
+  deprecated in favor of `C_CVar.*` on Forever, same pattern as
+  `Compat:GetItemSellPrice` already having to prefer `C_Item.GetItemInfo` over the
+  dropped global. Asked the user for one diagnostic
+  (`/run print(C_CVar and C_CVar.GetCVar(...), GetCVar(...))`) before writing a fix,
+  rather than guess and cost a second test cycle.
+- **V5 (recording recovery) — incomplete.** Recording toggle confirmed working (and
+  the "Mark this spot"/"Add a note here" buttons the user flagged as new are
+  expected, by-design behavior already documented in `Panel.lua:32,230,234` — not a
+  finding). The relog + `tools/extract_recording.py` comparison wasn't actually run
+  this session; still open.
+- **V7 (QuestieDB adapter) — mechanism confirmed**, adapter loaded and validated a
+  2781-step imported route without erroring. Two "quest not found in database"
+  results are a data-completeness note about that specific imported route, not an
+  adapter bug. Open question: the screenshot also showed the
+  `Compat:SavedVarsAreBroken()` Forever-specific warning firing, but it's unconfirmed
+  whether this check ran on Forever or Classic Era — that warning firing on Classic
+  Era would itself be a new finding, so this needs one line of confirmation from the
+  user before treating V7 as fully closed.
+
 ## Next steps
 
-1. User runs the in-game confirmation pass described in the rewritten plan's
-   "Remaining: in-game verification" section, on the Forever beta (and Classic Era
-   / Retail if convenient), and fills in the results table.
-2. If any check surfaces an actual behavioral bug (not just an unconfirmed
-   assumption), open it as a new, small, separately-scoped fix — don't reopen
-   Phase 1-4 wholesale for it.
-3. No further code changes queued from this plan otherwise.
+1. Get the C_CVar diagnostic result from the user, then implement the targeted
+   `Compat:SetCVarSafe`/`GetCVarSafe` fix for V4 (scoped to `Compat.lua` + two
+   functions in `Marker.lua`) and ask for a re-test.
+2. Get confirmation of which client V7 ran on; if Classic Era, the SavedVariables
+   warning firing there is a second new finding to open separately.
+3. Re-run V5 end-to-end (record, relog, `extract_recording.py`, compare) since it
+   wasn't actually completed this session.
+4. Once V4/V5/V7 close out, update `plans/01-bug-fixes.md`'s "Done when" checklist
+   to all-checked and this plan is fully closed.
 
 ## Relevant files
 
