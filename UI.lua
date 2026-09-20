@@ -23,6 +23,7 @@ local VERB = {
     complete = "Do",
     grind    = "Grind",
     level    = "Reach",
+    xp       = "Reach",
     travel   = "Go to",
     hearth   = "Hearth",
     trainer  = "Train",
@@ -41,6 +42,7 @@ local VERB_COLOR_KEY = {
     turnin   = "bright",
     complete = "accent",
     grind    = "ember",
+    xp       = "ember",
     travel   = "dim",
     hearth   = "accent",
     trainer  = "warn",
@@ -52,6 +54,9 @@ local VERB_COLOR_KEY = {
 local function StepLabel(step)
     if step.type == "grind" or step.type == "level" then
         return "level " .. (step.targetLevel or "?")
+    end
+    if step.type == "xp" and step.xp then
+        return ("level %s, %s%% XP"):format(step.xp.level or "?", step.xp.pct or 0)
     end
 
     local name = step.questName or step.name

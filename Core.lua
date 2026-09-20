@@ -60,8 +60,11 @@ end
 
 Core.ResolveQuest = ResolveQuest
 
--- Returns true if this step is already satisfied.
-local function IsStepDone(step)
+-- Returns true if this step's own condition is satisfied, ignoring
+-- `requires` - split out so the requires-gate below can call back into
+-- IsStepDone for prerequisite steps without re-running their own gate
+-- twice.
+local function StepOwnConditionDone(step)
     local t = step.type
 
     -- name-based steps need an ID before anything can be checked
@@ -81,6 +84,10 @@ local function IsStepDone(step)
         return Data:IsQuestComplete(step.quest)
 
     elseif t == "complete" then
+        if step.objective then
+            return Data:IsQuestObjectiveDone(step.quest, step.objective)
+                or Data:IsQuestComplete(step.quest)
+        end
         -- Objectives done but not handed in yet.
         return Data:IsQuestReadyToTurnIn(step.quest) or Data:IsQuestComplete(step.quest)
 
@@ -89,6 +96,17 @@ local function IsStepDone(step)
 
     elseif t == "level" then
         return Data:PlayerLevel() >= step.targetLevel
+
+    elseif t == "xp" then
+        local target = step.xp
+        if not target or not target.level then return false end
+        local level = Data:PlayerLevel()
+        if level > target.level then return true end
+        if level < target.level then return false end
+        local xp = Compat:Guard(UnitXP, "player") or 0
+        local xpMax = Compat:Guard(UnitXPMax, "player") or 0
+        if xpMax <= 0 then return false end
+        return (xp / xpMax * 100) >= (target.pct or 0)
 
     elseif t == "section" then
         -- a header, not a task
@@ -110,6 +128,27 @@ local function IsStepDone(step)
     return false
 end
 
+-- Wraps the step's own condition with an optional `requires` gate: a list
+-- of OTHER step indices (in this same route) that must also be done first.
+-- `visited` guards against a circular requires chain (an authoring
+-- mistake, not a contrived case - fail closed rather than blow the stack).
+local function IsStepDone(step, visited)
+    if not StepOwnConditionDone(step) then return false end
+    if not step.requires then return true end
+
+    visited = visited or {}
+    if visited[step] then return false end
+    visited[step] = true
+
+    for _, idx in ipairs(step.requires) do
+        local reqStep = Core.active and Core.active.steps[idx]
+        if reqStep and not IsStepDone(reqStep, visited) then
+            return false
+        end
+    end
+    return true
+end
+
 Core.IsStepDone = IsStepDone
 
 -- Should this step be shown at all for this character?
@@ -129,6 +168,10 @@ local function StepApplies(step)
     end
 
     if step.minLevel and Data:PlayerLevel() < step.minLevel then
+        return false
+    end
+
+    if step.skipIfLevel and Data:PlayerLevel() >= step.skipIfLevel then
         return false
     end
 
@@ -214,7 +257,10 @@ function Core:Reconcile()
             if guard > 5000 then break end   -- paranoia
 
             local step = self.active.steps[self.index]
-            if not StepApplies(step) or IsStepDone(step) then
+            -- `optional` never blocks auto-advance, done or not - it's a
+            -- take-it-or-leave-it extra, not a gate. It's still visible
+            -- (dimmed) in the Progress checklist either way.
+            if not StepApplies(step) or IsStepDone(step) or step.optional then
                 self.index = self.index + 1
                 moved = true
             else
@@ -275,7 +321,7 @@ function Core:PreviewCatchUp()
     local furthest = 1
     for i = 1, #steps do
         local step = steps[i]
-        if not StepApplies(step) or IsStepDone(step) then
+        if not StepApplies(step) or IsStepDone(step) or step.optional then
             furthest = i + 1
         else
             break

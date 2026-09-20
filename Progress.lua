@@ -123,13 +123,15 @@ local function RowLabel(entry)
 
     if s.type == "grind" or s.type == "level" then
         what = "Reach level " .. (s.targetLevel or "?")
+    elseif s.type == "xp" and s.xp then
+        what = ("Level %s, %s%% XP"):format(s.xp.level or "?", s.xp.pct or 0)
     else
         what = s.name or (s.quest and ("Quest " .. s.quest)) or s.type
     end
 
     local verb = ({
         accept = "Accept", turnin = "Turn in", complete = "Complete",
-        grind = "", level = "", travel = "Go to", hearth = "Hearth",
+        grind = "", level = "", xp = "Reach", travel = "Go to", hearth = "Hearth",
         manual = "Do", note = "", })[s.type] or s.type
 
     local line = (verb ~= "" and (verb .. ": ") or "") .. what
@@ -353,6 +355,10 @@ function Progress:RenderRows()
                 mark, color = Hex.warn .. ">|r", Hex.warn
             elseif e.done then
                 mark, color = Hex.done .. "v|r", Hex.dim
+            elseif e.step.optional then
+                -- Never blocks auto-advance, so it reads as "skippable",
+                -- not "not done yet" like a normal to-do step.
+                mark, color = Hex.faint .. "o|r", Hex.faint
             else
                 mark, color = Hex.faint .. "-|r", Hex.text
             end

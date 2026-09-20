@@ -126,6 +126,17 @@ function Data:IsQuestReadyToTurnIn(questID)
     return Compat:IsQuestObjectivesComplete(questID)
 end
 
+-- Is objective n (1-based, in the order the quest log lists them) of this
+-- quest finished? Lets a "complete" step gate on one specific objective
+-- rather than the whole quest.
+function Data:IsQuestObjectiveDone(questID, n)
+    if not (C_QuestLog and C_QuestLog.GetQuestObjectives) then return false end
+    local objectives = Compat:Guard(C_QuestLog.GetQuestObjectives, questID)
+    if type(objectives) ~= "table" then return false end
+    local obj = objectives[n]
+    return obj ~= nil and obj.finished == true
+end
+
 function Data:PlayerLevel()
     return UnitLevel("player")
 end
@@ -180,6 +191,39 @@ function Data:ValidateRoute(route)
 
         if step.type == "flightpath" and not (step.mapID and (step.node or step.name)) then
             table.insert(problems, label .. ": flightpath step needs mapID and node or name")
+        end
+
+        if step.type == "complete" and step.objective ~= nil and type(step.objective) ~= "number" then
+            table.insert(problems, label .. ": objective should be a number")
+        end
+
+        if step.type == "xp" then
+            local xp = step.xp
+            if type(xp) ~= "table" or type(xp.level) ~= "number" then
+                table.insert(problems, label .. ": xp step needs xp = { level = n, pct = n }")
+            elseif xp.pct ~= nil and (type(xp.pct) ~= "number" or xp.pct < 0 or xp.pct > 100) then
+                table.insert(problems, label .. ": xp.pct should be 0-100")
+            end
+        end
+
+        if step.skipIfLevel ~= nil and type(step.skipIfLevel) ~= "number" then
+            table.insert(problems, label .. ": skipIfLevel should be a number")
+        end
+
+        if step.requires then
+            if type(step.requires) ~= "table" then
+                table.insert(problems, label .. ": requires should be a list of step numbers")
+            else
+                for _, idx in ipairs(step.requires) do
+                    if type(idx) ~= "number" or idx < 1 or idx > #route.steps then
+                        table.insert(problems,
+                            ("%s: requires references step %s, which isn't in this route"):format(
+                                label, tostring(idx)))
+                    elseif idx == i then
+                        table.insert(problems, label .. ": requires references itself")
+                    end
+                end
+            end
         end
 
         if step.x and (step.x < 0 or step.x > 100) then
