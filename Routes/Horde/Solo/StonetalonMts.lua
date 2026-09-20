@@ -288,7 +288,13 @@ Leg(8, "Stonetalon Mts", {
       location = "Boulderslide Ravine", atLevel = 24, logCount = 17, x = 57.6, y = 89.4,
     },
     {
-      type = "turnin", questName = "", zone = "Stonetalon Mts", location = "Malaka'Jin",
+      -- Source spreadsheet had a turn-in here with no quest name (blank
+      -- cell) between Earthen Arise and Jin'Zil's Forest Magic - logCount
+      -- drops 17->16 so a real turn-in did happen, but which quest is
+      -- unknown. Left as a manual note rather than guessing a name.
+      type = "note", name = "Unidentified turn-in at Malaka'Jin",
+      note = "The route's source data lost this quest's name. Turn in whatever's ready in your log here, then Next.",
+      zone = "Stonetalon Mts", location = "Malaka'Jin",
       atLevel = 24, logCount = 16, x = 71.2, y = 94.8,
     },
     {

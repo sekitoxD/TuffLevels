@@ -122,8 +122,11 @@ Leg(28, "Feralas", {
       zone = "Orgrimmar", location = "The Drag", atLevel = 44, x = 59.5, y = 36.6,
     },
     {
+      -- x/y dropped: same reasoning as the Stranglethorn Vale hearth step -
+      -- this exact coordinate pair is reused verbatim there too, so it's a
+      -- placeholder the sheet reused rather than this spot's real position.
       type = "hearth", name = "Hearth to Camp Mojache", zone = "Ragefire Chasm", atLevel = 44,
-      logCount = 13, x = 52.8, y = 49.0,
+      logCount = 13,
       note = "Bind your hearthstone here even if it costs you the old bind.",
     },
     {
