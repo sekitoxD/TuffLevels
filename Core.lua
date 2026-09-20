@@ -237,6 +237,7 @@ function Core:Reconcile()
         if step then Data:SetWaypoint(step) end
         if ns.Marker then ns.Marker:RescanAll() end
         if ns.Panel then ns.Panel:Refresh() end
+        if ns.Pace then ns.Pace:OnStepAdvance() end
     end
 end
 
@@ -378,6 +379,7 @@ function Core:LoadRoute(name)
     self.active = route
     self.pinned = false
     self.index = 1
+    if ns.Pace then ns.Pace:OnRouteLoad() end
     self:Reconcile()
     self:Save()
     if ns.UI then ns.UI:Refresh() end
@@ -593,6 +595,7 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         Core:Load()
 
         if ns.Automation then ns.Automation:Load() end
+        if ns.Pace then ns.Pace:StartRun() end
         if ns.UI then ns.UI:Build() ; ns.UI:Refresh() end
 
         -- Sitting at step 1 with quest flags saying otherwise means either
@@ -822,6 +825,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "help" then
         if ns.Panel then ns.Panel:ShowHelpDialog() end
 
+    elseif cmd == "pace" then
+        if ns.Pace then ns.Pace:ShowExport() end
+
     elseif cmd == "client" then
         Print(("Flavor: %s  |  Interface: %d  |  Mainline: %s"):format(
             Compat.flavor, Compat.tocVersion, tostring(Compat.isMainline)))
@@ -855,7 +861,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
-        Print("          verify | capture | client | errors | reset | help | code [<code>]")
+        Print("          verify | capture | client | errors | reset | help | code [<code>] | pace")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")

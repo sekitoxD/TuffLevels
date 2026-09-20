@@ -13,6 +13,7 @@ Theme.lua
 Data.lua
 Core.lua
 Automation.lua
+Pace.lua
 Recorder.lua
 Marker.lua
 UI.lua

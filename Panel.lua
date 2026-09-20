@@ -673,7 +673,11 @@ function Panel:ShowHelpDialog()
         "tracker or in this menu) accepts and turns in quests for you, but only " ..
         "the ones matching your current step, and never guesses when a turn-in " ..
         "has more than one reward to choose from. Hold Shift to skip it for a " ..
-        "single dialog without turning it off.")
+        "single dialog without turning it off.\n\n" ..
+        "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
+        "how long your current section is taking versus your best time for it, " ..
+        "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
+        "/tuff pace) gives you a copyable summary of the run.")
 
     FitDialogToBody(f, body, 46, 60, 160)
 

@@ -36,6 +36,7 @@ Theme.lua       -- shared color palette for all frames
 Data.lua        -- QuestieDB adapter (the ONE file to touch if QuestieDB's API changes)
 Core.lua        -- the step engine: route registry, step advancement, slash commands
 Automation.lua  -- opt-in, step-matched auto accept/turn-in (off by default)
+Pace.lua        -- per-section timing, personal-best splits, XP/hour and level ETA
 Recorder.lua    -- turns live play (accept/turn-in events) into route step data
 Marker.lua      -- nameplate icons over quest NPCs / objective mobs
 UI.lua          -- the tracker window

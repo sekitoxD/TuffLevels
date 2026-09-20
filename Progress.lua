@@ -10,7 +10,11 @@ local Progress = {}
 ns.Progress = Progress
 
 local ROW_H = 18
-local ROW_TOP = 92     -- offset from the top where the row list starts
+-- The summary block can now run up to ~5 lines (route stats, lifetime
+-- quests, session turn-ins, current section + best, XP/hour + ETA), so
+-- the filter buttons and row list start further down than a 1-2 line
+-- summary would need.
+local ROW_TOP = 120    -- offset from the top where the row list starts
 local ROW_BOTTOM = 52  -- offset reserved at the bottom for the slider/buttons
 
 local win, rows, slider, EnsureRow
@@ -202,7 +206,7 @@ function Progress:Build()
     local function FilterButton(label, mode, x)
         local b = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
         b:SetSize(70, 20)
-        b:SetPoint("TOPLEFT", x, -66)
+        b:SetPoint("TOPLEFT", x, -94)
         b:SetText(label)
         b:SetScript("OnClick", function()
             filter = mode ; offset = 0 ; Progress:Refresh()
@@ -303,6 +307,14 @@ function Progress:Build()
     jump:SetText("Jump to current")
     jump:SetScript("OnClick", ScrollToCurrent)
 
+    local export = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
+    export:SetSize(120, 22)
+    export:SetPoint("BOTTOM", 0, 16)
+    export:SetText("Export splits")
+    export:SetScript("OnClick", function()
+        if ns.Pace then ns.Pace:ShowExport() end
+    end)
+
     local close = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
     close:SetSize(100, 22)
     close:SetPoint("BOTTOMRIGHT", -18, 16)
@@ -381,6 +393,27 @@ function Progress:Refresh()
     local session = #self:SessionTurnIns()
     if session > 0 then
         text = text .. ("   This session: |cff00ff00%d|r"):format(session)
+    end
+
+    if ns.Pace then
+        local section = ns.Pace.currentSectionName
+        if section then
+            local elapsed = ns.Pace:FormatTime(ns.Pace:CurrentSectionElapsed())
+            local best = ns.Pace:BestFor(section)
+            text = text .. ("\n|cffffd100%s|r: %s"):format(section, elapsed)
+            if best then
+                text = text .. (" |cff808080(best %s)|r"):format(ns.Pace:FormatTime(best))
+            end
+        end
+
+        local rate = ns.Pace:XPPerHour()
+        if rate then
+            text = text .. ("\nXP/hour: |cff00ff00%d|r"):format(rate)
+            local eta = ns.Pace:LevelETASeconds()
+            if eta then
+                text = text .. ("   Next level in ~|cff00ff00%s|r"):format(ns.Pace:FormatTime(eta))
+            end
+        end
     end
 
     win.summary:SetText(text)
