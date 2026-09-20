@@ -2,6 +2,9 @@
 
 See [README.md](README.md) for the legend, abbreviations and confidence caveats.
 
+Also see **Model-derived additions** at the bottom: weapons a DPS model ranks highly that the tables
+below do not list, with sources checked against the DB.
+
 The weapon is the single most important piece of gear for a leveling Rogue (WH). Two common builds:
 **Combat Swords** (the standard leveling spec — sword list) and **Subtlety/dagger** (more crowd
 control, popular on hardcore/PvP realms — dagger list). Rogue class quests give **skills, not gear**
@@ -194,3 +197,92 @@ sword rows marked D (dungeon drop) or V (vendor) have no quest reward in the DB,
 required levels match (Butcher's Slicer 18, Cruel Barb 19, Bite of Serra'kis 23, Toxic Revenger 27, Swinetusk
 Shank 30, Rondel 39, Gahz'rilla Fang 42, Satyr's Lash 45, Barman Shanker 50, Dire Nail 51, Keris of Zul'Serak 55,
 Distracting Dagger 57).
+
+## Model-derived additions (2026-09-20)
+
+Produced by an offline DPS calculator (`tools/tuffweights`, Classic Era 1.12 rules, all rogue-usable weapons
+in either hand, five builds: combat swords/maces/fist, dagger assassination/subtlety) and then checked by hand
+against the DB with `tools/qdb.py`. The calculator's output is not committed (it is derived from the DB); this
+section keeps only what a human verified. Nothing above was edited.
+
+**How far to trust it.** It scores damage only (no stamina, armor, utility, convenience), on a 20-second
+fight with maxed weapon skill, and it does not know factions. Weapons within ~1% of each other are ties.
+Level ranges are the levels where the item is in the model's top 5 (of ~970 weapons) for a build; the first
+level is the item's or quest's minimum level.
+
+### Gaps in the tables above (routable)
+
+| Levels | Item | Weapon DPS | Faction | Source (DB-checked) | Notes |
+|---|---|---|---|---|---|
+| 21-30 | **Outlaw Sabre** (16886) | 18.9 | **Horde only** | Quest "Baron Aquanis" (6922, min 21). The quest item, Strange Water Globe, drops 100% from Baron Aquanis (level 28 elite, Blackfathom Deeps); turn in to Je'neu Sancrea, Zoram'gar Outpost, Ashenvale | Fills the Horde sword gap (20 Wingblade 15.7 → 30 Hammerfall 23.0). Top 5 in every build from 21 to at least 27 (swords and maces to 30). The other reward choice is Witch's Finger (off-hand). BoP |
+| 25-28 | **Windstorm Hammer** (6804) | 22.1 | **Horde only** | Quest "Final Passage" (1394, min 25); turn in to Dorn Plainstalker, Thousand Needles. DB shows it chained after "Test of Lore" (6628); the order of that chain was not checked | Mace: rank 1 for the mace/fist builds, lower for swords (loses Sword Specialization). +4 Str, +5 Sta |
+| 40-44 | **Gryphon Rider's Stormhammer** (9651) | 31.5 | **Alliance only** | Quest "Saving Sharpbeak" (2994, min 40): kill Vile Priestess Hexx at the top of Jintha'Alor (Hinterlands) for the key to Sharpbeak's cage; Gryphon Master Talonaxe. Reward choice with Gryphon Rider's Leggings | Slow (2.7) mace, rank 1 for the fist, mace and sword builds at 40-44. Elite quest, probably a group |
+| 40-47 | **Lifeforce Dirk** (10750) | 35.9 | Both | Quest "The God Hakkar" (3528, min 40, level 53): bring the Filled Egg of Hakkar to Yeh'kinya, Tanaris. Chain: requires "The Ancient Egg" (4787). Other choices: Avenguard Helm, Gemburst Circlet | Fast (1.6) dagger, +11 Sta. Rank 3 for dagger assassination, top 5 for the other builds at 40-43. How the egg gets filled was not checked in the DB |
+| 55-59 | **Mirah's Song** (15806) | 40.0 | Both | Quest "Kirtonos the Herald" (5384, min 55, level 60): Scholomance, place Blood of Innocents in the brazier and kill Kirtonos; Eva Sarkhoff. Needs "Krastinov's Bag of Horrors" (5515) turned in first. Other choices: Penelope's Rose (off-hand) | Sword, 1.8 speed, +9 Agi +9 Str. Group content (Scholomance); rank 2 for combat swords at 55-59 |
+
+### Opportunistic: use it if it drops, do not farm it
+
+| Item | Levels | Weapon DPS | Where it comes from |
+|---|---|---|---|
+| Blackvenom Blade (4446) | 21-26 | 16.7 | Rohh the Silent (level 26 rare elite), ~25% drop; Nature poison proc worth ~0.3 DPS |
+| Talon of Vultros (4454) | 21-25 | 16.8 | Vultros (level 26 rare elite), ~25% drop; +5 Agi |
+| Gut Ripper (2164) | 40-47 | 33.9 | World drop (level 40-50 mobs), ~0.002% |
+| Widowmaker (4091) | 42-46 | 31.6 | World drop, and the "Solid Chest" gameobjects; +8 Agi +7 Str |
+| Bloodrazor (809) | 45-50 | 37.0 | World drop, ~0.002%; its bleed proc adds ~1 DPS |
+| Shadowblade (2163) | 48-54 | 38.9 | World drop; fast (1.4) dagger |
+
+### Do not plan around (in the model's shortlist, but not obtainable in practice)
+
+- **Scout's Blade / Sentinel's Blade** (many level versions, 19542-19549, 20441, 20443): sold by Kelm Hargunth and
+  Illiyana Moonblaze, and the vendor rows require **Revered** with Warsong Outriders or Silverwing Sentinels (a Warsong
+  Gulch reputation grind). The calculator first treated them as plain vendor items; the export now records the
+  vendor condition and no longer scores them as freely buyable.
+- **Crystal Tipped Stiletto** (20657): drops from Crimson Templar, a level-60 elite with no spawn rows, i.e.
+  a Scourge Invasion event mob. Not leveling content.
+- **Doomforged Straightedge** (12535): Blackrock Depths trash, ~0.02%. **Ironfoe** (11684): Emperor Dagran Thaurissan, 1%.
+  Both would be top options at 49+/55+ if they dropped, which is a lottery ticket, not a plan.
+- **Krol Blade** (2244): drops from the level-63 Colossus of Ashi/Regal/Zora (Ahn'Qiraj-era) and from the world-drop
+  table (~0.001%). It would add about +5% at 51-59, but nothing while levelling can reach it. `Rogue.upgrades` now files it
+  under "worth it if convenient": equip one if it turns up, never plan around it.
+
+### Effort classes (what `Rogue.upgrades` uses)
+
+`tuffweights run --faction horde` also writes `worth.md`. For each weapon it measures how much DPS it adds over the best
+loadout built only from vendor and quest weapons (what you wear anyway), best across builds, then sorts by how hard it is
+to get: **detour** = vendor/quest source with mean uplift >= 2.5% and mean x levels >= 20 percent-levels;
+**convenient** = adds >= 1% somewhere but is a drop or a small gain; **skip** = under 1% everywhere. The model cannot see
+quest-chain length, group requirements or that many quest rewards sit inside dungeons, so the classes were confirmed by hand.
+Horde detours: Wingblade (15-20, ~+17%), Outlaw Sabre (21-24, ~+14%), Sword of Omen (33-36, ~+7%), Vanquisher's Sword
+(37-48, +3% mean), Thrash Blade (45-50, +3.5%). The vendor/quest baseline is thin below level 25, so early uplifts are
+overstated.
+
+### Listed above, but the model rates it clearly below the best option at its listed level
+
+Gap is to the best loadout at the item's listed level; gaps under 4% are omitted (there are 10 of them, from -2.2% to -3.6%).
+
+| Item | Gap | Why (from the item's stats) |
+|---|---|---|
+| Enchanted Azsharite Felbane Sword | -9.9% | 50-93 at 2.0 speed, no stats; the Fel Curse on-use is not valued |
+| Longsword | -17.9% | Vendor filler; better options exist by 21 |
+| Linken's Sword of Mastery | -8.3% | 42-78 at 1.8, no stats |
+| Electrocutioner's Leg (DB name: Electrocutioner Leg) | -7.9% | 26-49 at 1.7, no stats |
+| Wingblade | -6.4% at 20 | Best at 11-17 in the model; by 20 Shadowfang / Cruel Barb pull ahead |
+| Lord General's Sword | -6.0% | The best loadout at 51 is 6% higher |
+| Blade of Eternal Darkness | -5.3% | The best loadout at 49 is 5% higher |
+| Rondel | -5.0% | Vendor dagger at 39 |
+| Solid Shortblade | -4.3% | Below the best at 15 |
+
+Everything else on the tables scores within ~4% of the best loadout at its level. Of the 43 listed weapons, 17 are in
+the model's top 5 (Sword of Serenity/Omen, Black Menace, Vanquisher's Sword, Thrash Blade, Blade of Reckoning, Cruel Barb,
+Satyr's Lash and others).
+
+### Regenerating this
+
+```
+python3 tools/export_items.py                      # DB -> tools/.cache/items.json (ignored)
+cd tools/tuffweights && cargo run --release -- run # reports in tools/tuffweights/out (ignored)
+```
+
+`shortlist.md`, `best_by_level.md` and `audit.md` there hold the full per-level tables; `explain` prints the DPS parts for one
+loadout.
+

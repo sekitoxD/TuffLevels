@@ -127,34 +127,75 @@ Rogue.weapons = {
 
 -- Horde-obtainable only. Alliance-side rewards are left out rather than
 -- listed and caveated.
+--
+-- class says how much effort a weapon deserves:
+--   detour     - go out of your way for it: a fixed source (quest/vendor) that
+--                adds a lasting DPS gain over what you would wear anyway
+--   convenient - take it if you are already at the source (or it drops);
+--                never spend extra time acquiring it
+--   skip       - looked at and not worth acquiring
+-- The gains quoted in the notes come from an offline DPS model (Classic Era
+-- rules) measured against the best vendor/quest weapon at that level.
+Rogue.upgradeClasses = {
+    { key = "detour",     title = "Worth going out of your way for" },
+    { key = "convenient", title = "Worth it if convenient (don't chase)" },
+    { key = "skip",       title = "Not worth acquiring" },
+}
+
 Rogue.upgrades = {
-    { level = 4,  item = "Jagged Dagger",
-      how = "Quest chain starting with Report to Orgnil, Durotar (Skull Rock)",
-      note = "Needs roughly level 8 to actually solo. Take the chain early, finish it later." },
-    { level = 10, item = "Blade of Cunning",
-      how = "Rogue class quest at 10",
-      note = "Likely your first green. The agility is a large jump at this level. Do not skip." },
-    { level = 17, item = "Tail Spike",
-      how = "Drops from Skum, Wailing Caverns",
-      note = "Horde-favoured dungeon, so far easier for you than Alliance. Sticks around a while." },
-    { level = 30, item = "Swinetusk Shank",
-      how = "Drops in Razorfen Kraul",
-      note = "Lines up with the Barrens-to-Thousand-Needles stretch." },
-    { level = 35, item = "Tok'kar's Murloc Shanker",
-      how = "Threat From the Sea, Swamp of Sorrows",
-      note = "Worth the detour if you're passing through anyway." },
-    { level = 39, item = "Vanquisher's Sword",
+    -- detour
+    { class = "detour", level = 15, item = "Wingblade",
+      how = "Leaders of the Fang, Wailing Caverns",
+      note = "Largest jump on the list, roughly +17% over the best vendor/quest weapon for levels 15-20. A sword, and a group dungeon." },
+    { class = "detour", level = 21, item = "Outlaw Sabre",
+      how = "Baron Aquanis, Blackfathom Deeps (turn in in Ashenvale)",
+      note = "Roughly +14% for levels 21-24, then the gap closes. Elite kill, bring a group." },
+    { class = "detour", level = 33, item = "Sword of Omen",
+      how = "Into The Scarlet Monastery",
+      note = "Roughly +7% for levels 33-36. A sword, so it keeps Sword Specialization." },
+    { class = "detour", level = 39, item = "Vanquisher's Sword",
       how = "Bring the Light / Bring the End, Razorfen Downs",
-      note = "A sword, which matters - see the spec note." },
-    { level = 45, item = "Thrash Blade",
+      note = "A sword, which matters - see the spec note. Averages +3% across 37-48, peaking near +9%." },
+    { class = "detour", level = 45, item = "Thrash Blade",
       how = "Corruption of Earth and Seed, Maraudon",
-      note = "Extra-attack proc. Excellent while levelling." },
-    { level = 51, item = "Krol Blade",
-      how = "World drop, Bind on Equip - watch the Auction House",
-      note = "Fills the gap between Thrash Blade and Dal'Rend's. Not guaranteed like a quest reward, but worth grabbing if one turns up." },
-    { level = 58, item = "Dal'Rend's Sacred Charge",
-      how = "Upper Blackrock Spire",
-      note = "Carries into raiding. Worth chasing near 60." },
+      note = "Extra-attack proc. About +3.5% for levels 45-50." },
+
+    -- convenient
+    { class = "convenient", level = 4,  item = "Jagged Dagger",
+      how = "Quest chain starting with Report to Orgnil, Durotar (Skull Rock)",
+      note = "On the normal levelling path anyway. Needs roughly level 8 to actually solo, so take the chain early and finish it later." },
+    { class = "convenient", level = 10, item = "Blade of Cunning",
+      how = "Rogue class quest at 10",
+      note = "You do the class quest regardless. The model shows it roughly level with the other quest weapons at 10, not a big jump." },
+    { class = "convenient", level = 17, item = "Tail Spike",
+      how = "Drops from Skum, Wailing Caverns",
+      note = "Only about +1%. Worth having if you are in there for Wingblade." },
+    { class = "convenient", level = 19, item = "Shadowfang",
+      how = "Razorclaw the Butcher or Baron Silverlaine, Shadowfang Keep",
+      note = "About +4% for levels 19-22, up to +7% at the top. Only if you are already running Shadowfang Keep." },
+    { class = "convenient", level = 21, item = "Blackvenom Blade",
+      how = "Rohh the Silent, level 26 rare elite (about 25% drop)",
+      note = "About +5% for levels 21-24. Take it if you are passing that way, do not hunt it." },
+    { class = "convenient", level = 51, item = "Krol Blade",
+      how = "Level-63 Ahn'Qiraj-era Colossi or a rare world drop, Bind on Equip",
+      note = "Would be +5% through 59, but the drop sources are effectively unreachable while levelling. Equip one if it turns up; never plan around it." },
+    { class = "convenient", level = 54, item = "Ebon Hilt of Marduk",
+      how = "Marduk Blackpool, Scholomance",
+      note = "About +4% for levels 54-59. Only if you are already in Scholomance." },
+    { class = "convenient", level = 55, item = "Ironfoe",
+      how = "Emperor Dagran Thaurissan, Blackrock Depths (1% drop)",
+      note = "About +3.5% for levels 55-59, but a 1% drop. Only worth it if it drops during a run you were doing anyway." },
+    { class = "convenient", level = 58, item = "Dal'Rend's Sacred Charge",
+      how = "Warchief Rend Blackhand, Upper Blackrock Spire",
+      note = "About +5% at 58-59 and it carries into raiding, but only two levels of levelling use. Take it if you are in the Spire." },
+
+    -- skip
+    { class = "skip", level = 30, item = "Swinetusk Shank",
+      how = "Drops in Razorfen Kraul",
+      note = "Within noise of the vendor/quest options at 30. Not worth a run." },
+    { class = "skip", level = 35, item = "Tok'kar's Murloc Shanker",
+      how = "Threat From the Sea, Swamp of Sorrows",
+      note = "No measurable gain at 35. Do the quest only for its other rewards or XP." },
 }
 
 Rogue.specNote =
@@ -272,17 +313,28 @@ function Rogue:BuildUpgrades()
     table.insert(lines, Theme.hex.faint .. "Horde-obtainable only.|r")
     table.insert(lines, "")
 
-    for _, u in ipairs(self.upgrades) do
-        local colour
-        if level >= u.level + 6 then colour = Theme.hex.faint
-        elseif level >= u.level then colour = Theme.hex.done
-        elseif level >= u.level - 4 then colour = Theme.hex.warn
-        else colour = Theme.hex.dim end
+    for _, class in ipairs(self.upgradeClasses) do
+        local shown = false
+        for _, u in ipairs(self.upgrades) do
+            if u.class == class.key then
+                if not shown then
+                    table.insert(lines, Theme.hex.accent .. class.title .. "|r")
+                    table.insert(lines, "")
+                    shown = true
+                end
+                local colour
+                if class.key == "skip" then colour = Theme.hex.faint
+                elseif level >= u.level + 6 then colour = Theme.hex.faint
+                elseif level >= u.level then colour = Theme.hex.done
+                elseif level >= u.level - 4 then colour = Theme.hex.warn
+                else colour = Theme.hex.dim end
 
-        table.insert(lines, ("%s[%d] %s|r"):format(colour, u.level, u.item))
-        table.insert(lines, ("   %s%s|r"):format(Theme.hex.text, u.how))
-        table.insert(lines, ("   %s%s|r"):format(Theme.hex.faint, u.note))
-        table.insert(lines, "")
+                table.insert(lines, ("%s[%d] %s|r"):format(colour, u.level, u.item))
+                table.insert(lines, ("   %s%s|r"):format(Theme.hex.text, u.how))
+                table.insert(lines, ("   %s%s|r"):format(Theme.hex.faint, u.note))
+                table.insert(lines, "")
+            end
+        end
     end
 
     table.insert(lines, Theme.hex.accent .. "Spec and weapon type|r")
@@ -419,9 +471,10 @@ rf:SetScript("OnEvent", Compat:Wrap("Rogue", function(self, event, ...)
             end
         end
         for _, u in ipairs(Rogue.upgrades) do
-            if u.level == newLevel then
-                ns.Print(("%sWeapon available: %s|r - %s")
-                    :format(Theme.hex.bright, u.item, u.how))
+            if u.level == newLevel and u.class ~= "skip" then
+                local label = u.class == "detour" and "Weapon worth a detour" or "Weapon, only if convenient"
+                ns.Print(("%s%s: %s|r - %s")
+                    :format(Theme.hex.bright, label, u.item, u.how))
             end
         end
         Rogue:Refresh()
