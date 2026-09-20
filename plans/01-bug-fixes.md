@@ -1,12 +1,17 @@
 # Plan 1: Bug fixes from the initial audit
 
-Branch: `initial_audit`
-Source: audit of the repo on 2026-09-18 (Forever beta day 2).
+Status: **Phases 1-4 done and committed on master.** Rewritten 2026-09-20 after an
+audit against the actual codebase (see
+`.claude/checkpoints/2026-09-20-plan-01-bug-fixes-audit.md` for the full evidence
+trail). Original source: audit of the repo on 2026-09-18 (Forever beta day 2).
 
-There is no headless Lua runner for WoW, so every task has a **Verify** line. It says
-whether it can be checked in a plain Lua interpreter (P) or only in the game client (G).
+There is no headless Lua runner for WoW, so nothing here can be proven correct
+outside the client — CI (`luacheck`, `busted spec/`, `validate_route.py --no-db`)
+covers what's mechanically checkable and is green on the current `master`
+(`gh run list`), but live behavior still needs a play session. That play session is
+the only work this plan has left; see "Remaining: in-game verification" below.
 
-Ground rules from `CLAUDE.md` still apply:
+Ground rules from `CLAUDE.md` still apply and were followed by everything below:
 - Route all client detection through `Compat`.
 - All event registration goes through `Compat:RegisterEvents`.
 - `Data.lua` is the only file that touches QuestieDB.
@@ -14,248 +19,95 @@ Ground rules from `CLAUDE.md` still apply:
 
 ---
 
-## Phase 0: Confirm the assumptions (30 min, in game)
+## Phase 1: Correctness bugs — done
 
-Three of the fixes rest on things I could not check from outside the client. Do these
-first on the Forever beta (and Classic Era or Retail if available) and write the results
-at the bottom of this file.
-
-| # | Check | Command | Why |
+| # | Fix | Where it lives | Evidence |
 |---|---|---|---|
-| 0.1 | Lua `atan` semantics | `/run print(math.atan(1,-1), math.atan2 and math.atan2(1,-1))` | Decides fix 1.1 |
-| 0.2 | Which TOC the client loads | `/tuff client` | The `_Mainline` suffix is unverified on Forever |
-| 0.3 | `SetCVar` return value | `/run print(SetCVar("nameplateShowFriends", 1))` | Decides fix 1.6 |
-| 0.4 | Spellbook bank argument | `/run print(Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player)` | Decides fix 1.8 |
-| 0.5 | Do accept/turn-in calls need a hardware event? | See Plan 2, Phase C spike | README claim (fix 1.9) |
+| 1.1 | `Compat.Atan2(y, x)` replaces the invalid two-arg `math.atan` call, branching on whether `math.atan2` exists rather than assuming either way | `Compat.lua:194`, called from `Arrow.lua:68` | Reads correctly regardless of what a live client's `math.atan2` turns out to be — the fix was written defensively, so Phase 0.1's original "which does the client have" question no longer blocks anything |
+| 1.2 | `Core:SetIndex` is now the only place `self.index`/`Core.index` is assigned; `Core.pinned` blocks `Reconcile` from undoing Back/goto; cleared by Advance/LoadRoute/`Core:Resume()` | `Core.lua:22,228,245-426,851-852`; call sites fixed in `UI.lua:236,321,373`, `Progress.lua:244` | Matches the plan's chosen "pin until the user acts" behavior exactly |
+| 1.3 | `Compat:Wrap(name, fn, onTrip)` wraps every `OnEvent`/slash handler with its own per-module error counter (ceiling well under Forever's 100-error cap) and an `onTrip` callback instead of going silent; `/tuff errors` reports counts | `Compat.lua:570,617,642,650`; wrapped at `Core.lua:636,697`, `Arrow.lua:158`, `Marker.lua:370`, `Recorder.lua:381`, `Rogue.lua:522` | Covered by `spec/compat_spec.lua`'s `Compat:Wrap` block (budget trip, `onTrip` fires once, one module tripping doesn't affect another) |
+| 1.4 | `Core:AutoSelectRoute` collects candidates into a list and sorts deterministically (non-demo before `sample`/`skeleton`, then starting level, then name); logs the pick once; `Durotar.lua` marked `sample = true` | `Core.lua:443-470,487`; `Routes/Horde/Durotar.lua:89` | Covered by `spec/core_spec.lua`'s `AutoSelectRoute` block |
+| 1.5 | `Data:ValidateRoute` treats a `questName`-only step as `unresolved` (info), not a problem; returns `problems, unknown, unresolved`; caller updated | `Data.lua:164-255` | Covered by `spec/data_spec.lua` |
+| 1.6 | `Marker:EnableFriendlyPlates`/`DisableFriendlyPlates` call `pcall(SetCVar, ...)` directly and confirm via a `GetCVar` readback instead of trusting `Compat:Guard`'s always-nil return; check `InCombatLockdown()` first | `Marker.lua:309-336` | Reads correctly regardless of Phase 0.3's original question |
+| 1.7 | `Data.lua`'s QuestieDB adapter prefers `QuestieLoader:ImportModule("QuestieDB")`, documents the fallback, stays fully optional | `Data.lua:21-95` | No database on Forever to test against; Classic Era confirmation is a live-client task, folded into "Remaining" below |
+| 1.8 | `Compat:GetSpellBookName` uses `Enum.SpellBookSpellBank.Player` when it exists, else the legacy `"spell"` bank string; `Rogue.lua` calls the shim instead of a hardcoded `2` | `Compat.lua:326-338`; `Rogue.lua:556` | Reads correctly regardless of Phase 0.4's original question |
 
----
-
-## Phase 1: Correctness bugs
-
-### 1.1 Arrow bearing uses a one-argument `math.atan`
-
-- **File:** `Arrow.lua:44`
-- **Problem:** `math.atan(dx, -dy)` passes two arguments. WoW runs Lua 5.1, where `math.atan`
-  takes one argument, so the bearing is probably wrong. The arrow is the headline feature.
-- **Fix:**
-  - Add a local `Atan2(y, x)` in `Compat.lua` (`Compat.Atan2`).
-  - It uses `math.atan2` if present.
-  - Otherwise it uses `math.atan(y / x)` with quadrant correction, and handles `x == 0`.
-  - Replace the call in `Arrow.lua`.
-- **Also check:** the rotation sign in `tex:SetRotation(-angle)` once bearing is correct.
-  Walk toward a known coordinate and confirm the arrow points at it.
-- **Verify:** (P) table-test `Atan2` against the four quadrants and the axes.
-  (G) walk toward a target and check the arrow.
-
-### 1.2 `Back` and `goto` are undone by `Reconcile`
-
-- **Files:** `Core.lua:170-187`, `211-217`, `486-491`, `514-518`; `UI.lua:236`; `Progress.lua:180`
-- **Problem:** `Reconcile` advances past any step where `IsStepDone` is true. After Back
-  lands on a completed quest step, the next quest event (within about 0.3 s) pushes it
-  forward again. `goto` calls `Reconcile` immediately, so it does the same. `UI.lua` and
-  `Progress.lua` assign `Core.index` directly and have the same problem.
-- **Fix:**
-  1. Add `Core:SetIndex(n, opts)` as the only place `self.index` is assigned. It clamps
-     to `1..#steps+1`, saves, refreshes UI, marker, waypoint and panel, and does not call `Reconcile`.
-  2. Add `Core.pinned`. Set it to `true` by any manual navigation (Back, `goto`, Progress
-     jump, section jump).
-  3. While `pinned`, `Reconcile` returns without advancing.
-  4. Clear `pinned` in `Advance` (the Next button), `LoadRoute`, and a new
-     `Core:Resume()` (fast-forward, see Plan 2 item A3).
-  5. The tracker shows a small "Paused here. Next or Resume to continue" hint while pinned.
-  6. Replace the direct assignments in `Core.lua:489`, `Core.lua:515`, `UI.lua:236` and
-     `Progress.lua:180` with `SetIndex`.
-- **Decision to confirm with the author:** pin until the user acts, versus auto-clear once
-  the pinned step becomes newly done. This plan picks pin until the user acts, because it
-  is predictable and needs no edge detection.
-- **Verify:** (P) stub `Data` and `Compat`, mark steps done, call `Back`, fire `Reconcile`,
-  assert the index does not move. (G) accept, complete and turn in a quest, hit Back, do a
-  quest action, and confirm the tracker stays put.
-
-### 1.3 Unwrapped handlers and one shared error budget
-
-- **Files:** `Compat.lua:199-222`, `Arrow.lua:110-115`, `Core.lua:319-340`,
-  `Marker.lua:281-295`, `Recorder.lua:349`, `Rogue.lua:402`
-- **Problem:**
-  - `Compat:Guard` only wraps individual API calls, not the handlers. An error in
-    `Arrow:Update` at 20 Hz can hit Forever's 100-error cap in about 5 seconds and hide
-    every other addon's errors.
-  - The 10-error budget is global, so after it is spent every guarded call in every
-    module silently returns nil. The addon looks half-dead with no explanation.
-- **Fix:**
-  1. Add `Compat:Wrap(name, fn)` that returns a function running `fn` under `pcall`.
-  2. Give each `name` its own counter, with a total ceiling of about 30 (well under
-     the client's 100).
-  3. De-duplicate by message: an identical error reports once, then only counts.
-  4. On a module hitting its limit, call an optional `onTrip` callback instead of going
-     silent. For `Arrow`, that hides the frame and prints one message.
-  5. Wrap every `OnUpdate`, `OnEvent` and slash handler.
-  6. `/tuff errors` prints per-module counts and the last error for each.
-- **Verify:** (P) test that a throwing function trips at the limit and calls `onTrip`, and
-  that one module tripping doesn't affect another. (G) temporarily inject an error into
-  `Arrow:Update` and confirm one message and a hidden arrow.
-
-### 1.4 Non-deterministic route selection
-
-- **File:** `Core.lua:236-251`
-- **Problem:** `AutoSelectRoute` iterates with `pairs()`. Both shipped routes match Horde
-  Orc/Troll, and on Forever the saved route is lost every launch, so the route picked can
-  differ between launches.
-- **Fix:**
-  - Collect matching routes into a list and sort deterministically.
-  - Prefer routes with `sample ~= true` and `skeleton ~= true`, then `levels[1]` ascending,
-    then name.
-  - Mark `Routes/Durotar.lua` with `sample = true`.
-  - Log which route was auto-selected and why, once, in chat.
-- **Verify:** (P) register three routes in shuffled order and assert the same choice each time.
-
-### 1.5 `/tuff verify` rejects name-based steps
-
-- **File:** `Data.lua:130-142`
-- **Problem:** Spreadsheet-imported steps carry `questName` and no `quest`. `ValidateRoute`
-  reports "missing numeric quest ID" for every one of them.
-- **Fix:**
-  - A quest step is valid if it has a numeric `quest` or a non-empty `questName`.
-  - Count name-only steps under a separate `unresolved` total and report them as info
-    ("N steps resolve by name at runtime"), not as problems.
-  - Return `problems, unknown, unresolved`.
-  - Update the caller in `Core.lua:409-423`.
-- **Verify:** (P) validate a route that mixes numeric and name-only steps.
-
-### 1.6 Misleading nameplate CVar message
-
-- **File:** `Marker.lua:236-245`
-- **Problem:** `Compat:Guard` returns the wrapped function's results, and `SetCVar` returns
-  nothing, so `ok` is always nil and the code always prints "Could not change nameplate
-  settings".
-- **Fix:**
-  - Call `pcall(SetCVar, ...)` directly.
-  - Confirm success by reading `GetCVar` back.
-  - Print success or failure based on that.
-  - `SetCVar` is blocked in combat: detect `InCombatLockdown()` and say "try again out of combat".
-- **Verify:** (G) toggle with `/tuff plates`, in and out of combat.
-
-### 1.7 QuestieDB access likely wrong (Classic Era only)
-
-- **File:** `Data.lua:23-75`
-- **Problem:** `_G.QuestieDB` is probably not a real global, and `h:GetQuest(id)` passes
-  `h` as the ID if `GetQuest` is a dot-function. These are from memory and unverified;
-  the README already flags them as assumptions.
-- **Fix (lowest priority, Forever has no database):**
-  - Read Questie's source and `docs/api.md`.
-  - Prefer `QuestieLoader:ImportModule("QuestieDB")`.
-  - Use the correct call form.
-  - Record the verified signatures in the file header.
-  - Keep the "works with no provider" guarantee. Do not bundle any Questie data
-    (GPL-3.0, see README "Licensing").
-- **Verify:** (G, Classic Era) `/tuff verify` on the Durotar route with Questie installed.
-
-### 1.8 Rogue spellbook scan passes a wrong bank argument
-
-- **File:** `Rogue.lua:435-443`
-- **Problem:** `Compat:Guard(getInfo, i, 2)` uses `2` as the "bank". The modern
-  `C_SpellBook.GetSpellBookItemName` expects an `Enum.SpellBookSpellBank` value
-  (`Player`), so the scan may return nothing or the wrong list.
-- **Fix:**
-  - Use `Enum.SpellBookSpellBank.Player` when it exists, else the legacy `"spell"` book
-    type for the old global.
-  - Move the call into a `Compat:GetSpellBookName(i)` shim.
-  - Feature-gate it on the Phase 0.4 result. `GetSpecialization` is absent on Forever, so
-    don't build on spec APIs.
-- **Verify:** (G) log in as a rogue and run the scan.
-
----
-
-## Phase 2: Forever-specific data loss
+## Phase 2: Forever-specific data loss — done
 
 ### 2.1 Recording silently stops and is lost between launches
 
-- **Files:** `Recorder.lua:106-141`, `Compat.lua:79-102`, `Panel.lua`
-- **Problem:** The recorder is the addon's main data source on Forever, since no quest
-  database exists. It keeps the log and the `recording` flag in SavedVariables. Forever
-  writes SavedVariables on exit but never restores them, so the flag is false and the log
-  is empty on next launch. Recording just stops.
-- **Fix:**
-  1. When `Compat:SavedVarsAreBroken()`, show a persistent status line in the tracker while
-     recording: "N steps recorded. Export before you log out."
-  2. Auto-open the export window when the player logs out is not possible (no logout hook),
-     so instead nudge every 25 recorded steps and on `PLAYER_LEAVING_WORLD`.
-  3. On login with recording expected but not restored, print one clear warning that
-     recording was reset, and ask the user to click Start again.
-  4. Add `tools/extract_recording.py`. It parses
-     `WTF/Account/<ACCT>/SavedVariables/TuFFlevels.lua` (still written on exit) and prints
-     the route file, so a lost session can be recovered from disk.
-  5. Document the recovery path in `HOW-TO-USE.md`.
-- **Verify:** (P) run the extractor on a sample SavedVariables file.
-  (G) record steps, exit the game, run the tool, and compare the output with the export window.
+Status line while recording and `Compat:SavedVarsAreBroken()`, periodic nudge, login
+warning, and `tools/extract_recording.py` for disk recovery are all in place.
+
+- `Recorder.lua:91,153,156,394`
+- `tools/extract_recording.py` (parses `WTF/Account/<ACCT>/SavedVariables/TuFFlevels.lua`)
+
+## Phase 3: Content and documentation — done
+
+- **3.1** README.md:126 states auto-accept/turn-in is implemented, opt-in, and
+  confirmed live on Forever — stronger than the plan's requested "under
+  investigation" wording; superseded rather than just satisfied.
+- **3.2** `## Author: sekitoxD` in all three `.toc` files; `author = "sekitoxD"` in
+  `Routes/Horde/Durotar.lua:88`; `/tuff routes` tags `skeleton` and `sample` routes
+  (`Core.lua:753-754`); `Durotar.lua:89` carries `sample = true` so it's never
+  auto-selected over a real route.
+- **3.3** `Arrow.lua` routes every `TuFFlevelsDB` access through
+  `Compat:InitSavedVar` (`Arrow.lua:107,117,145,269,275,281,288`).
+- **3.4** `16001` listed first in `## Interface` for Forever in both
+  `TuFFlevels.toc` and `TuFFlevels_Mainline.toc`. Which TOC Forever actually loads
+  (Phase 0.2) is still worth a one-line `/tuff client` confirmation — folded into
+  "Remaining" below since it's cheap to check alongside the rest.
+
+## Phase 4: Tooling — done
+
+All four items shipped, one under a different name than originally specified:
+
+1. `.luacheckrc` with this addon's WoW globals — present, wired into CI.
+2. `.github/workflows/lint.yml` — three jobs on push/PR: `luacheck`,
+   `validate-routes` (`validate_route.py --no-db` + a `merge_routes.py` smoke test),
+   `busted spec/`. Green on the current `master` HEAD (`gh run list`).
+3. Structural route validation outside the game — shipped as
+   `tools/validate_route.py --no-db` (Python) rather than the originally-proposed
+   `tools/validate_routes.lua`. Same job, already in CI; the second contributor's
+   existing Python tooling absorbed this instead of a new Lua script being written.
+   Not a gap — recorded here so a future read of this plan doesn't go looking for a
+   file that was never going to exist.
+4. `spec/{compat,core,data}_spec.lua` cover exactly the functions named:
+   `IsStepDone`, `StepApplies`, `Reconcile`, `SetIndex` + pinning, `AutoSelectRoute`,
+   `Data:ValidateRoute`, `Compat:Guard`/`Wrap`. Stub `Data`/`Compat` via
+   `spec/helpers/`.
+5. `.pkgmeta` — present, configured for the BigWigs packager, ignores
+   `Architecture`/`plans`/`tools`/`spec`/`.github`/dev-only files.
 
 ---
 
-## Phase 3: Content and documentation
+## Remaining: in-game verification
 
-### 3.1 Correct the auto-accept claim (README:107)
-The README says auto-accept and auto-turn-in are "blocked on every client, no workaround"
-and "same limitation RestedXP has". RestedXP advertises those features and lists Forever.
-Reword to: "Not implemented yet. Whether the required calls are allowed on Forever is under
-investigation (Plan 2, Phase C)." Update the matching line in `CLAUDE.md` if present.
+This is the only work left, and it's not code — it's a play session on the Forever
+beta (and Classic Era / Retail if convenient) to confirm the defensively-written
+fixes above actually behave as intended live, and to close out the plan's original
+"Done when" checklist.
 
-### 3.2 Placeholders and consistency
-- Replace `## Author: you` in all three TOCs and `author = "you"` in `Routes/Durotar.lua`.
-- Make chat messages use one canonical command, `/tuff`, with `/sl` documented as an alias.
-  Touch `Compat.lua:211` and `Core.lua:520-524`.
-- Mark `Routes/Horde1-60.lua` clearly as a skeleton in `/tuff routes` output (it already
-  has `skeleton = true`; show it).
-- Mark the Durotar IDs as unverified in `/tuff routes` and stop auto-selecting it (fix 1.4).
-- Confirm the Forever quest IDs by recording them in the beta (levels 1-20 for now).
-  Don't ship Classic Era IDs as Forever data.
+**Impact:** none — this is a read/observe pass, no files change unless a check
+surfaces an actual bug, in which case that becomes its own small, separately-scoped
+fix rather than reopening this plan.
+**Performance:** none — no code runs differently because of this pass.
+**Dev time:** ~20-30 minutes of played time (mostly the 10-minute error-spam
+watch and one delivered-quest turn-in for the recording-recovery check).
 
-### 3.3 Route through `InitSavedVar`
-`Arrow.lua:74,103` touch `TuFFlevelsDB` directly. Use `Compat:InitSavedVar("TuFFlevelsDB")`
-so the Forever in-session cache stays consistent.
-
-### 3.4 TOC audit
-- Confirm which TOC Forever loads (Phase 0.2). If the `_Mainline` suffix is not picked up,
-  fall back to the un-suffixed `TuFFlevels.toc`, which already lists `16001`.
-- Keep `16001` first in the `## Interface` line for Forever.
-
----
-
-## Phase 4: Tooling so this stays fixed
-
-1. `.luacheckrc` with the WoW globals used by this addon. Run `luacheck .` and fix the
-   findings. This is the cheapest way to catch typos, unused variables and accidental
-   globals.
-2. `.github/workflows/lint.yml` running `luacheck` on push and PR.
-3. `tools/validate_routes.lua`: loads every `Routes/*.lua` with a stub `ns.RegisterRoute`
-   and runs the structural checks from `Data:ValidateRoute` outside the game.
-4. `spec/` with `busted` tests for the pure logic: `IsStepDone`, `StepApplies`,
-   `Reconcile`, `SetIndex` and pinning, `AutoSelectRoute`, `ValidateRoute`, `Compat:Wrap`.
-   Stub `Data` and `Compat`.
-5. `.pkgmeta` so the BigWigs packager can build release zips.
-
----
-
-## Order of work
-
-1. Phase 0 checks.
-2. 1.1 (arrow), 1.2 (Back), 1.3 (error handling). These affect every user.
-3. 1.4, 1.5, 1.6, 2.1.
-4. 3.1-3.4 (docs and placeholders).
-5. Phase 4 tooling. Doing this earlier is fine and makes 1.x safer, so pull step 1 of
-   Phase 4 forward if possible.
-6. 1.7, 1.8 last.
+| # | Check | Command | What it confirms |
+|---|---|---|---|
+| V1 | Arrow bearing | Walk toward a known coordinate | `Compat.Atan2` (1.1) points correctly regardless of which branch it took |
+| V2 | Back sticks | Accept/complete/turn in a quest, hit Back, do a quest action | `Core.pinned` (1.2) actually blocks `Reconcile` from re-advancing |
+| V3 | No error spam | 10 minutes of normal play | `Compat:Wrap` (1.3) per-module budgets hold under real event traffic |
+| V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat |
+| V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path |
+| V6 | Which TOC loads | `/tuff client` | 3.4's `16001`-first ordering is actually what Forever picks up |
+| V7 | QuestieDB adapter (Classic Era only, if available) | `/tuff verify` on the Durotar route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct |
+| V8 | Rogue spellbook scan (rogue character) | Run the scan from the Rogue tab | `Compat:GetSpellBookName` (1.8) returns real names |
 
 ## Done when
 
-- `luacheck` passes with no warnings.
-- `busted` passes.
-- On the Forever beta: the arrow points at a known target, Back sticks, no error spam
-  after 10 minutes of play, and a recording can be recovered after a relog.
-
-## Phase 0 results (fill in)
-
-- 0.1:
-- 0.2:
-- 0.3:
-- 0.4:
-- 0.5:
+- [x] `luacheck` passes with no warnings — CI green.
+- [x] `busted` passes — CI green.
+- [ ] V1-V8 above confirmed live and any resulting findings resolved.
