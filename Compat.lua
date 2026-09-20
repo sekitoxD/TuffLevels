@@ -192,6 +192,67 @@ function Compat:GetQuestLogInfo(index)
     return ok and result or nil
 end
 
+--------------------------------------------------------------------------
+-- Gossip quest lists
+--------------------------------------------------------------------------
+
+-- NOTE: C_GossipInfo.GetActiveQuests/GetAvailableQuests's returned table
+-- shape (title/questID/... fields) is from memory, not verified against
+-- this session's client - same caveat as the QuestieDB/flightpath
+-- assumptions elsewhere in this addon. Confirm live before relying on it
+-- for anything higher-stakes than the automation opt-in it backs today.
+--
+-- Both paths return a list of { title = string, questID = number|nil,
+-- index = number|nil } - questID is set on the modern path (exact match),
+-- index on the legacy Classic Era path (title-text match only).
+function Compat:GossipActiveQuests()
+    local out = {}
+    if C_GossipInfo and C_GossipInfo.GetActiveQuests then
+        local list = self:Guard(C_GossipInfo.GetActiveQuests) or {}
+        for _, entry in ipairs(list) do
+            table.insert(out, { title = entry.title, questID = entry.questID })
+        end
+        return out
+    end
+    local n = self:Guard(_G.GetNumActiveQuests) or 0
+    for i = 1, n do
+        table.insert(out, { title = self:Guard(_G.GetActiveTitle, i), index = i })
+    end
+    return out
+end
+
+function Compat:GossipAvailableQuests()
+    local out = {}
+    if C_GossipInfo and C_GossipInfo.GetAvailableQuests then
+        local list = self:Guard(C_GossipInfo.GetAvailableQuests) or {}
+        for _, entry in ipairs(list) do
+            table.insert(out, { title = entry.title, questID = entry.questID })
+        end
+        return out
+    end
+    local n = self:Guard(_G.GetNumAvailableQuests) or 0
+    for i = 1, n do
+        table.insert(out, { title = self:Guard(_G.GetAvailableTitle, i), index = i })
+    end
+    return out
+end
+
+function Compat:SelectGossipActiveQuest(entry)
+    if C_GossipInfo and C_GossipInfo.SelectActiveQuest and entry.questID then
+        self:Guard(C_GossipInfo.SelectActiveQuest, entry.questID)
+    elseif entry.index then
+        self:Guard(_G.SelectActiveQuest, entry.index)
+    end
+end
+
+function Compat:SelectGossipAvailableQuest(entry)
+    if C_GossipInfo and C_GossipInfo.SelectAvailableQuest and entry.questID then
+        self:Guard(C_GossipInfo.SelectAvailableQuest, entry.questID)
+    elseif entry.index then
+        self:Guard(_G.SelectAvailableQuest, entry.index)
+    end
+end
+
 -- The modern C_SpellBook API takes an Enum.SpellBookSpellBank value
 -- ("Player"), not the old numeric BOOKTYPE_SPELL bank argument. Passing a
 -- bare 2 where that enum is expected returns nothing or the wrong list.

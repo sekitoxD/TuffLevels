@@ -592,6 +592,7 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         Compat:LoadNameCache()
         Core:Load()
 
+        if ns.Automation then ns.Automation:Load() end
         if ns.UI then ns.UI:Build() ; ns.UI:Refresh() end
 
         -- Sitting at step 1 with quest flags saying otherwise means either

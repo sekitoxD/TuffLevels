@@ -12,6 +12,7 @@ Compat.lua
 Theme.lua
 Data.lua
 Core.lua
+Automation.lua
 Recorder.lua
 Marker.lua
 UI.lua

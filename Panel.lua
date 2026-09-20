@@ -169,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 706)
+    panel:SetSize(240, 732)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -230,66 +230,70 @@ function Panel:Build()
         Panel:ShowProgressCode()
     end)
 
+    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -316, function()
+        ns.Automation:Toggle() ; Panel:Refresh()
+    end)
+
     -- Recording extras
-    MakeButton(panel, "Add a note here", -316, function()
+    MakeButton(panel, "Add a note here", -342, function()
         Panel:PromptNote()
     end)
 
-    MakeButton(panel, "Mark this spot", -342, function()
+    MakeButton(panel, "Mark this spot", -368, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
     -- Display / options
-    panel.arrowBtn = MakeButton(panel, "Arrow", -368, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -394, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -394, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -420, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -420, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -446, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -446, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -472, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
     end)
 
-    MakeButton(panel, "Colors", -472, function()
+    MakeButton(panel, "Colors", -498, function()
         Panel:ShowColorPicker()
     end)
 
-    MakeButton(panel, "Reset arrow position", -498, function()
+    MakeButton(panel, "Reset arrow position", -524, function()
         ns.Arrow:ResetPosition()
     end)
 
-    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -524, function()
+    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -550, function()
         ns.Arrow:ToggleColorblind() ; Panel:Refresh()
     end)
 
-    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -550, function()
+    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -576, function()
         ns.Arrow:ToggleTextOnly() ; Panel:Refresh()
     end)
 
-    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -576, function()
+    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -602, function()
         ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
     end)
 
-    MakeButton(panel, "Rogue", -602, function()
+    MakeButton(panel, "Rogue", -628, function()
         ns.Rogue:Show()
     end)
 
-    MakeButton(panel, "Help / About", -628, function()
+    MakeButton(panel, "Help / About", -654, function()
         Panel:ShowHelpDialog()
     end)
 
-    MakeButton(panel, "Close", -660, function() panel:Hide() end)
+    MakeButton(panel, "Close", -686, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -317,6 +321,9 @@ function Panel:Refresh()
         and "Arrow text-only mode: on" or "Arrow text-only mode: off")
     panel.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom
         and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
+
+    panel.autoBtn:SetText(ns.Automation and ns.Automation.enabled
+        and "Auto accept/turn-in: on" or "Auto accept/turn-in: off")
 end
 
 function Panel:Toggle()
@@ -661,7 +668,12 @@ function Panel:ShowHelpDialog()
         "quests you've already completed, without moving anything.\n" ..
         "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
         "The |cffffd100Catch up on quests|r button on this menu does the same " ..
-        "thing with a confirm dialog instead of typing commands.")
+        "thing with a confirm dialog instead of typing commands.\n\n" ..
+        "|cffffd100Auto accept/turn-in|r (off by default, toggle top-left on the " ..
+        "tracker or in this menu) accepts and turns in quests for you, but only " ..
+        "the ones matching your current step, and never guesses when a turn-in " ..
+        "has more than one reward to choose from. Hold Shift to skip it for a " ..
+        "single dialog without turning it off.")
 
     FitDialogToBody(f, body, 46, 60, 160)
 
