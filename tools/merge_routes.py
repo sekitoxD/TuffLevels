@@ -47,7 +47,10 @@ QUEST_TYPES = ("accept", "turnin", "complete")
 
 
 def load_inputs(paths):
-    """[(path, route_name, [step, ...])] - the first route found per file."""
+    """[(path, route_name, route_dict, [step, ...])] - the first route
+    found per file. route_dict is the full parsed route table (faction,
+    races, levels, format, client, class, recordedAt, ...), not just its
+    steps, so callers can check export metadata across inputs too."""
     out = []
     for path in paths:
         try:
@@ -60,8 +63,23 @@ def load_inputs(paths):
             continue
         name, route, _, _ = routes[0]
         steps = route.get("steps") or []
-        out.append((path, name, steps))
+        out.append((path, name, route, steps))
     return out
+
+
+def check_export_format(inputs, conflicts):
+    """Warns (via conflicts) if the inputs' Recorder.lua `format` numbers
+    disagree - a newer/older export shape a mismatched addon version
+    produced might not merge cleanly even if it parses without error."""
+    seen = {}
+    for path, _, route, _ in inputs:
+        fmt = route.get("format")
+        seen.setdefault(fmt, []).append(os.path.basename(path))
+    if len(seen) > 1:
+        conflicts.append(
+            "export format mismatch across inputs - " + "; ".join(
+                "format %s: %s" % (fmt, ", ".join(files))
+                for fmt, files in sorted(seen.items(), key=lambda kv: (kv[0] is None, kv[0]))))
 
 
 def _mode(values):
@@ -91,7 +109,7 @@ def merge_quest_steps(inputs, conflicts):
     HANDLED = {"type", "quest", "name", "npc", "map", "note", "x", "y"}
 
     groups = {}
-    for path, _, steps in inputs:
+    for path, _, _, steps in inputs:
         n = max(1, len(steps))
         for i, step in enumerate(steps):
             if not isinstance(step, dict) or step.get("type") not in QUEST_TYPES:
@@ -106,7 +124,7 @@ def merge_quest_steps(inputs, conflicts):
             key = (qid, step["type"], step.get("objective"))
             groups.setdefault(key, []).append((path, step, i / n))
 
-    all_paths = {path for path, _, _ in inputs}
+    all_paths = {path for path, _, _, _ in inputs}
     merged = {}
 
     for key, entries in groups.items():
@@ -177,7 +195,7 @@ def merge_other_steps(inputs):
     module docstring's Limitations section)."""
     if not inputs:
         return []
-    _, _, steps = inputs[0]
+    _, _, _, steps = inputs[0]
     n = max(1, len(steps))
     return [(i / n, step) for i, step in enumerate(steps)
             if isinstance(step, dict) and step.get("type") not in QUEST_TYPES]
@@ -233,6 +251,7 @@ def _serialize_step(step):
 
 def build_merged_route(inputs, route_name):
     conflicts = []
+    check_export_format(inputs, conflicts)
     quest_groups = merge_quest_steps(inputs, conflicts)
     other = merge_other_steps(inputs)
 
@@ -241,7 +260,7 @@ def build_merged_route(inputs, route_name):
     ordered_steps = [step for _, step in combined]
 
     lines = ["-- Merged with tools/merge_routes.py from:"]
-    for path, name, steps in inputs:
+    for path, name, _, steps in inputs:
         lines.append("--   %s (route %r, %d steps)" % (path, name, len(steps)))
     lines.append("-- Read the conflict report this tool printed (stderr) before trusting this.")
     lines.append("")
@@ -288,7 +307,7 @@ def main(argv):
         sys.stderr.write("Fewer than 2 files parsed successfully - nothing to merge.\n")
         return 1
 
-    route_name = "Merged: " + " + ".join(name for _, name, _ in inputs)
+    route_name = "Merged: " + " + ".join(name for _, name, _, _ in inputs)
     text, conflicts = build_merged_route(inputs, route_name)
 
     if out_path:
