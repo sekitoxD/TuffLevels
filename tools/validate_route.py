@@ -483,9 +483,24 @@ def validate_file(path, db, errors_only):
     totals = [0, 0, 0]
     try:
         routes = parse_routes(path)
-    except (lua.LuaParseError, OSError) as e:
-        print("%s: could not parse: %s" % (path, e))
+    except OSError as e:
+        print("%s: could not read: %s" % (path, e))
         return 1, 0, 0
+    except lua.LuaParseError as e:
+        # This parser only understands literal table data, not real Lua
+        # (no variables, loops, function calls). A file like
+        # Routes/Horde/Solo/Register.lua legitimately builds `steps` from
+        # a loop over other files' contributions - WoW's actual Lua
+        # interpreter runs that fine, only this offline tool's simplified
+        # parser can't. Unbalanced braces mean the file is actually
+        # broken (WoW's interpreter would fail too); anything else here
+        # just means "not a literal table", which isn't necessarily wrong.
+        if "unbalanced braces" in str(e):
+            print("%s: could not parse: %s" % (path, e))
+            return 1, 0, 0
+        print("%s: not a literal step table (probably built with real Lua "
+              "code - not checkable by this tool, not necessarily wrong): %s" % (path, e))
+        return 0, 1, 0
     if not routes:
         print("%s: no ns.RegisterRoute call found" % path)
         return 0, 1, 0

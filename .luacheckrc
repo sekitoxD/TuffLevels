@@ -8,6 +8,12 @@
 std = "lua51"
 max_line_length = false
 
+-- .luarocks/ is CI's own locally-installed luacheck/busted dependency
+-- tree (created by `luarocks install` right before this runs), not part
+-- of this addon - exclude it so this only ever checks the project's own
+-- code, regardless of what tree luarocks happens to install into.
+exclude_files = { ".luarocks/**" }
+
 -- Every file opens with `local ADDON, ns = ...` by convention, even in
 -- files that only ever use `ns` - keeping both names documents the
 -- vararg's shape consistently across the whole addon. Don't flag ADDON
