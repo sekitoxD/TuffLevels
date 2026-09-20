@@ -718,6 +718,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "guide" then
         ns.GuideImport:Show()
 
+    elseif cmd == "write" then
+        if ns.CompactGuide then ns.CompactGuide:Show() end
+
     elseif cmd == "rogue" then
         ns.Rogue:Show()
 
@@ -907,7 +910,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
-        Print("          verify | capture | client | errors | reset | help | code [<code>] | pace")
+        Print("          verify | capture | client | errors | reset | help | code [<code>] | pace | write")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")

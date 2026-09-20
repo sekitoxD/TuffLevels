@@ -46,6 +46,7 @@ Progress.lua    -- checklist view of the whole route
 Import.lua      -- rebuilds a route skeleton from already-completed quests (quest flags)
 Zones.lua       -- "where to go next" leveling zone guide
 GuideImport.lua -- converts community Guidelime-format guides into routes
+CompactGuide.lua -- original line-based syntax that compiles to step tables
 SheetImport.lua -- converts a CSV/TSV spreadsheet export into a route
 Rogue.lua       -- rogue-only tab (training milestones, weapon upgrades, grind advice)
 Routes\*.lua    -- data files, loaded last, call ns.RegisterRoute(...)

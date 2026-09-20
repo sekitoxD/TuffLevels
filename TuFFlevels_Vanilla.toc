@@ -23,6 +23,7 @@ Progress.lua
 Import.lua
 Zones.lua
 GuideImport.lua
+CompactGuide.lua
 SheetImport.lua
 Rogue.lua
 

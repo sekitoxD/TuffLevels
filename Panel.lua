@@ -169,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 732)
+    panel:SetSize(240, 758)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -210,90 +210,94 @@ function Panel:Build()
         ns.GuideImport:Show()
     end)
 
-    MakeButton(panel, "Recover past quests", -186, function()
+    MakeButton(panel, "Write a route (text)", -186, function()
+        ns.CompactGuide:Show()
+    end)
+
+    MakeButton(panel, "Recover past quests", -212, function()
         ns.Import:Show()
     end)
 
-    MakeButton(panel, "Save this as a route", -212, function()
+    MakeButton(panel, "Save this as a route", -238, function()
         ns.Recorder:ShowExport()
     end)
 
-    MakeButton(panel, "Progress / completed", -238, function()
+    MakeButton(panel, "Progress / completed", -264, function()
         ns.Progress:Toggle()
     end)
 
-    MakeButton(panel, "Catch up on quests", -264, function()
+    MakeButton(panel, "Catch up on quests", -290, function()
         Panel:ShowCatchUpDialog()
     end)
 
-    MakeButton(panel, "Progress code", -290, function()
+    MakeButton(panel, "Progress code", -316, function()
         Panel:ShowProgressCode()
     end)
 
-    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -316, function()
+    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -342, function()
         ns.Automation:Toggle() ; Panel:Refresh()
     end)
 
     -- Recording extras
-    MakeButton(panel, "Add a note here", -342, function()
+    MakeButton(panel, "Add a note here", -368, function()
         Panel:PromptNote()
     end)
 
-    MakeButton(panel, "Mark this spot", -368, function()
+    MakeButton(panel, "Mark this spot", -394, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
     -- Display / options
-    panel.arrowBtn = MakeButton(panel, "Arrow", -394, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -420, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -420, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -446, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -446, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -472, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -472, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -498, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
     end)
 
-    MakeButton(panel, "Colors", -498, function()
+    MakeButton(panel, "Colors", -524, function()
         Panel:ShowColorPicker()
     end)
 
-    MakeButton(panel, "Reset arrow position", -524, function()
+    MakeButton(panel, "Reset arrow position", -550, function()
         ns.Arrow:ResetPosition()
     end)
 
-    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -550, function()
+    panel.cbBtn = MakeButton(panel, "Arrow colorblind colors", -576, function()
         ns.Arrow:ToggleColorblind() ; Panel:Refresh()
     end)
 
-    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -576, function()
+    panel.textOnlyBtn = MakeButton(panel, "Arrow text-only mode", -602, function()
         ns.Arrow:ToggleTextOnly() ; Panel:Refresh()
     end)
 
-    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -602, function()
+    panel.tomtomBtn = MakeButton(panel, "Defer arrow to TomTom", -628, function()
         ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
     end)
 
-    MakeButton(panel, "Rogue", -628, function()
+    MakeButton(panel, "Rogue", -654, function()
         ns.Rogue:Show()
     end)
 
-    MakeButton(panel, "Help / About", -654, function()
+    MakeButton(panel, "Help / About", -680, function()
         Panel:ShowHelpDialog()
     end)
 
-    MakeButton(panel, "Close", -686, function() panel:Hide() end)
+    MakeButton(panel, "Close", -712, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -677,7 +681,11 @@ function Panel:ShowHelpDialog()
         "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
         "how long your current section is taking versus your best time for it, " ..
         "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
-        "/tuff pace) gives you a copyable summary of the run.")
+        "/tuff pace) gives you a copyable summary of the run.\n\n" ..
+        "|cffffd100Write a route (text)|r (or /tuff write) is a quicker way to " ..
+        "author a route than a Lua table - one line per step, e.g. " ..
+        "|cffa0a0a0accept 4641 npc=Kaltunk at=1411,42.6,68.8|r. See " ..
+        "CompactGuide.lua's header for the full format.")
 
     FitDialogToBody(f, body, 46, 60, 160)
 
