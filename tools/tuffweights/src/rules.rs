@@ -310,3 +310,158 @@ pub fn allocate_talents(build: &Build, rules: &Rules, level: u32) -> HashMap<Str
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build_with_talents(talents: &[&str]) -> Build {
+        Build {
+            name: "test_build".into(),
+            description: String::new(),
+            weapon_types: vec!["sword".into()],
+            rotation: vec![Action { ability: Ability::SinisterStrike, when: None }],
+            position_fraction: 1.0,
+            talents: talents.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    // --- Cond parser -------------------------------------------------
+
+    #[test]
+    fn cond_parses_cp_at_least() {
+        assert_eq!(Cond::try_from("cp >= 5".to_string()).unwrap(), Cond::CpAtLeast(5));
+    }
+
+    #[test]
+    fn cond_parses_energy_at_least() {
+        assert_eq!(Cond::try_from("energy >= 40".to_string()).unwrap(), Cond::EnergyAtLeast(40.0));
+    }
+
+    #[test]
+    fn cond_parses_positional() {
+        assert_eq!(Cond::try_from("positional".to_string()).unwrap(), Cond::Positional);
+    }
+
+    #[test]
+    fn cond_parses_talent() {
+        assert_eq!(Cond::try_from("talent:malice".to_string()).unwrap(), Cond::Talent("malice".to_string()));
+    }
+
+    #[test]
+    fn cond_trims_whitespace() {
+        assert_eq!(Cond::try_from("  cp   >=   3  ".to_string()).unwrap(), Cond::CpAtLeast(3));
+        assert_eq!(Cond::try_from("talent:  deflection  ".to_string()).unwrap(), Cond::Talent("deflection".to_string()));
+    }
+
+    #[test]
+    fn cond_rejects_unknown_lhs() {
+        assert!(Cond::try_from("rage >= 10".to_string()).is_err());
+    }
+
+    #[test]
+    fn cond_rejects_non_numeric_rhs() {
+        assert!(Cond::try_from("cp >= five".to_string()).is_err());
+        assert!(Cond::try_from("energy >= lots".to_string()).is_err());
+    }
+
+    #[test]
+    fn cond_rejects_garbage() {
+        assert!(Cond::try_from("not a condition".to_string()).is_err());
+        assert!(Cond::try_from("".to_string()).is_err());
+    }
+
+    // --- allocate_talents ---------------------------------------------
+
+    #[test]
+    fn allocate_talents_spends_down_the_list_in_order() {
+        let rules = test_rules();
+        // precision max 5, malice max 5 (era-1.12.toml).
+        let build = build_with_talents(&["precision", "malice"]);
+        // level 12 -> 3 points: all go to the first entry, none reach the second.
+        let out = allocate_talents(&build, &rules, 12);
+        assert_eq!(out.get("precision"), Some(&3));
+        assert_eq!(out.get("malice"), None);
+    }
+
+    #[test]
+    fn allocate_talents_overflows_into_the_next_entry_once_the_first_caps_out() {
+        let rules = test_rules();
+        let build = build_with_talents(&["precision", "malice"]);
+        // level 16 -> 7 points: precision caps at 5, remaining 2 go to malice.
+        let out = allocate_talents(&build, &rules, 16);
+        assert_eq!(out.get("precision"), Some(&5));
+        assert_eq!(out.get("malice"), Some(&2));
+    }
+
+    #[test]
+    fn allocate_talents_below_level_10_spends_nothing() {
+        let rules = test_rules();
+        let build = build_with_talents(&["precision"]);
+        assert!(allocate_talents(&build, &rules, 5).is_empty());
+        assert!(allocate_talents(&build, &rules, 9).is_empty());
+    }
+
+    #[test]
+    fn allocate_talents_skips_unknown_names_without_consuming_points() {
+        let rules = test_rules();
+        let build = build_with_talents(&["not_a_real_talent", "precision"]);
+        let out = allocate_talents(&build, &rules, 12);
+        assert_eq!(out.get("not_a_real_talent"), None);
+        assert_eq!(out.get("precision"), Some(&3));
+    }
+
+    // --- load_builds / Build::validate ---------------------------------
+
+    #[test]
+    fn load_builds_loads_every_committed_build_file_sorted_by_path() {
+        let builds = load_builds("builds").unwrap();
+        assert!(!builds.is_empty());
+        let names: Vec<_> = builds.iter().map(|b| b.name.as_str()).collect();
+        assert!(names.contains(&"combat_swords"));
+        let mut sorted = names.clone();
+        sorted.sort();
+        assert_eq!(names, sorted, "load_builds must read directory entries in sorted path order");
+    }
+
+    #[test]
+    fn load_builds_reports_the_bad_file_on_malformed_toml() {
+        let dir = std::env::temp_dir().join(format!("tuffweights_test_builds_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("broken.toml"), "this is not valid = = toml").unwrap();
+        let err = load_builds(dir.to_str().unwrap()).unwrap_err();
+        assert!(err.to_string().contains("broken.toml"), "error should name the bad file: {err}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn every_committed_build_validates_against_the_ruleset() {
+        let rules = test_rules();
+        for b in load_builds("builds").unwrap() {
+            b.validate(&rules).unwrap_or_else(|e| panic!("{}: {e}", b.name));
+        }
+    }
+
+    #[test]
+    fn build_validate_rejects_empty_rotation() {
+        let rules = test_rules();
+        let mut b = build_with_talents(&[]);
+        b.rotation.clear();
+        assert!(b.validate(&rules).is_err());
+    }
+
+    #[test]
+    fn build_validate_rejects_unknown_talent_in_talent_list() {
+        let rules = test_rules();
+        let b = build_with_talents(&["not_a_real_talent"]);
+        assert!(b.validate(&rules).is_err());
+    }
+
+    #[test]
+    fn build_validate_rejects_unknown_talent_in_rotation_condition() {
+        let rules = test_rules();
+        let mut b = build_with_talents(&[]);
+        b.rotation.push(Action { ability: Ability::Eviscerate, when: Some(Cond::Talent("not_a_real_talent".into())) });
+        assert!(b.validate(&rules).is_err());
+    }
+}

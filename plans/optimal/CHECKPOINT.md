@@ -1,20 +1,28 @@
 # Checkpoint: plans/optimal
 
-Saved: 2026-09-20 02:35 (state section updated after the commit and push)
-Branch: master; plan work committed as b64d863, merged with remote 66f41b2 (v1.5.3, unrelated route and toc fixes), pushed to origin/master
+Saved: 2026-09-20 (Phase 0 partially started; see State)
+Branch: master; plan work committed as b64d863, merged with remote 66f41b2 (v1.5.3, unrelated route and toc fixes), pushed to origin/master. Nothing from this session is committed yet (ask first, per standing rule).
 Location rule: grouped plans keep their checkpoint here, `plans/<group>/CHECKPOINT.md`, one file overwritten per save (`CLAUDE.md`, "Checkpoints for grouped plans").
 
 ## Goal
 Plan (not yet implement) turning `tools/tuffweights` from a rogue-only, fixed-20 s-fight calculator into a multi-class, multi-rotation, parameterised engine, then use it plus the local cmangos 1.12 DB and a few manual Wowhead lookups to decide leveling spec, respec, talent order, per-enemy-health-tier rotations, and to hand-author new routes and item targets. Rogue + Warrior first.
 
 ## State
-Planning phase is **complete**; implementation has **not started**. No Rust, Python or Lua was changed.
+Planning phase is **complete**. Implementation is **Phase 0, partially done, unverified**:
 
-Committed and pushed (commit b64d863, no AI attribution in the message):
+Uncommitted changes on disk (not yet asked-and-committed):
+- `tools/tuffweights/src/rules.rs`: added the tests doc 07 Phase 0 calls "missing" — `Cond` parser (every form: `cp >=`, `energy >=`, `positional`, `talent:`, whitespace handling, and error cases), `allocate_talents` (in-order spend, overflow into the next entry, below-level-10, unknown-name skip), `load_builds` (loads/sorts the real `builds/` dir, reports the bad file on malformed TOML) and `Build::validate` (empty rotation, unknown talent in the talent list, unknown talent in a rotation condition, plus a check that every committed build file validates against the real ruleset).
+- `tools/tuffweights/src/model.rs` (`exported_items_evaluate`) and `src/mc.rs` (`simulation_matches_analytic`): changed from `let Ok(file) = load_items(..) else { return }` (silently passes when the export is absent) to `load_items(..).unwrap()` (fails loudly with `data::load_items`'s existing "run tools/export_items.py first" message) — per doc 07 Phase 0 and `06` checklist item 6. `search.rs:311` and `weights.rs:66` already `.unwrap()`, so were left alone.
+
+**Not done, blocked in this environment:**
+- **No Rust toolchain here.** `cargo`/`rustc` are not on `PATH` and not found under `%USERPROFILE%\.cargo\bin` — checked in both the Bash and PowerShell tools. None of the above changes have been compiled or test-run. They're a careful hand-review against the existing code (types, field names, real talent names/max ranks cross-checked against `rules/era-1.12.toml` and all five `builds/*.toml` files), not a verified `cargo test` pass.
+- **No DB credentials here.** `~/.config/tuff/qdb.env` does not exist and no `QDB_*` env vars are set, so `python3 tools/export_items.py` cannot run and `tools/.cache/items.json` does not exist. This blocks the golden-`v0` baseline, the `run`/`rewards` timings, and the `crosscheck` diffs at levels 15/25/35/45/55 — the rest of Phase 0's acceptance criteria.
+- This looks like a different machine/session than whichever one had Rust and DB access configured previously (the checkpoint's "Relevant files" section references `~/.config/tuff/qdb.env` as already set up, and earlier `plans/optimal` docs describe live DB queries already run). Flagging rather than guessing why.
+
+Prior save (still true): committed and pushed (commit b64d863, no AI attribution in the message):
 - `plans/optimal/`: `README.md`, `01-data-sources.md`, `02-tuffweights-architecture.md`, `03-builds-rotations-tiers.md`, `04-spec-and-talent-progression.md`, `05-routes-and-item-targets.md`, `06-tuffweights-audit.md`, `07-implementation-phases.md`, this file.
 - `CLAUDE.md`: new section "Checkpoints for grouped plans".
 - `.claude/skills/checkpoint/SKILL.md`: save and resume steps follow the same rule.
-- Remote had one new commit (66f41b2) touching only routes, `Panel.lua`, the `.toc` files and `plans/04-sheet-audit.md`; merged cleanly, no conflicts.
 - `.claude/checkpoints/` stays untracked on purpose (older, ungrouped checkpoints).
 - Memory saved: `feedback_grouped-plan-checkpoints.md`.
 
@@ -44,11 +52,12 @@ The docs were audited by the `plan-auditor` agent (23 findings, all applied). A 
 - Later, at review: which route to author first (doc 05), and whether warrior gets a `Warrior.lua` class tab like `Rogue.lua`.
 
 ## Next steps
-1. Optionally run the `plan-auditor` agent once more over `plans/optimal/` to confirm the applied fixes introduced no new contradictions.
-2. (Done: committed and pushed.) Commits keep following the standing rule: ask first, no AI attribution in the message.
-3. Start **phase 0** (doc 07): store `tools/tuffweights/out/golden/v0/` (results.json, reports, exact command lines, seeds, hash of rules and builds, sorted item-id list), record `run`/`rewards` timings and `crosscheck` for levels 15/25/35/45/55, add the missing tests (`Cond` parser, `allocate_talents`, `load_builds`; make export-dependent tests fail loudly when `tools/.cache/items.json` is missing).
-4. Before phase 3, do manual lookup 1 (rogue tree layout) and extend the five rogue builds to valid 51-point orders (each lists only 22-35 points today).
-5. Update this file after each phase (what passed, which golden version was created, timings), then continue with phases 1-8 in order.
+1. **Blocker to resolve first:** get a Rust toolchain and the DB credentials into whichever environment continues this work (either run this session's uncommitted `rules.rs`/`model.rs`/`mc.rs` changes through `cargo test` on a machine that has `cargo` and `~/.config/tuff/qdb.env` set up, or tell me to proceed and I'll pick up in an environment that has them). Until then, nothing below can be verified from here.
+2. Once `cargo test` runs: confirm the new `rules.rs` tests compile and pass, and that `exported_items_evaluate` / `simulation_matches_analytic` now fail (not skip) when `tools/.cache/items.json` is absent, and pass when it's present.
+3. Once DB creds are available: run `python3 tools/export_items.py`, then finish Phase 0's remaining acceptance items — store `tools/tuffweights/out/golden/v0/` (results.json, reports, exact command lines, seeds, hash of rules and builds, sorted item-id list), record `run`/`rewards` wall time, and `crosscheck` diffs for levels 15/25/35/45/55, with a note that `v0` encodes an under-talented rogue (`06` A4: 22-35 of 51 points).
+4. Optionally run the `plan-auditor` agent once more over `plans/optimal/` to confirm the earlier 23 fixes introduced no new contradictions.
+5. Before phase 3, do manual lookup 1 (rogue tree layout) and extend the five rogue builds to valid 51-point orders (each lists only 22-35 points today).
+6. Update this file after each phase (what passed, which golden version was created, timings), then continue with phases 1-8 in order.
 
 ## Relevant files
 - `plans/optimal/README.md` (decisions and index), `07-implementation-phases.md` (phases and acceptance tests), `06-tuffweights-audit.md` (current-state findings with file:line references and the post-refactor checklist), `03-builds-rotations-tiers.md` (tiers, schemas).

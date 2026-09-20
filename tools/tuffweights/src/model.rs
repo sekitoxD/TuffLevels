@@ -927,8 +927,9 @@ mod tests {
 
     #[test]
     fn exported_items_evaluate() {
-        // Skipped when the (gitignored, DB-derived) export has not been generated.
-        let Ok(file) = crate::data::load_items(ITEMS) else { return };
+        // Requires the (gitignored, DB-derived) export; fails loudly rather than
+        // silently passing when it is absent (`tools/export_items.py` generates it).
+        let file = crate::data::load_items(ITEMS).unwrap();
         let (r, b, _) = setup();
         let thrash = file.items.iter().find(|i| i.name == "Thrash Blade").unwrap().weapon.as_ref().unwrap();
         assert!((thrash.dps() - 35.185).abs() < 0.01, "Thrash Blade is 66-124 @ 2.7");

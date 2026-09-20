@@ -360,8 +360,9 @@ mod tests {
     /// noise; a gap means the closed-form rotation or extra-attack accounting drifted.
     #[test]
     fn simulation_matches_analytic() {
-        // Skipped when the (gitignored, DB-derived) export has not been generated.
-        let Ok(mut file) = crate::data::load_items("../.cache/items.json") else { return };
+        // Requires the (gitignored, DB-derived) export; fails loudly rather than
+        // silently passing when it is absent (`tools/export_items.py` generates it).
+        let mut file = crate::data::load_items("../.cache/items.json").unwrap();
         let mut rules = crate::rules::load_rules("rules/era-1.12.toml").unwrap();
         rules.apply_world(&std::mem::take(&mut file.world)).unwrap();
         rules.resolve_durations(&mut file.items);
