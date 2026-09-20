@@ -66,7 +66,10 @@ pub fn norm(name: &str) -> String {
 pub fn describe_source(i: &Item) -> String {
     let mut parts: Vec<String> = Vec::new();
     for q in i.sources.quest.iter().take(2) {
-        parts.push(format!("quest \"{}\"", q.title));
+        match &q.requires {
+            Some(r) => parts.push(format!("quest \"{}\" (requires {r})", q.title)),
+            None => parts.push(format!("quest \"{}\"", q.title)),
+        }
     }
     for v in i.sources.vendor.iter().take(1) {
         match &v.requires {

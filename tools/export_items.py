@@ -284,17 +284,38 @@ def load_spells(conn, rows):
 TYPE_EFFORT = {1: "group", 41: "pvp", 62: "raid", 81: "dungeon"}
 EFFORT_ORDER = ["solo", "group", "dungeon", "raid", "pvp"]
 
+# Faction ids that gate quests (quest_template.RequiredMinRepFaction); the DB has no faction-name table.
+FACTION_NAMES = {529: "Argent Dawn", 270: "Zandalar Tribe", 910: "Brood of Nozdormu", 609: "Cenarion Circle",
+                 59: "Thorium Brotherhood", 729: "Frostwolf Clan", 730: "Stormpike Guard", 509: "League of Arathor",
+                 510: "The Defilers", 576: "Timbermaw Hold", 890: "Silverwing Sentinels", 889: "Warsong Outriders",
+                 909: "Darkmoon Faithful", 589: "Wintersaber Trainers", 349: "Ravenholdt", 47: "Ironforge",
+                 87: "Bloodsail Buccaneers"}
+# Cumulative reputation at which each standing starts.
+REP_RANKS = [(42000, "Exalted"), (21000, "Revered"), (9000, "Honored"), (3000, "Friendly")]
+
+
+def rep_requirement(faction, value):
+    """Text for a quest's minimum-reputation gate, or None when it asks for less than Friendly."""
+    if not faction or value < REP_RANKS[-1][0]:
+        return None
+    rank = next(name for floor, name in REP_RANKS if value >= floor)
+    return "%s with %s" % (rank, FACTION_NAMES.get(faction, "faction %d" % faction))
+
 
 def quest_efforts(conn):
-    """quest id -> (effort, chain_len).
+    """quest id -> (effort, chain_len, requires).
 
     Effort is how the quest has to be done: solo, group (elite quest or an elite/boss
     objective mob, or 2+ suggested players), dungeon, raid or pvp. A quest inherits the
     hardest effort in its prerequisite chain (PrevQuestId either sign, and whoever offers
     it through NextQuestInChain), because you have to do those first.
+
+    `requires` is the reputation gate (text) on the quest or on any quest earlier in its
+    chain, or None: such a quest is not something a levelling player can plan on.
     """
     rows = qdb.query(conn, "SELECT entry, Type, SuggestedPlayers, PrevQuestId, NextQuestInChain, "
-                           "ReqCreatureOrGOId1, ReqCreatureOrGOId2, ReqCreatureOrGOId3, ReqCreatureOrGOId4 "
+                           "ReqCreatureOrGOId1, ReqCreatureOrGOId2, ReqCreatureOrGOId3, ReqCreatureOrGOId4, "
+                           "RequiredMinRepFaction, RequiredMinRepValue "
                            "FROM quest_template")
     mobs = {r["entry"]: [r["ReqCreatureOrGOId%d" % n] for n in range(1, 5) if r["ReqCreatureOrGOId%d" % n] > 0]
             for r in rows}
@@ -303,8 +324,9 @@ def quest_efforts(conn):
     for ch in chunks(ids):
         for r in qdb.query(conn, "SELECT Entry, Rank FROM creature_template WHERE Entry IN (%s)" % in_list(ch)):
             ranks[r["Entry"]] = r["Rank"]
-    own, parents = {}, defaultdict(set)
+    own, parents, gates = {}, defaultdict(set), {}
     for r in rows:
+        gates[r["entry"]] = rep_requirement(r["RequiredMinRepFaction"], r["RequiredMinRepValue"])
         e = TYPE_EFFORT.get(r["Type"])
         if e is None:
             elite = any(1 <= ranks.get(m, 0) <= 3 for m in mobs[r["entry"]])
@@ -320,14 +342,15 @@ def quest_efforts(conn):
         if q in memo:
             return memo[q]
         if q not in own or q in seen:
-            return ("solo", 0)
-        effort, depth = own[q], 1
+            return ("solo", 0, None)
+        effort, depth, requires = own[q], 1, gates[q]
         for p in parents.get(q, ()):
-            pe, pd = walk(p, seen + (q,))
+            pe, pd, pr = walk(p, seen + (q,))
             if EFFORT_ORDER.index(pe) > EFFORT_ORDER.index(effort):
                 effort = pe
             depth = max(depth, pd + 1)
-        memo[q] = (effort, min(depth, 12))
+            requires = requires or pr
+        memo[q] = (effort, min(depth, 12), requires)
         return memo[q]
 
     return {q: walk(q) for q in own}
@@ -351,6 +374,7 @@ def quest_sources(conn, item_ids, efforts):
                         "race_mask": q["RequiredRaces"], "class_mask": q["RequiredClasses"],
                         "zone": q["ZoneOrSort"],
                         "effort": efforts[q["entry"]][0], "chain": efforts[q["entry"]][1],
+                        **({"requires": efforts[q["entry"]][2]} if efforts[q["entry"]][2] else {}),
                     })
     return out
 
@@ -388,7 +412,8 @@ def quest_choices(conn, item_ids, max_level, efforts):
         quests.append({"quest": q["entry"], "title": q["Title"], "min_level": q["MinLevel"],
                        "quest_level": q["QuestLevel"], "race_mask": q["RequiredRaces"],
                        "class_mask": q["RequiredClasses"], "zone": q["ZoneOrSort"],
-                       "effort": efforts[q["entry"]][0], "chain": efforts[q["entry"]][1], "choices": choices})
+                       "effort": efforts[q["entry"]][0], "chain": efforts[q["entry"]][1], "choices": choices,
+                       **({"requires": efforts[q["entry"]][2]} if efforts[q["entry"]][2] else {})})
     others = {}
     for ch in chunks(wanted - set(item_ids)):
         for r in qdb.query(conn, "SELECT entry, name, class, subclass, InventoryType, AllowableClass, SellPrice "

@@ -17,6 +17,7 @@
 
 use crate::search::Tier;
 
+#[derive(Clone)]
 pub struct VerdictOptions {
     /// Uplift (percent) below which an item is not worth having at all.
     pub min_uplift: f64,

@@ -44,6 +44,9 @@ pub struct QuestChoice {
     /// Quests in the prerequisite chain up to and including this one.
     #[serde(default)]
     pub chain: u32,
+    /// Reputation gate on the quest or on a quest earlier in its chain; such a quest is not plannable.
+    #[serde(default)]
+    pub requires: Option<String>,
     pub choices: Vec<Choice>,
 }
 
@@ -282,6 +285,9 @@ pub struct QuestSrc {
     pub effort: String,
     #[serde(default)]
     pub chain: u32,
+    /// Reputation gate on the quest or on a quest earlier in its chain, when it has one.
+    #[serde(default)]
+    pub requires: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

@@ -124,7 +124,7 @@ mod tests {
         let mut vendor = item(serde_json::json!({"id": 1, "name": "V", "slot": "waist", "gate_level": 1, "stats": {"agi": 2.0}}));
         vendor.sources.vendor = vec![crate::data::VendorSrc { name: "v".into(), limited_stock: false, requires: None }];
         let mut dungeon = item(serde_json::json!({"id": 2, "name": "D", "slot": "waist", "gate_level": 1, "stats": {"agi": 10.0}}));
-        dungeon.sources.quest = vec![crate::data::QuestSrc { quest: 9, title: "q".into(), min_level: 1, race_mask: 0, effort: "dungeon".into(), chain: 1 }];
+        dungeon.sources.quest = vec![crate::data::QuestSrc { quest: 9, title: "q".into(), min_level: 1, race_mask: 0, effort: "dungeon".into(), chain: 1, requires: None }];
         let subject = item(serde_json::json!({"id": 3, "name": "S", "slot": "waist", "gate_level": 1, "stats": {"agi": 5.0}}));
         let items = vec![vendor, dungeon, subject.clone()];
         let value = StatValue { base_dps: 100.0, dpu: HashMap::from([("agility", 1.0)]), mh_skill: None, oh_skill: None, single_hand: true };

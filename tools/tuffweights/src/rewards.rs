@@ -11,8 +11,11 @@
 //!   stat weights around that baseline loadout, minus the best item in the same slot that is
 //!   in that same baseline pool (the second best for rings and trinkets).
 //!
-//! Each pick carries the same verdict `worth.md` uses (solo quest, group quest, dungeon...),
-//! taken from the quest's effort. The DPS model does not know about survival: armor value and
+//! Each pick carries the same verdict `worth.md` uses (solo quest, group quest, dungeon...):
+//! the quest's effort gives the method, and the item's window from the worth computation (how
+//! many levels it stays an upgrade, and its mean gain over them) gives the rest, so an item that
+//! peaks briefly cannot read "very worth it" here and "kinda" there. An item with no window (armor
+//! that never clears the bar, quests below level 10) is judged on its one-level score. The DPS model does not know about survival: armor value and
 //! Stamina are shown as a tie-breaker column, never scored. Like `worth.md`, the baseline is
 //! thin at low levels, so early uplifts are overstated. The output is a candidate list for a
 //! human to confirm.
@@ -22,8 +25,11 @@ use crate::armor::{slot_baseline, StatValue};
 use crate::model::Prepared;
 use crate::rules::{Build, Rules};
 use crate::search::{race_bit, search, Filter, Tier, ROGUE_CLASS_BIT};
+use crate::audit::norm;
+use crate::report::{compute_cells, RunOptions};
 use crate::verdict::{classify, Verdict, VerdictOptions, POINT_WINDOW};
-use std::collections::{BTreeMap, HashMap};
+use crate::worth::{compute_rows, Row, WorthOptions};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 
 pub struct RewardOptions<'a> {
@@ -144,6 +150,7 @@ fn score_quest<'a>(
     file: &'a ItemsFile,
     builds: &[&Build],
     by_id: &HashMap<u32, &'a Item>,
+    windows: &HashMap<(bool, String), &Row>,
     o: &RewardOptions,
 ) -> Vec<Outcome<'a>> {
     let mut out: Vec<Outcome> = Vec::new();
@@ -216,13 +223,23 @@ fn score_quest<'a>(
     for i in to_score {
         match best.remove(&i.id) {
             Some((uplift, raw, build, at)) => {
-                let verdict = classify(quest_tier, POINT_WINDOW, uplift, uplift, None, &o.verdict);
+                let verdict = pick_verdict(quest_tier, windows.get(&(i.weapon.is_some(), i.name.clone())).copied(), at, uplift, &o.verdict);
                 out.push(Outcome::Scored(Scored { item: i, at, uplift, raw, build, verdict }))
             }
             None => out.push(Outcome::Skipped { name: i.name.clone(), sell: i.sell_price, why: "no baseline loadout at that level".into() }),
         }
     }
     out
+}
+
+/// Verdict for a reward scored at level `at`: the item's worth window when that window covers `at`,
+/// else its score at the one level. A window that does not cover `at` is about some other level (worth
+/// starts at 10, so a quest done earlier has none), and using it would contradict the score being shown.
+fn pick_verdict(quest_tier: Tier, window: Option<&Row>, at: u32, uplift: f64, o: &VerdictOptions) -> Verdict {
+    match window.filter(|r| r.first != 0 && (r.first..=r.last).contains(&at)) {
+        Some(r) => classify(quest_tier, r.last - r.first + 1, r.mean, r.peak, None, o),
+        None => classify(quest_tier, POINT_WINDOW, uplift, uplift, None, o),
+    }
 }
 
 fn race_tag(mask: i64) -> &'static str {
@@ -290,11 +307,34 @@ fn verdict(scored: &[&Scored], skipped: &[(&str, u64)], o: &RewardOptions) -> (K
     (Kind::NoGain, pick, sell())
 }
 
+/// The worth computation's level windows for every rogue-usable reward item, so a pick's verdict
+/// can use the same window as `worth.md`. Costs a full run of the loadout search (~15s).
+fn window_rows(rules: &Rules, builds: &[&Build], file: &ItemsFile, o: &RewardOptions) -> Vec<Row> {
+    let owned: Vec<Build> = builds.iter().map(|b| (*b).clone()).collect();
+    let opts = RunOptions {
+        min_level: 10,
+        max_level: o.max_level,
+        race: o.race,
+        filter: Filter { race: o.race.map(String::from), max_tier: Tier::WorldDrop, include_gated: false, faction: o.faction, ..Default::default() },
+        top_n: 5,
+        min_window: 5,
+        mc_fights: 0,
+    };
+    let cells = compute_cells(rules, &file.abilities, &owned, &file.items, &opts);
+    // Every reward weapon is a subject, not only the ones that top a cell.
+    let ids: BTreeSet<u32> = file.quest_choices.iter().flat_map(|q| q.choices.iter().map(|c| c.item)).collect();
+    let listed: BTreeSet<String> = file.items.iter().filter(|i| ids.contains(&i.id)).map(|i| norm(&i.name)).collect();
+    compute_rows(rules, &file.abilities, &owned, &file.items, &cells, &listed, &opts, &WorthOptions::default())
+}
+
 pub fn rewards_md(rules: &Rules, builds: &[Build], file: &ItemsFile, o: &RewardOptions) -> anyhow::Result<String> {
     let builds: Vec<&Build> = builds.iter().filter(|b| o.build.map_or(true, |n| b.name == n)).collect();
     anyhow::ensure!(!builds.is_empty(), "no build named {:?}", o.build);
     let by_id: HashMap<u32, &Item> = file.items.iter().map(|i| (i.id, i)).collect();
     let rb = o.race.and_then(race_bit);
+    let rows = window_rows(rules, &builds, file, o);
+    let windows: HashMap<(bool, String), &Row> = rows.iter().map(|r| ((r.weapon, r.name.clone()), r)).collect();
+    let gated = file.quest_choices.iter().filter(|q| q.requires.is_some() && Tier::of_quest(&q.effort).is_some()).count();
 
     let mut quests: Vec<(u32, &QuestChoice)> = file
         .quest_choices
@@ -303,6 +343,7 @@ pub fn rewards_md(rules: &Rules, builds: &[Build], file: &ItemsFile, o: &RewardO
         .filter(|q| rb.map_or(true, |b| q.race_mask == 0 || q.race_mask & b != 0))
         .filter(|q| o.faction.map_or(true, |m| q.race_mask == 0 || q.race_mask & m != 0))
         .filter(|q| Tier::of_quest(&q.effort).is_some())
+        .filter(|q| q.requires.is_none())
         .map(|q| (q.quest_level.max(q.min_level).max(o.min_level), q))
         .filter(|(l, _)| *l <= o.max_level)
         .collect();
@@ -313,7 +354,7 @@ pub fn rewards_md(rules: &Rules, builds: &[Build], file: &ItemsFile, o: &RewardO
     let (mut clear, mut marginal, mut no_gain, mut none) = (0, 0, 0, 0);
     for (level, q) in &quests {
         let quest_tier = Tier::of_quest(&q.effort).unwrap_or(Tier::QuestSolo);
-        let outcomes = score_quest(q, quest_tier, *level, rules, file, &builds, &by_id, o);
+        let outcomes = score_quest(q, quest_tier, *level, rules, file, &builds, &by_id, &windows, o);
         let mut scored: Vec<&Scored> = outcomes.iter().filter_map(|x| if let Outcome::Scored(s) = x { Some(s) } else { None }).collect();
         // Order by uplift to a tenth of a point, then by armor value and sell price as tie-breakers.
         scored.sort_by(|a, b| {
@@ -347,9 +388,9 @@ pub fn rewards_md(rules: &Rules, builds: &[Build], file: &ItemsFile, o: &RewardO
     let mut s = String::from("# Quest reward advisor\n\n");
     let _ = write!(
         s,
-        "For each quest with a choice of reward, the choice that adds the most DPS for a levelling rogue. Uplift is percent DPS over the gear you could otherwise plan on that is easier to get than this quest (vendor items for a group quest's baseline plus solo quests; everything short of a dungeon for a dungeon quest; this quest's other rewards are left out): for a weapon, the best loadout with it against the best loadout without; for armor, jewelry and cloaks, the item's stats valued by the model's stat weights minus the best item already in that slot. The label after each pick is the same verdict `worth.md` uses, from the quest's effort (solo, group or dungeon, including the hardest quest earlier in its chain). The pick is the best across builds{}.\n\n\
+        "For each quest with a choice of reward, the choice that adds the most DPS for a levelling rogue. Uplift is percent DPS over the gear you could otherwise plan on that is easier to get than this quest (vendor items for a group quest's baseline plus solo quests; everything short of a dungeon for a dungeon quest; this quest's other rewards are left out): for a weapon, the best loadout with it against the best loadout without; for armor, jewelry and cloaks, the item's stats valued by the model's stat weights minus the best item already in that slot. The label after each pick is the same verdict `worth.md` uses: the quest's effort (solo, group or dungeon, including the hardest quest earlier in its chain) sets the method, and the item's window from `worth.md` (how many levels it stays an upgrade and its mean gain over them) sets how worth it is; an item with no window there is judged on its score at one level. The uplift shown is the score at the level the quest is done at, the verdict uses the window, so the two can differ. The pick is the best across builds{}.\n\n\
 A choice must beat that baseline by {:.1}% to count as a clear pick. Below that, the report still names the best choice: \"net\" is the gain over the baseline (negative means easier sources give the slot something better), \"alone\" is the gain if the slot is empty. With no gain even then it suggests the sturdiest choice and the vendor value; choices within {:.2} points count as a tie. Survival is not modelled: armor value and Stamina are shown but never scored, so break ties with them. \"Scored at\" is the best of the start, middle and end of the levels the quest can be done at (its minimum level to its quest level, or the item's required level if higher). The baseline is thin at low levels, so early uplifts are overstated. Candidate list for a human to confirm, not a verdict.\n\n\
-{} quests scored: {} with a clear DPS pick, {} where the best choice only helps an empty slot, {} where nothing adds DPS, {} with nothing a rogue can use.\n\n\
+{} quests scored: {} with a clear DPS pick, {} where the best choice only helps an empty slot, {} where nothing adds DPS, {} with nothing a rogue can use. Quests behind a reputation gate (their own or an earlier quest in the chain) are left out ({} of them, across all levels), like a reputation-gated vendor.\n\n\
 ## Picks\n\n| L | quest | side | pick | note |\n|---|---|---|---|---|\n",
         o.build.map(|b| format!(" (only {b})")).unwrap_or_default(),
         o.min_uplift,
@@ -358,7 +399,8 @@ A choice must beat that baseline by {:.1}% to count as a clear pick. Below that,
         clear,
         marginal,
         no_gain,
-        none
+        none,
+        gated
     );
     s.push_str(&summary);
     s.push_str("\n## Detail\n");
@@ -379,6 +421,20 @@ mod tests {
         assert_eq!(money(0), "0c");
         assert_eq!(money(105), "1s 5c");
         assert_eq!(money(12_0000 + 3_00 + 4), "12g 3s 4c");
+    }
+
+    #[test]
+    fn pick_verdict_uses_the_worth_window_over_the_single_level_score() {
+        let o = VerdictOptions::default();
+        let row = Row { id: 1, name: "A".into(), slot: "main_hand".into(), weapon: true, tier: Tier::QuestDungeon, first: 28, last: 29, mean: 6.5, peak: 9.4, build: "x".into(), verdict: Verdict::DungeonKinda };
+        // +15.4% at one level reads "very worth it" on its own, but it is an upgrade for only two levels.
+        assert_eq!(pick_verdict(Tier::QuestDungeon, None, 28, 15.4, &o), Verdict::DungeonVery);
+        assert_eq!(pick_verdict(Tier::QuestDungeon, Some(&row), 28, 15.4, &o), Verdict::DungeonKinda);
+        assert_eq!(pick_verdict(Tier::QuestDungeon, Some(&row), 28, 15.4, &o), row.verdict);
+        // Scored at a level the window does not cover (e.g. a quest done before worth's level 10): the score decides.
+        assert_eq!(pick_verdict(Tier::QuestDungeon, Some(&row), 9, 15.4, &o), Verdict::DungeonVery);
+        let never = Row { first: 0, last: 0, mean: 0.0, peak: 0.0, ..row };
+        assert_eq!(pick_verdict(Tier::QuestDungeon, Some(&never), 9, 15.4, &o), Verdict::DungeonVery);
     }
 
     #[test]

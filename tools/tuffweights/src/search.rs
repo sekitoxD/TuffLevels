@@ -62,7 +62,8 @@ pub fn tier_of(item: &Item) -> Tier {
     for v in s.vendor.iter().filter(|v| v.requires.is_none()) {
         best = best.min(if v.limited_stock { Tier::QuestSolo } else { Tier::Vendor });
     }
-    for q in &s.quest {
+    // Likewise a quest behind a reputation gate.
+    for q in s.quest.iter().filter(|q| q.requires.is_none()) {
         if let Some(t) = Tier::of_quest(&q.effort) {
             best = best.min(t);
         }
@@ -272,6 +273,17 @@ mod tests {
         assert_eq!(tier_of(&i), Tier::Vendor);
         assert!(Tier::Vendor < Tier::QuestSolo && Tier::QuestSolo < Tier::QuestGroup && Tier::QuestGroup < Tier::Crafted);
         assert!(Tier::Crafted < Tier::OpenDrop && Tier::OpenDrop < Tier::QuestDungeon && Tier::QuestDungeon < Tier::DungeonDrop && Tier::DungeonDrop < Tier::WorldDrop);
+    }
+
+    #[test]
+    fn reputation_gated_quests_are_not_a_source() {
+        let quest = |requires: Option<&str>| crate::data::QuestSrc { quest: 9, title: "q".into(), min_level: 1, race_mask: 0, effort: "solo".into(), chain: 1, requires: requires.map(String::from) };
+        let mut i = bare(1, "one_hand", "sword");
+        i.sources = Sources { quest: vec![quest(Some("Friendly with Argent Dawn"))], ..Default::default() };
+        assert_eq!(tier_of(&i), Tier::None);
+        // An ungated way to get it still counts.
+        i.sources.quest.push(quest(None));
+        assert_eq!(tier_of(&i), Tier::QuestSolo);
     }
 
     #[test]
