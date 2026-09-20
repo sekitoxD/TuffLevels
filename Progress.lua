@@ -378,6 +378,49 @@ function Progress:RenderRows()
     if offset > maxOffset then offset = maxOffset end
 end
 
+-- The section/delta/XP-rate line, the only part of the summary that needs
+-- to move between step advances/quest events (the ticker below re-renders
+-- just this, not the whole RouteStats/BuildList walk).
+function Progress:PaceSuffix()
+    local text = ""
+    if not ns.Pace then return text end
+
+    local section = ns.Pace.currentSectionName
+    if section then
+        local elapsed = ns.Pace:FormatTime(ns.Pace:CurrentSectionElapsed())
+        local best = ns.Pace:BestFor(section)
+        text = text .. ("\n|cffffd100%s|r: %s"):format(section, elapsed)
+        if best then
+            text = text .. (" |cff808080(best %s)|r"):format(ns.Pace:FormatTime(best))
+        end
+    end
+
+    -- Step-granularity pace, live: how far ahead/behind the best
+    -- recorded run is at the exact step you're on right now, not just
+    -- at the end of the (possibly long) section.
+    local delta = ns.Pace:StepDeltaVsBest()
+    if delta then
+        if delta <= 0 then
+            text = text .. (" |cff00ff00%s ahead|r"):format(ns.Pace:FormatTime(-delta))
+        else
+            text = text .. (" |cffff5555%s behind|r"):format(ns.Pace:FormatTime(delta))
+        end
+    end
+
+    local rate = ns.Pace:XPPerHour()
+    if rate then
+        text = text .. ("\nXP/hour: |cff00ff00%d|r"):format(rate)
+        local eta = ns.Pace:LevelETASeconds()
+        if eta then
+            text = text .. ("   Next level in ~|cff00ff00%s|r"):format(ns.Pace:FormatTime(eta))
+        end
+    end
+
+    return text
+end
+
+local cachedBase = nil -- summary text without the live pace suffix; only Refresh() rebuilds it
+
 function Progress:Refresh()
     -- RouteStats and BuildList both walk the whole route, which is thousands
     -- of steps now. Reconcile calls this on every quest event, so a closed
@@ -401,30 +444,19 @@ function Progress:Refresh()
         text = text .. ("   This session: |cff00ff00%d|r"):format(session)
     end
 
-    if ns.Pace then
-        local section = ns.Pace.currentSectionName
-        if section then
-            local elapsed = ns.Pace:FormatTime(ns.Pace:CurrentSectionElapsed())
-            local best = ns.Pace:BestFor(section)
-            text = text .. ("\n|cffffd100%s|r: %s"):format(section, elapsed)
-            if best then
-                text = text .. (" |cff808080(best %s)|r"):format(ns.Pace:FormatTime(best))
-            end
-        end
+    cachedBase = text
 
-        local rate = ns.Pace:XPPerHour()
-        if rate then
-            text = text .. ("\nXP/hour: |cff00ff00%d|r"):format(rate)
-            local eta = ns.Pace:LevelETASeconds()
-            if eta then
-                text = text .. ("   Next level in ~|cff00ff00%s|r"):format(ns.Pace:FormatTime(eta))
-            end
-        end
-    end
-
-    win.summary:SetText(text)
+    win.summary:SetText(cachedBase .. self:PaceSuffix())
     self:RenderRows()
 end
+
+-- Keeps the live step-pace delta moving between full Refresh() calls,
+-- without repeating the thousands-of-steps RouteStats/BuildList walk every
+-- 2 seconds - it only recomputes the cheap pace suffix and re-sets the text.
+C_Timer.NewTicker(2, function()
+    if not win or not win:IsShown() or not cachedBase then return end
+    win.summary:SetText(cachedBase .. Progress:PaceSuffix())
+end)
 
 function Progress:Toggle()
     self:Build()

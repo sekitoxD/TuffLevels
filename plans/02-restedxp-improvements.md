@@ -1,238 +1,202 @@
 # Plan 2: Features inspired by RestedXP, and how to improve on them
 
-Branch: `initial_audit`
-Depends on: `plans/01-bug-fixes.md` Phases 1.1-1.3 (arrow, Back, error handling) being done.
+Status: **rewritten 2026-09-20** after an audit found ~90% of the original plan already
+shipped. See `.claude/checkpoints/2026-09-20-plan-02-restedxp-audit.md` for the audit
+record (which scout confirmed what, with file:line references). This document now
+describes only the work still remaining.
+
+Depends on: `plans/01-bug-fixes.md` Phases 1.1-1.3 — confirmed done in code (`Compat.Atan2`,
+`Core.pinned`/`Core:SetIndex`, and wrapped handlers via `Compat:Guard` all exist across
+Core.lua/Arrow.lua/Compat.lua), even though that plan's own "Phase 0 results" section
+was never filled in. No blocker here.
 
 ## What this plan is and is not
 
-RestedXP (RXP) is a leveling addon with a free client and paid speedrun guides. Its
-[CurseForge listing](https://www.curseforge.com/wow/addons/restedxp-guide) advertises:
+RestedXP (RXP) is a leveling addon with a free client and paid speedrun guides.
+**What we copy:** the feature ideas. **What we do not copy:** its guide content or
+route data, its code, or its guide syntax verbatim. See the original plan's intro
+(preserved below in git history) for the full disclaimer — unchanged by this rewrite.
 
-- an optimized quest path
-- auto quest accept and turn-in
-- other automation options
-- NPC targeting through a macro
-- a customizable arrow
-- a customizable UI
-- a leveling time tracker
-- custom guides
+**Non-goals (from the README, still in force):** no algorithmic route generation, no
+bundled QuestieDB data, no secure snippets, the addon must keep working with no quest
+database.
 
-It lists Retail, Forever, MoP Classic, Classic and TBC.
+## Already shipped (verified against source 2026-09-20, not re-planned here)
 
-**What we copy:** the feature ideas.
+- **Phase A** — auto-detect for `travel`/`hearth`/`trainer`/`death`/`flightpath`
+  (Core.lua), the `Compat.has` capability table (Compat.lua:55-60), `Core:Resume`/
+  catch-up scan/progress codes (`/tuff code`, Core.lua:305-415).
+- **Phase B** (mostly) — real-yard distance via `Data:RealDistanceToStep`
+  (Data.lua:278-296), multi-waypoint `step.path` via `Data:EffectiveTarget`
+  (Data.lua:306-330), colorblind palette / scale / text-only arrow modes, and
+  `Data:SetWaypoint` TomTom+native handoff (Data.lua:346-383).
+- **Phase C** (mostly) — step-matched auto accept/turn-in with Shift bypass and an
+  on/off toggle (Automation.lua), gossip auto-select, and the nameplate targeting
+  helper (Marker.lua).
+- **Phase D** (mostly) — personal-best splits, XP/hour, level ETA, text export
+  (Pace.lua).
+- **Phase E** — `objective`, the `xp` step type, `optional`, `skipIfLevel`, `requires`
+  with a cycle guard, and the CompactGuide.lua original line syntax. All documented in
+  the Durotar.lua route header and enforced by `Data:ValidateRoute`.
+- **Phase F** — `tools/merge_routes.py` (median-coordinate merge with conflict
+  reporting), `tools/extract_recording.py`, `tools/validate_route.py`, and
+  `CONTRIBUTING.md`'s record/export/PR workflow.
+- **Phase G** (mostly) — `Compat:HasSecretRestrictions`, Marker.lua pausing under
+  instance/secret restrictions, and the `/tuff debugrestrict` test hook.
 
-**What we do not copy:**
-- RXP's guide content or route data.
-- Its code.
-- Its guide syntax verbatim.
-
-Its guides are a commercial product. The DSL notes below are from my own knowledge, not
-from fetched docs (the RXP docs returned 403), so treat them as a design reference and check
-the RXPGuides repo license before reusing anything.
-
-**Non-goals (from the README, still in force):**
-- No algorithmic route generation. Routes stay hand-authored data.
-- No bundled QuestieDB data.
-- No secure snippets.
-- The addon must keep working with no quest database.
-
-## Forever constraints that shape everything here
-
-- API is the Midnight 12.x set. Port from Retail, not Classic.
-- Secret-value restrictions apply, mostly in combat and instances. Quest log, maps and
-  waypoints are not restricted, but nameplate unit names can become secret in instances.
-- No quest database exists for Forever. The Recorder plus crowdsourcing is the data story.
-- Beta level cap: 20, rising to 30 after two weeks (beta ends Oct 21). Launch is Nov 4,
-  2026. Route work above level 30 cannot be tested until launch.
-- SavedVariables do not restore on the beta. Design for state that can be rebuilt from the
-  quest log.
+Do not re-implement or "improve" any of the above as part of this plan without a new,
+separately audited reason — it works and is covered by existing behavior.
 
 ---
 
-## Phase A: Quick wins (small, low risk)
+## Remaining work
 
-### A1. Auto-detect the manual step types
-Today `travel`, `hearth`, `trainer` and `death` are never auto-detected (`Core.lua:87-91`).
-Detect them instead of making the user click Next.
+### R1. Locale-only objective-name parsing in Marker.lua
 
-| Step type | Detect completion by |
-|---|---|
-| `travel` | Player within N yards of the step's coordinates, or reached the target map (see B1 for yards) |
-| `hearth` | Bind location or zone change after using the Hearthstone. Choose events in a spike; wrap them with `Compat:RegisterEvents` |
-| `trainer` | `TRAINER_CLOSED` after `TRAINER_SHOW`. Optionally also a level or spell-learned check |
-| `death` | `PLAYER_DEAD`, then `PLAYER_ALIVE` or `PLAYER_UNGHOST` |
-| `flightpath` (new) | Taxi node known. Use the `C_TaxiMap` node state if present |
+- **File:** `Marker.lua:52-56`
+- **Problem:** `ObjectiveNames()` strips a kill-objective's trailing verb with
+  hardcoded English patterns (`slain`, `killed`, `destroyed`). On any non-English
+  client locale, the verb won't match, the leftover text won't equal the nameplate
+  name, and the objective-mob marker silently never appears — it fails closed with no
+  error, so it's easy to miss.
+- **Fix:** Add a small `LOCALE_SUFFIXES` lookup keyed by `GetLocale()` (enUS/enGB,
+  deDE, frFR, esES/esMX, ptBR, ruRU, itIT, koKR, zhCN, zhTW — the locales WoW ships),
+  each holding the verb suffixes that locale's client appends to a kill objective.
+  Fall back to the English list for any locale not in the table. This is a mitigation,
+  not a perfect fix — Blizzard doesn't expose the raw target name via
+  `C_QuestLog.GetQuestObjectives`, so text-parsing is unavoidable; the fix scopes the
+  regex per locale instead of assuming English everywhere.
+- **Impact:** Contained to one function in one file (`Marker.lua`). Nothing else calls
+  `ObjectiveNames`. No schema change, no cross-module dependency.
+- **Performance:** Zero measurable cost — same regex work as today, just locale-keyed.
+  Runs only when the objective mob set is recomputed (on quest log update, already
+  throttled elsewhere), not per-frame.
+- **Dev time:** ~20-30 minutes, including sourcing correct per-locale suffixes.
 
-- Each new event goes through `Compat:RegisterEvents` and is listed in `/tuff client` if rejected.
-- **Acceptance:** a route with these step types advances with zero clicks.
+### R2. `via` field for cross-zone travel steps
 
-### A2. Capability table instead of flavor checks
-Adopt the pattern used by other Forever ports: a `Compat.has` table.
-- Keys such as `has.specs`, `has.questDB`, `has.secretValues`, `has.taxiMap`.
-- Each key is true only if the API is present and not on a known-absent list.
-- Feature code asks `Compat.has.x`, not `Compat.isForever`.
-- **Acceptance:** no `isForever` checks outside `Compat.lua` (except the SavedVariables logic).
+- **Files:** `Data.lua` (schema/validation, `EffectiveTarget`), `Arrow.lua` (display),
+  `Routes/Horde/Durotar.lua` header (docs)
+- **Problem:** `step.path` multi-waypoint routing works, but a travel step that
+  crosses maps has no way to name *why* the intermediate point exists (zone gate,
+  boat, tram, flight master). The arrow already shows "Via: " for in-path steps
+  (Arrow.lua:255) but has no transition-type label to show alongside it.
+- **Fix:** Add an optional `via = "gate" | "boat" | "tram" | "flightpath"` (free-form
+  string is fine; no need for an enum) on a `path` waypoint entry. `Data:ValidateRoute`
+  accepts it as an optional string, no new validation failure modes. `Arrow.lua`'s
+  existing "Via: " line appends the label when present (e.g. "Via: Boat to
+  Menethil").
+- **Impact:** Additive, optional field — existing routes with no `via` field are
+  unaffected (`nil` just means no label, same as today). Touches `Data.lua`'s
+  validator and one display line in `Arrow.lua`. No behavior change to routing.
+- **Performance:** None — read once when the arrow row is drawn, not per-frame.
+- **Dev time:** ~30-45 minutes, including updating the Durotar.lua schema-header
+  comment (the authoritative field reference).
 
-### A3. Fast-forward and progress recovery
-Forever loses SavedVariables, so the step index resets on every launch. `Reconcile` heals
-only if every step before the real position is auto-detectable.
-- `Core:Resume()`: scan forward and jump to the last step whose quest flag is done. This
-  also clears the pin from Plan 1 fix 1.2.
-- Ask on login when index is 1 but quest flags say the player is further along: "You
-  look further along. Jump to step N?"
-- **Progress code:** a short code (route id, step index, checksum) shown in the tracker with
-  a Copy button, plus `/tuff code <code>` to restore it.
-- **Acceptance:** relog on Forever, accept the prompt, land within one step of the true position.
+### R3. Reward-choice call-out in Automation.lua — DONE (2026-09-20, scoped down)
 
----
+- **File:** `Automation.lua`, new `Compat:GetItemSellPrice` wrapper in `Compat.lua`.
+- **Shipped:** On `QUEST_COMPLETE` with more than one reward choice, each choice's
+  item link (`GetQuestItemLink("choice", i)`) is scored by vendor sell price via the
+  new `Compat:GetItemSellPrice` (tries `C_Item.GetItemInfo`, falls back to the global
+  `GetItemInfo` for Classic Era), and the best one is named in a chat line. Nothing is
+  auto-selected.
+- **Scope change from the original idea:** the original wording said "highlight the
+  best-scoring button with a glow/border." That was dropped in favor of a chat
+  call-out during implementation, because the actual reward-choice frame's name and
+  layout differ between Classic Era and Forever/Retail, this addon has no way to test
+  either client's live frame without loading it in-game, and getting a UI-frame guess
+  wrong risks visibly breaking Blizzard's own quest frame. The chat call-out delivers
+  the same "point at the best choice without picking it" goal without that risk.
+  Class-usability scoring (the other half of the original idea) was also dropped —
+  sell price alone is enough signal for a first pass, and a class-usability table is
+  new scope, not a quick addition.
+- **Impact:** matches the original estimate — contained to `Automation.lua` +
+  `Compat.lua`.
+- **Performance:** as estimated — a few sell-price lookups only when a multi-choice
+  turn-in is open, not per-frame.
 
-## Phase B: Arrow and navigation
+### R4. Per-step Pace timing — DONE (2026-09-20)
 
-### B1. Real distance
-`Arrow.lua:53` uses `map fraction * 1000`, which is not yards.
-- Use `C_Map.GetWorldPosFromMapPos` for the target and `UnitPosition("player")` for the
-  player. Compute yards, not map fraction.
-- Fall back to the current estimate with a `~` prefix when the real value is unavailable.
-- **Acceptance:** a distance readout that matches an in-game measurement to within a few yards.
+- **Files:** `Pace.lua` (`Pace:RecordStepSplit`, `Pace:BestStepTime`,
+  `Pace:StepDeltaVsBest`, called from `Pace:OnStepAdvance`).
+- **Shipped:** cumulative time-since-run-start is recorded per step index into
+  `db.paceBest[routeName].steps[stepIndex]` (keeps only the best, same model as the
+  existing per-section `RecordSplit`), alongside the existing per-section data — no
+  change to the section mechanism.
+- **Impact/performance:** as estimated — additive table, one more record per step
+  advance (event-driven, not per-frame).
 
-### B2. Multi-waypoint steps and cross-zone travel
-- A step may carry `path = { {map, x, y}, ... }`. The arrow points at the next point.
-- If the target is on another map, point at the nearest known transition (zone edge,
-  boat, tram, flight master) instead of showing "--". Add `via = {...}` on travel steps
-  and let authors supply it.
-- **Acceptance:** an Orgrimmar to Durotar travel step points at the gate, then the target.
+### R5. Live ghost/timeline visual in Pace — DONE (2026-09-20)
 
-### B3. Arrow polish
-- Colorblind-safe palette option, size and scale settings, and a minimal text-only mode.
-- Optionally hand off to TomTom, or use the native super-tracked waypoint, if the user prefers
-  (`Data:SetWaypoint` already does both).
+- **Files:** `Pace.lua` (`Pace:StepDeltaVsBest`), `Progress.lua` (Refresh's existing
+  pace block, plus a new `C_Timer.NewTicker(2, ...)` calling `Progress:Refresh()`).
+- **Shipped:** the Progress window's existing pace line now also shows a live
+  "+0:32 behind" / "0:14 ahead" delta at step granularity (color-coded green/red),
+  computed against R4's best-step-time data. A 2-second ticker keeps it moving
+  between quest events; `Progress:Refresh()` already no-ops while the window is
+  hidden (existing guard, confirmed before relying on it), so the ticker costs
+  nothing while Progress isn't open. This reuses the tracker/Progress window rather
+  than building a new frame, per the impact note in the original plan.
+- **Impact/performance:** as estimated — small UI hook, bounded 2s ticker cost only
+  while the window is shown.
 
----
+### R6. Settings panel using the Retail Settings API — DONE (2026-09-20)
 
-## Phase C: Automation (the biggest gap versus RXP)
-
-### C0. Spike first (1-2 hours, in the Forever beta)
-Determine whether `AcceptQuest`, `CompleteQuest`, `GetQuestReward`, `SelectGossipOption`
-and `SelectAvailableQuest`/`SelectActiveQuest` (or their Retail equivalents) work
-from an event handler without a hardware event on Forever. Record the results in
-Plan 1 Phase 0.5. **If they are blocked, drop this phase and update the README to say so.**
-I believe they are allowed, but I have not confirmed it.
-
-### C1. Step-aware auto accept and turn-in (opt-in)
-Better than a blanket "accept everything":
-- Only act when the open quest matches the **current step** (`step.quest`).
-- Accept on `QUEST_DETAIL` for `accept` steps. Turn in on `QUEST_COMPLETE` for `turnin` steps.
-- Reward choice: never guess. If the quest has a choice, show a highlight on the best
-  choice by the user's rule (vendor value, or class-usable upgrade) and let the user click.
-- Gossip: auto-select the single matching option only when the step names the NPC.
-- Shift held bypasses automation. A visible on/off toggle sits in the tracker.
-- **Acceptance:** with automation on, a run through the Valley of Trials needs no dialog
-  clicks; with it off, behaviour is unchanged.
-
-### C2. Optional targeting helper
-RXP offers a targeting macro. The unsecure alternative here is to highlight the NPC
-(nameplate marker, already built) and print the name. Do not create secure macros or
-snippets (see `CLAUDE.md`).
-
----
-
-## Phase D: Pace tracking (improve on RXP's time tracker)
-
-The Recorder already stamps entries with `t` (`Recorder.lua:99`).
-- Per-step and per-section timing shown in the Progress window.
-- Personal best splits stored per route, and an optional "ghost" (a saved run to compare
-  against, ahead/behind by N minutes).
-- XP/hour and level ETA from the actual step data.
-- Export a run as text so players can share it (SavedVariables can't be relied on on
-  Forever, so the export must work in-session).
-- **Acceptance:** finishing a section shows time taken and delta versus best.
-
----
-
-## Phase E: Route format
-
-The engine stays a step engine. These add expressiveness for authors.
-
-### E1. New step fields
-- `objective = n` on `complete` steps: done when objective n of the quest is finished.
-- `xp = { level = 12, pct = 50 }` step type: done at level 12 and 50% XP.
-- `optional = true`: shown dimmed, skipped by Resume.
-- `skipIfLevel = n`: skipped when the player is at or above level n.
-- `requires`/`after`: step ids that must be done first, so out-of-order play is fine.
-- Update the schema header in `Routes/Durotar.lua` and `Data:ValidateRoute`.
-
-### E2. Compact guide syntax that compiles to step tables
-Lua tables are hard for a first-time author to write. Add an optional line format,
-loaded at runtime or converted offline, for example:
-
-```
-section Valley of Trials 1-6
-accept 4641 npc=Kaltunk at=1411,42.6,68.8 "Right in front of you at spawn."
-turnin 4641 npc=Gornek
-xp 5
-travel 1411,55.4,74.4 "Southeast along the road."
-```
-
-- `GuideImport.lua` already converts Guidelime-format text, so reuse its parsing scaffolding.
-- Keep it a convenience layer. The step table stays the source of truth.
-- Original syntax, not RXP's. The line above is a sketch, not a spec.
-- **Acceptance:** the Durotar sample route can be written in the compact form and compiles to identical steps.
+- **Files:** `Compat.lua` (new `Compat.has.settingsAPI` entry), `Panel.lua` (new
+  `Panel:RegisterSettingsCategory`/`MakeSettingsToggle`), `Core.lua` (calls it once
+  from the `PLAYER_LOGIN` handler, right after `Panel:Build()`).
+- **Shipped:** a vertical-layout Settings category (Game Menu → Options → AddOns)
+  with 5 checkboxes wired to the same module state Panel.lua's existing buttons
+  drive: automation on/off, NPC markers on/off, objective-mob markers on/off, arrow
+  colorblind palette, arrow text-only mode. No new SavedVariables. Gated entirely
+  behind `Compat.has.settingsAPI` (checks `Settings` plus the four specific
+  functions used, not just namespace presence), so Classic Era — which has no
+  `Settings` global — never executes any of this code.
+- **Known verification gap:** the exact call signature of
+  `Settings.RegisterProxySetting`/`Settings.CreateCheckbox` could not be confirmed
+  against a live client from a non-interactive environment. Every call is wrapped in
+  `Compat:Guard`, so a wrong guess degrades to "this checkbox doesn't register"
+  rather than an error cascade — but **this needs a live in-game check on Forever or
+  Retail** (open Game Menu → Options → AddOns → TuFFlevels, confirm all 5 checkboxes
+  render and correctly reflect/change state) before calling R6 fully verified. Since
+  `Toggle()`/`ToggleMobs()`/etc. are flip-only (not `SetEnabled(bool)`), each setter
+  only calls the real toggle when the requested value differs from current state —
+  double-check in-game that checkboxes don't desync from actual state on first open.
+- **Impact/performance:** as estimated — additive UI, one-time registration cost at
+  login, no effect on Classic Era.
 
 ---
 
-## Phase F: Crowd-sourced Forever routes
+## Suggested order
 
-Since no database exists for Forever, this is the biggest opportunity.
-1. **Versioned export.** The Recorder's export gets a `format = N` header, client build,
-   date and character class/race, so recordings can be compared.
-2. `tools/merge_routes.py`: merge multiple recordings into one route. Group by quest ID,
-   take the median coordinates, keep the most common order, flag conflicts.
-3. `tools/lint_route.lua` (from Plan 1 Phase 4) run in CI on every route PR.
-4. A `CONTRIBUTING.md` explaining: record, export, open a PR.
-5. Human review keeps the "authored, not generated" rule: tools assist, the author decides.
-- **Acceptance:** two recordings of the same zone merge into a single route with a conflict report.
+R1 and R2 are small and independent — do first. R3 needs a new Compat wrapper, so do
+it before R4/R5 in case the wrapper pattern informs anything there (it shouldn't, but
+sequencing avoids two people, or two sessions, touching Compat.lua at once). R4 before
+R5 since R5 depends on R4's per-step data. R6 is independent of all the others and can
+happen any time, including in parallel.
 
----
+## Forever constraints that still apply
 
-## Phase G: Safety and UX
-
-- **Instance safety:** when `C_Secrets`/`C_RestrictedActions` report restrictions, or the
-  player is in an instance, pause the nameplate markers and never compare secret names.
-  Add a test hook so this can be checked outside an instance.
-- **Settings panel** using the Retail Settings API (present on Forever), not the removed
-  `InterfaceOptions` frames.
-- **Localisation of objective parsing.** `Marker.lua:52-60` strips English suffixes only.
-  Prefer the objective `type` and `numFulfilled` fields to text parsing.
-- **Onboarding for a first-time author:** trim `Rogue.lua` out of the default load or
-  ship it as an optional module. It is class-specific scope for a first addon.
-
----
-
-## Suggested schedule (against the Forever timeline)
-
-| When | Work |
-|---|---|
-| Now to Oct 7 (beta cap 20) | Plan 1. Phase C0 spike. Phase A. Record levels 1-20 in the beta |
-| Oct 7 to Oct 21 (beta cap 30) | Phase B, Phase C if the spike passed, Phase F tooling. Record 20-30 |
-| Oct 21 to Nov 4 | Phase D, Phase E, Phase G. Merge and review beta recordings. Re-verify APIs on the release build |
-| Launch, Nov 4 | Record 30-60. Ship a first verified route for 1-30 |
-
-Dates assume the beta level-cap schedule stays as announced. Blizzard may change it.
-
-## Risks
-
-- **Beta churn.** The Forever API may change before launch. Keep every client-specific
-  call behind `Compat`.
-- **Automation may be blocked** on Forever (spike C0). The plan works without it.
-- **Data quality.** Crowd-sourced routes need review. Merge tooling reports conflicts and
-  doesn't hide them.
-- **Scope.** This is a lot for a first addon. The order above deliberately front-loads
-  the cheap, high-value items (A1, A3, B1).
-- **Legal.** Do not reuse RestedXP guide content, code or verbatim syntax.
+- Beta level cap 20 until Oct 7, 30 until Oct 21 (beta ends), launch Nov 4, 2026 —
+  unchanged from the original plan and still the live schedule as of today (2026-09-20).
+- All new API surface (Settings API, item-info wrapper) goes through `Compat`, checked
+  by presence, not by `Compat.isForever`/build number.
+- No secure snippets — none of R1-R6 need one.
 
 ## Done when
 
-- A new character can play levels 1-20 on Forever with the arrow, markers and automatic
-  step advance, with no manual Next clicks for quest, travel, hearth or trainer steps.
-- A lost session can be restored (progress code or fast-forward).
-- At least one route for the Forever starting zones is recorded, merged and CI-clean.
+All six items (R1-R6) are implemented as of 2026-09-20 — see each section above for
+what shipped. What's left is in-game verification, since none of this could be
+playtested from this environment:
+
+- [ ] R1: on a non-English client (or a locale override, if testable without a
+  second client), the objective marker still appears on a kill step.
+- [ ] R2: a route with a `via`-annotated multi-map travel step shows the label in the
+  arrow's "Via:" line, and `/tuff verify` still passes.
+- [ ] R3: completing a multi-choice quest with automation on prints the best-value
+  reward call-out without auto-selecting anything.
+- [ ] R4/R5: the Progress window shows a live ahead/behind delta at step granularity
+  that updates every ~2 seconds while open.
+- [ ] R6: Game Menu → Options → AddOns → TuFFlevels shows all 5 checkboxes,
+  correctly reflecting and changing real state (see R6's verification-gap note).

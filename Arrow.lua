@@ -41,13 +41,13 @@ end
 
 -- Returns angle (radians, 0 = straight ahead), distance in yards, whether
 -- the target is on a different map, whether the distance is only the old
--- map-fraction estimate (real-yards APIs unavailable), and whether the
--- target is the step's own final destination (false while still routing
--- through an authored `path`).
+-- map-fraction estimate (real-yards APIs unavailable), whether the target
+-- is the step's own final destination (false while still routing through
+-- an authored `path`), and that path point's `via` label if it has one.
 local function Bearing(step)
     if not step then return nil end
 
-    local targetMap, tx, ty, isFinal = ns.Data:EffectiveTarget(step)
+    local targetMap, tx, ty, isFinal, via = ns.Data:EffectiveTarget(step)
     if not (tx and ty) then return nil end
 
     local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
@@ -81,7 +81,7 @@ local function Bearing(step)
         approx = true
     end
 
-    return angle % TWO_PI, dist, false, approx, isFinal
+    return angle % TWO_PI, dist, false, approx, isFinal, via
 end
 
 --------------------------------------------------------------------------
@@ -201,7 +201,7 @@ function Arrow:Update()
         end
     end
 
-    local angle, dist, wrongMap, approx, isFinal = Bearing(step)
+    local angle, dist, wrongMap, approx, isFinal, via = Bearing(step)
 
     if wrongMap then
         frame:Show()
@@ -250,7 +250,7 @@ function Arrow:Update()
         distText:SetText(("%s%d"):format(approx and "~" or "", dist))
     end
 
-    local label = step.npc or step.name or ""
+    local label = (not isFinal and via) or step.npc or step.name or ""
     if #label > 28 then label = label:sub(1, 26) .. "..." end
     local prefix = usingNext and "Next: " or (not isFinal and "Via: " or "")
     titleText:SetText(prefix .. label)

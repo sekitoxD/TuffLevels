@@ -57,6 +57,18 @@ Compat.has = {
     secretValues = Compat.restricted,
     taxiMap     = C_TaxiMap ~= nil,
     questDB     = false,
+    -- The modern Settings API (Blizzard Game Menu > Options > AddOns) is
+    -- Retail/Forever only (both WOW_PROJECT_MAINLINE) - Classic Era still
+    -- uses the legacy InterfaceOptionsFrame and has no `Settings` global at
+    -- all. Gated on the exact functions Panel.lua's settings category
+    -- needs, not just `Settings ~= nil`, since a future client could add
+    -- the namespace without every function this addon calls - short-circuit
+    -- `and` keeps this safe even when `Settings` itself is nil.
+    settingsAPI = Settings ~= nil
+        and Settings.RegisterVerticalLayoutCategory ~= nil
+        and Settings.RegisterAddOnCategory ~= nil
+        and Settings.RegisterProxySetting ~= nil
+        and Settings.CreateCheckbox ~= nil,
 }
 
 --------------------------------------------------------------------------
@@ -234,6 +246,20 @@ function Compat:GetQuestLogInfo(index)
     if not (C_QuestLog and C_QuestLog.GetInfo) then return nil end
     local ok, result = pcall(C_QuestLog.GetInfo, index)
     return ok and result or nil
+end
+
+-- GetItemInfo is dropped on Forever (see the header note); C_Item.GetItemInfo
+-- is the Retail/Forever replacement and takes the same arguments (itemID,
+-- itemString, item link or item name), so try it first. Returns nil, not an
+-- error, for an item the client hasn't cached data for yet - callers that
+-- need this can't block on a retry, so treat nil as "skip this item".
+function Compat:GetItemSellPrice(item)
+    if not item then return nil end
+    local getInfo = (C_Item and C_Item.GetItemInfo) or _G.GetItemInfo
+    if not getInfo then return nil end
+    local result = { self:Guard(getInfo, item) }
+    local sellPrice = result[11]
+    return type(sellPrice) == "number" and sellPrice or nil
 end
 
 --------------------------------------------------------------------------

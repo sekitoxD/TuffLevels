@@ -303,6 +303,104 @@ function Panel:Toggle()
 end
 
 --------------------------------------------------------------------------
+-- Blizzard Settings panel (Game Menu > Options > AddOns)
+--------------------------------------------------------------------------
+
+-- A second UI surface for the SAME toggles the buttons above already drive
+-- - no new SavedVariables, no new state. Gated on Compat.has.settingsAPI:
+-- Classic Era has no `Settings` namespace at all, so nothing below ever
+-- runs there.
+--
+-- Every Settings.* call is wrapped in Compat:Guard. The exact argument
+-- shape of Settings.RegisterProxySetting/CreateCheckbox could not be
+-- confirmed against a live client from this environment (no headless Lua
+-- runner, no client access) - a wrong guess about that shape degrades to
+-- "this one checkbox doesn't register", never a crash that takes the rest
+-- of Panel.lua down with it.
+--
+-- Toggle()/ToggleMobs()/ToggleColorblind()/ToggleTextOnly() unconditionally
+-- flip their boolean - they are not SetEnabled(bool) setters. The Settings
+-- API calls the setter with the NEW value the user picked (and may call it
+-- once during registration/restore), so the setter below only calls the
+-- real Toggle() when the requested value actually differs from current
+-- state, instead of flipping it unconditionally and desyncing the checkbox
+-- from the real state on the first render.
+local function MakeSettingsToggle(category, variable, name, tooltip, getValue, setValue)
+    local varType = (Settings.VarType and Settings.VarType.Boolean) or "boolean"
+    local setting = Compat:Guard(Settings.RegisterProxySetting,
+        category, variable, varType, name, getValue() and true or false, getValue, setValue)
+    if not setting then return end
+
+    Compat:Guard(Settings.CreateCheckbox, category, setting, tooltip)
+end
+
+-- Called once at login (Core.lua's PLAYER_LOGIN handler, right after
+-- Panel:Build()). self.settingsRegistered guards against double
+-- registration if something ever calls this twice in one session.
+function Panel:RegisterSettingsCategory()
+    if not Compat.has.settingsAPI then return end
+    if self.settingsRegistered then return end
+    self.settingsRegistered = true
+
+    local category = Compat:Guard(Settings.RegisterVerticalLayoutCategory, ADDON)
+    if not category then return end
+
+    Compat:Guard(Settings.RegisterAddOnCategory, category)
+
+    MakeSettingsToggle(category, "TUFFLEVELS_AUTO_ACCEPT_TURNIN", "Auto accept/turn-in",
+        "Automatically accepts and turns in quests matching your current step. Never guesses between multiple reward choices.",
+        function() return ns.Automation and ns.Automation.enabled or false end,
+        function(value)
+            if not ns.Automation then return end
+            if (ns.Automation.enabled or false) ~= value then
+                ns.Automation:Toggle()
+            end
+            Panel:Refresh()
+        end)
+
+    MakeSettingsToggle(category, "TUFFLEVELS_NPC_MARKERS", "NPC markers",
+        "Shows a floating icon over quest NPCs your current step needs.",
+        function() return ns.Marker and ns.Marker.enabled or false end,
+        function(value)
+            if not ns.Marker then return end
+            if (ns.Marker.enabled or false) ~= value then
+                ns.Marker:Toggle()
+            end
+            Panel:Refresh()
+        end)
+
+    MakeSettingsToggle(category, "TUFFLEVELS_OBJECTIVE_MOBS", "Objective mob markers",
+        "Also marks the mobs your current kill objective needs, not just quest NPCs.",
+        function() return ns.Marker and ns.Marker.markMobs or false end,
+        function(value)
+            if not ns.Marker then return end
+            if (ns.Marker.markMobs or false) ~= value then
+                ns.Marker:ToggleMobs()
+            end
+        end)
+
+    MakeSettingsToggle(category, "TUFFLEVELS_ARROW_COLORBLIND", "Arrow colorblind colors",
+        "Uses a colorblind-friendly palette for the directional arrow.",
+        function() return ns.Arrow and ns.Arrow.colorblind or false end,
+        function(value)
+            if not ns.Arrow then return end
+            if (ns.Arrow.colorblind or false) ~= value then
+                ns.Arrow:ToggleColorblind()
+            end
+        end)
+
+    MakeSettingsToggle(category, "TUFFLEVELS_ARROW_TEXT_ONLY", "Arrow text-only mode",
+        "Shows the arrow's distance/direction as text only, no icon.",
+        function() return ns.Arrow and ns.Arrow.textOnly or false end,
+        function(value)
+            if not ns.Arrow then return end
+            if (ns.Arrow.textOnly or false) ~= value then
+                ns.Arrow:ToggleTextOnly()
+            end
+        end)
+end
+
+--------------------------------------------------------------------------
 -- Content & Import submenu
 --------------------------------------------------------------------------
 

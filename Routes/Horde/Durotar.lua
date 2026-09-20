@@ -64,12 +64,16 @@
 --   path      optional ordered list of intermediate waypoints for a
 --             multi-hop or cross-zone travel step, e.g.
 --             { { zone = "Durotar", x = 50, y = 50 },
---               { zone = "The Barrens", x = 10, y = 20 } }
+--               { zone = "The Barrens", x = 10, y = 20, via = "Boat to Ratchet" } }
 --             The arrow guides through each point in turn (advancing once
 --             you're within ~20 yards and on that point's map) before
 --             finally pointing at the step's own map/x/y. Without a path,
 --             a step whose target is on a different map than the player
 --             just shows "Different zone" instead of a bearing.
+--   via       optional string on a path point, naming the transition it
+--             represents (zone gate, boat, tram, flight master). Shown in
+--             the arrow's "Via:" label while routing through that point;
+--             purely descriptive, doesn't change routing behavior.
 --
 -- uiMapIDs (Classic Era):
 --   Durotar 1411 | Orgrimmar 1454 | The Barrens 1413

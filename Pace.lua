@@ -100,6 +100,11 @@ function Pace:OnStepAdvance()
     if not Core.active then return end
     if not self.runStart then self:StartRun() end
 
+    -- Cumulative time-to-reach-this-step, same idea as section splits but
+    -- at step granularity - sections can be long enough that "behind pace"
+    -- is only useful to know once you've already lost the whole section.
+    self:RecordStepSplit(Core.index, time() - self.runStart)
+
     local section = Core:CurrentSection()
     local sectionName = section and section.name or nil
 
@@ -110,6 +115,49 @@ function Pace:OnStepAdvance()
         self.currentSectionName = sectionName
         self.sectionStart = time()
     end
+end
+
+-- Keeps only the best (lowest) cumulative time seen for reaching a given
+-- step index in this route, same "best so far" model as RecordSplit.
+function Pace:RecordStepSplit(stepIndex, elapsed)
+    local Core = ns.Core
+    local routeName = Core.active and Core.active.name
+    if not routeName then return end
+
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    db.paceBest = db.paceBest or {}
+    db.paceBest[routeName] = db.paceBest[routeName] or {}
+    db.paceBest[routeName].steps = db.paceBest[routeName].steps or {}
+
+    local best = db.paceBest[routeName].steps[stepIndex]
+    if not best or elapsed < best then
+        db.paceBest[routeName].steps[stepIndex] = elapsed
+    end
+end
+
+-- Best cumulative time (seconds since run start) previously recorded for
+-- reaching this step index in the currently loaded route, or nil.
+function Pace:BestStepTime(stepIndex)
+    local Core = ns.Core
+    local routeName = Core.active and Core.active.name
+    if not (routeName and stepIndex) then return nil end
+
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    return db.paceBest and db.paceBest[routeName] and db.paceBest[routeName].steps
+        and db.paceBest[routeName].steps[stepIndex]
+end
+
+-- Live delta in seconds between this run and the best recorded run, at the
+-- step you're on right now: positive means behind, negative means ahead.
+-- nil until there's a best time to compare against (first time through a
+-- step, or SavedVariables lost the record - same Forever caveat as
+-- everywhere else this addon persists state).
+function Pace:StepDeltaVsBest()
+    local Core = ns.Core
+    if not (Core.active and self.runStart) then return nil end
+    local best = self:BestStepTime(Core.index)
+    if not best then return nil end
+    return (time() - self.runStart) - best
 end
 
 -- Best time recorded for a section of the currently loaded route, or nil.

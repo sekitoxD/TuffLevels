@@ -659,6 +659,7 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         if ns.Panel then
             local firstRun = ns.Panel:FirstRunSetup()
             ns.Panel:Build()
+            ns.Panel:RegisterSettingsCategory()
             if firstRun then
                 if Compat:SavedVarsAreBroken() then
                     -- "First run" can't be remembered on this client (same

@@ -45,6 +45,31 @@ local function CurrentStepFor(stepType, questID)
     return nil
 end
 
+-- Never guesses which reward to take (that stays a manual click) - but
+-- names which choice looks like the better vendor sell value, so the
+-- player isn't clicking blind. This deliberately stops short of
+-- highlighting the actual reward button: that frame's name and layout
+-- differ between Classic Era and Forever/Retail (the same "port from
+-- Retail, not Classic" trap CLAUDE.md calls out for API calls applies to
+-- UI frame internals too), and there's no headless client to verify a
+-- guess against - a chat call-out is the version of this feature that can
+-- actually be checked by reading the code.
+local function AnnounceBestChoice(numChoices)
+    local bestIndex, bestPrice
+    for i = 1, numChoices do
+        local link = Compat:Guard(GetQuestItemLink, "choice", i)
+        local price = link and Compat:GetItemSellPrice(link)
+        if price and (not bestPrice or price > bestPrice) then
+            bestIndex, bestPrice = i, price
+        end
+    end
+    if bestIndex then
+        local link = Compat:Guard(GetQuestItemLink, "choice", bestIndex)
+        ns.Print(("Reward choice %d looks like the best vendor value: %s"):format(
+            bestIndex, link or ("#" .. bestIndex)))
+    end
+end
+
 local function FindGossipMatch(list, step)
     for _, entry in ipairs(list) do
         if (entry.questID and step.quest and entry.questID == step.quest)
@@ -76,10 +101,13 @@ f:SetScript("OnEvent", Compat:Wrap("Automation", function(self, event)
         local questID = Compat:Guard(GetQuestID)
         if questID and CurrentStepFor("turnin", questID) then
             -- Never guess between reward choices - only auto-turn-in when
-            -- there's a single reward, or none.
+            -- there's a single reward, or none. With more than one, call
+            -- out the best vendor-value choice instead of picking for you.
             local numChoices = Compat:Guard(GetNumQuestChoices) or 0
             if numChoices <= 1 then
                 Compat:Guard(GetQuestReward, 1)
+            else
+                AnnounceBestChoice(numChoices)
             end
         end
 

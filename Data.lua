@@ -245,6 +245,9 @@ function Data:ValidateRoute(route)
                     table.insert(problems,
                         ("%s: path point %d has coords but no map"):format(label, j))
                 end
+                if point.via and type(point.via) ~= "string" then
+                    table.insert(problems, ("%s: path point %d via should be a string"):format(label, j))
+                end
             end
         end
     end
@@ -300,12 +303,14 @@ end
 -- next point still ahead instead of the step's own final destination -
 -- advances through the list as each point is actually reached. Falls back
 -- to the step's own map/x/y once the path is exhausted or absent.
--- Returns mapID, x, y, isFinal.
+-- Returns mapID, x, y, isFinal, via. `via` is the authored point's own
+-- `via` field (e.g. "Boat to Menethil"), naming why the point exists, or
+-- nil for the step's own final destination or an unannotated point.
 local PATH_POINT_REACHED_YARDS = 20
 
 function Data:EffectiveTarget(step)
     if not step.path or #step.path == 0 then
-        return self:StepMap(step), step.x, step.y, true
+        return self:StepMap(step), step.x, step.y, true, nil
     end
 
     step._pathIndex = step._pathIndex or 1
@@ -319,14 +324,14 @@ function Data:EffectiveTarget(step)
             if dist and dist <= PATH_POINT_REACHED_YARDS then
                 step._pathIndex = step._pathIndex + 1
             else
-                return mapID, point.x, point.y, false
+                return mapID, point.x, point.y, false, point.via
             end
         else
-            return mapID, point.x, point.y, false
+            return mapID, point.x, point.y, false, point.via
         end
     end
 
-    return self:StepMap(step), step.x, step.y, true
+    return self:StepMap(step), step.x, step.y, true, nil
 end
 
 -- Compat:Guard returns nil both when the wrapped call throws and when it

@@ -38,6 +38,31 @@ local active = {}     -- [nameplateFrame] = markerTexture
 -- Your quest log already names what you need to kill: "Mottled Boar slain:
 -- 3/10". Parse the name out of that and we can mark those nameplates too,
 -- with no quest database involved at all.
+--
+-- Blizzard doesn't expose the raw target name, only this locale-formatted
+-- text, so the trailing verb has to be stripped per client locale rather
+-- than assuming English everywhere (a non-English client would otherwise
+-- leave the verb attached, never match a nameplate name, and the marker
+-- would silently never appear). CJK locales aren't in this table: their
+-- objective text isn't "Name <verb>: X/Y" shaped, so verb-stripping
+-- wouldn't apply cleanly; the counter-stripped text is used as-is for them.
+local LOCALE_SUFFIXES = {
+    enUS = { "slain", "killed", "destroyed" },
+    enGB = { "slain", "killed", "destroyed" },
+    deDE = { "getötet", "erlegt", "erschlagen", "zerstört" },
+    frFR = { "tués?", "tuées?", "détruite?s?" },
+    esES = { "muertos?", "muertas?", "destruidos?", "destruidas?" },
+    esMX = { "muertos?", "muertas?", "destruidos?", "destruidas?" },
+    ptBR = { "mortos?", "mortas?", "destruídos?", "destruídas?" },
+    ruRU = { "убит", "убита", "убито", "убиты", "уничтожен", "уничтожена", "уничтожено", "уничтожены" },
+    itIT = { "ucciso", "uccisa", "uccisi", "uccise", "distrutto", "distrutta", "distrutti", "distrutte" },
+}
+
+local function SuffixesForLocale()
+    local locale = GetLocale and GetLocale() or "enUS"
+    return LOCALE_SUFFIXES[locale] or LOCALE_SUFFIXES.enUS
+end
+
 local function ObjectiveNames(questID)
     local names = {}
     if not (C_QuestLog and C_QuestLog.GetQuestObjectives) then return names end
@@ -45,15 +70,17 @@ local function ObjectiveNames(questID)
     local objectives = Compat:Guard(C_QuestLog.GetQuestObjectives, questID)
     if type(objectives) ~= "table" then return names end
 
+    local suffixes = SuffixesForLocale()
+
     for _, obj in ipairs(objectives) do
         local text = obj.text
         if type(text) == "string" and obj.finished ~= true then
             -- strip the trailing counter and any verb the locale appends
             local name = text:match("^(.-):%s*%d+%s*/%s*%d+%s*$") or text
-            name = name:gsub("%s+slain$", "")
-                       :gsub("%s+killed$", "")
-                       :gsub("%s+destroyed$", "")
-                       :match("^%s*(.-)%s*$")
+            for _, suffix in ipairs(suffixes) do
+                name = name:gsub("%s+" .. suffix .. "$", "")
+            end
+            name = name:match("^%s*(.-)%s*$")
             if name and #name > 2 then
                 names[name:lower()] = true
             end
