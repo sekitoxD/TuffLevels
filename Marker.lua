@@ -114,7 +114,7 @@ function Marker:AnnounceWantedNPC()
     if wanted then
         if wanted ~= lastAnnounced then
             lastAnnounced = wanted
-            ns.Print("Look for: |cffffd100" .. wanted .. "|r")
+            if ns.Print then ns.Print("Look for: |cffffd100" .. wanted .. "|r") end
         end
     else
         lastAnnounced = nil
