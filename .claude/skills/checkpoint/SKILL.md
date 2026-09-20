@@ -51,8 +51,17 @@ repeatedly.
    - Dead ends: approaches tried and abandoned, so the next thread doesn't
      re-attempt them. This is as valuable as the "what worked" list.
 
-2. Write it to `.claude/checkpoints/<YYYY-MM-DD>-<slug>.md` (slug = a few
-   words for the task, kebab-case). Use this structure:
+2. Choose the location:
+   - **Grouped plans** (the work is implementing a `plans/<group>/` directory
+     of numbered plan documents, e.g. `plans/optimal/`): write
+     `plans/<group>/CHECKPOINT.md`, one file per group, overwritten each save.
+     Skip step 3 (no `LATEST.md`, no dated file). This is the repo rule in
+     `CLAUDE.md` ("Checkpoints for grouped plans").
+   - **Anything else**: write it to
+     `.claude/checkpoints/<YYYY-MM-DD>-<slug>.md` (slug = a few words for the
+     task, kebab-case).
+
+   Use this structure:
 
    ```markdown
    # Checkpoint: <slug>
@@ -83,7 +92,7 @@ repeatedly.
    just what's load-bearing>
    ```
 
-3. Also write/overwrite `.claude/checkpoints/LATEST.md` with the same
+3. (Non-grouped checkpoints only.) Also write/overwrite `.claude/checkpoints/LATEST.md` with the same
    content (or a pointer: `See <filename>.` is fine if you want dated files
    kept as history) so a new thread can find the most recent checkpoint
    without the user hunting for a filename.
@@ -93,7 +102,9 @@ repeatedly.
 
 ## Mode 2: Resume
 
-1. Read `.claude/checkpoints/LATEST.md` (or the file the user names).
+1. Read the file the user names. If they name a plan group (or the work is
+   in one, e.g. `plans/optimal/`), read `plans/<group>/CHECKPOINT.md`;
+   otherwise read `.claude/checkpoints/LATEST.md`.
 2. Reconcile it against current reality before trusting it — `git status`,
    `git log`, and a quick look at the "Relevant files" list. A checkpoint
    is a snapshot; if the user or someone else touched the repo since it was
