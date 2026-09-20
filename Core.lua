@@ -94,11 +94,15 @@ local function IsStepDone(step)
         -- a header, not a task
         return true
 
-    elseif t == "trainer" or t == "death" then
-        -- no detectable condition; user advances
-        return false
+    elseif t == "trainer" or t == "death" or t == "hearth" or t == "travel" then
+        -- Event-driven: the watcher below tags the step table directly
+        -- when it sees the matching event fire while this step is current.
+        return step._eventDone == true
 
-    elseif t == "manual" or t == "travel" or t == "hearth" or t == "note" then
+    elseif t == "flightpath" then
+        return Data:IsFlightPathKnown(step)
+
+    elseif t == "manual" or t == "note" then
         -- No detectable condition. User clicks to advance.
         return false
     end
@@ -305,6 +309,65 @@ function Core:CatchUp(confirmed)
 end
 
 --------------------------------------------------------------------------
+-- Progress codes
+--------------------------------------------------------------------------
+
+-- SavedVariables can't be relied on to carry progress across a reload on
+-- Forever, so this gives a portable alternative: a short, copy-pasteable
+-- string encoding route + step, with a checksum to catch typos (not
+-- cryptographic - just cheap corruption detection).
+local function SanitizeRouteName(name)
+    return (name:gsub("%s+", "_"):gsub("[^%w_]", ""))
+end
+
+local function Checksum(raw)
+    local sum = 0
+    for i = 1, #raw do
+        sum = (sum + raw:byte(i) * i) % 9973
+    end
+    return sum
+end
+
+function Core:GetProgressCode()
+    if not self.active then return nil end
+    local sanitized = SanitizeRouteName(self.active.name)
+    local sum = Checksum(self.active.name .. "#" .. self.index)
+    return ("%s-%d-%04d"):format(sanitized, self.index, sum)
+end
+
+-- Returns true on success, or false plus a reason string.
+function Core:ApplyProgressCode(code)
+    if not code or code == "" then return false, "empty code" end
+
+    local sanitized, index, sum = code:match("^(.-)%-(%d+)%-(%d+)$")
+    index, sum = tonumber(index), tonumber(sum)
+    if not (sanitized and index and sum) then
+        return false, "couldn't parse that code"
+    end
+
+    local match
+    for name, route in pairs(self.routes) do
+        if SanitizeRouteName(name) == sanitized then
+            match = route
+            break
+        end
+    end
+    if not match then
+        return false, "no installed route matches that code"
+    end
+
+    if Checksum(match.name .. "#" .. index) ~= sum then
+        return false, "checksum mismatch - check for a typo"
+    end
+
+    self.active = match
+    self.pinned = false
+    self:SetIndex(index)
+    self:Reconcile()
+    return true
+end
+
+--------------------------------------------------------------------------
 -- Route selection
 --------------------------------------------------------------------------
 
@@ -429,8 +492,73 @@ local _, missingEvents = Compat:RegisterEvents(f, {
     "QUEST_LOG_UPDATE",
     "UNIT_QUEST_LOG_CHANGED",
     "PLAYER_LEVEL_UP",
+    "TRAINER_CLOSED",
+    "PLAYER_DEAD",
+    "PLAYER_ALIVE",
+    "PLAYER_UNGHOST",
+    "UNIT_SPELLCAST_SUCCEEDED",
+    "ZONE_CHANGED_NEW_AREA",
 })
 Core.missingEvents = missingEvents
+
+-- Auto-detection for the manual-only step types that don't have a live
+-- "is this done" query the way quests do. Tags the CURRENT step's own
+-- table (not a side index) so IsStepDone can read it directly; only ever
+-- set while that step is actually current, so it can't mark a step done
+-- out of order.
+local HEARTHSTONE_SPELL_ID = 8690
+
+local function MarkCurrentStepEventDone(stepType)
+    local step = Core:CurrentStep()
+    if step and step.type == stepType then
+        step._eventDone = true
+    end
+end
+
+-- "hearth" is a two-part sequence (cast succeeds, then the zone actually
+-- changes once the teleport resolves) so it needs a pending flag rather
+-- than completing on the cast event alone.
+local awaitingHearth = false
+local awaitingRevive = false
+
+local function HandleStepDetectionEvent(event, ...)
+    if event == "TRAINER_CLOSED" then
+        MarkCurrentStepEventDone("trainer")
+
+    elseif event == "PLAYER_DEAD" then
+        awaitingRevive = true
+
+    elseif event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+        if awaitingRevive then
+            awaitingRevive = false
+            MarkCurrentStepEventDone("death")
+        end
+
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, _, spellID = ...
+        if unit == "player" and spellID == HEARTHSTONE_SPELL_ID then
+            awaitingHearth = true
+        end
+
+    elseif event == "ZONE_CHANGED_NEW_AREA" then
+        if awaitingHearth then
+            awaitingHearth = false
+            MarkCurrentStepEventDone("hearth")
+        end
+
+        -- Coarse "reached the target zone" travel detection - not precise
+        -- yards, which needs the real-distance work Phase B1 hasn't done
+        -- yet. Good enough to auto-advance a travel step once you're on
+        -- the right map.
+        local step = Core:CurrentStep()
+        if step and step.type == "travel" and C_Map and C_Map.GetBestMapForUnit then
+            local mapID = Data:StepMap(step)
+            if mapID and C_Map.GetBestMapForUnit("player") == mapID then
+                step._eventDone = true
+            end
+        end
+    end
+end
 
 -- QUEST_LOG_UPDATE fires constantly. Throttle reconciliation so we're not
 -- walking the route table dozens of times a second during heavy questing.
@@ -453,6 +581,17 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
 
         if ns.UI then ns.UI:Build() ; ns.UI:Refresh() end
 
+        -- Sitting at step 1 with quest flags saying otherwise means either
+        -- SavedVariables lost the real position (Forever) or the player
+        -- played ahead outside the addon. Offer the same catch-up scan the
+        -- menu button runs, instead of silently sitting at step 1.
+        if Core.active and Core.index == 1 then
+            local furthest = Core:PreviewCatchUp()
+            if furthest and furthest > Core.index and ns.Panel then
+                C_Timer.After(3, function() ns.Panel:ShowResumePrompt(furthest) end)
+            end
+        end
+
         -- Configure itself rather than making the user type commands.
         if ns.Panel then
             local firstRun = ns.Panel:FirstRunSetup()
@@ -474,6 +613,8 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         if ns.Arrow then ns.Arrow:Build() end
         if ns.Marker then C_Timer.After(1, function() ns.Marker:RescanAll() end) end
     else
+        HandleStepDetectionEvent(event, ...)
+
         -- Anything that isn't login is a quest event, so the cached view of
         -- the quest log is stale from here on.
         Compat:InvalidateLogIndex()
@@ -653,6 +794,17 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "catchup" then
         Core:CatchUp(arg:lower() == "confirm")
 
+    elseif cmd == "code" then
+        if arg == "" then
+            local code = Core:GetProgressCode()
+            if code then Print("Progress code: " .. code)
+            else Print("No route loaded.") end
+        else
+            local ok, reason = Core:ApplyProgressCode(arg)
+            if ok then Print("Restored to step " .. Core.index .. ".")
+            else Print("Couldn't apply that code: " .. reason) end
+        end
+
     elseif cmd == "help" then
         if ns.Panel then ns.Panel:ShowHelpDialog() end
 
@@ -689,7 +841,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
-        Print("          verify | capture | client | errors | reset | help")
+        Print("          verify | capture | client | errors | reset | help | code [<code>]")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")

@@ -169,7 +169,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 602)
+    panel:SetSize(240, 628)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -226,54 +226,58 @@ function Panel:Build()
         Panel:ShowCatchUpDialog()
     end)
 
+    MakeButton(panel, "Progress code", -290, function()
+        Panel:ShowProgressCode()
+    end)
+
     -- Recording extras
-    MakeButton(panel, "Add a note here", -290, function()
+    MakeButton(panel, "Add a note here", -316, function()
         Panel:PromptNote()
     end)
 
-    MakeButton(panel, "Mark this spot", -316, function()
+    MakeButton(panel, "Mark this spot", -342, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
 
     -- Display / options
-    panel.arrowBtn = MakeButton(panel, "Arrow", -342, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -368, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.mobBtn = MakeButton(panel, "Objective mobs", -368, function()
+    panel.mobBtn = MakeButton(panel, "Objective mobs", -394, function()
         ns.Marker:ToggleMobs() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -394, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -420, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
-    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -420, function()
+    panel.platesBtn = MakeButton(panel, "Friendly nameplates", -446, function()
         local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
         Panel:Refresh()
     end)
 
-    MakeButton(panel, "Colors", -446, function()
+    MakeButton(panel, "Colors", -472, function()
         Panel:ShowColorPicker()
     end)
 
-    MakeButton(panel, "Reset arrow position", -472, function()
+    MakeButton(panel, "Reset arrow position", -498, function()
         ns.Arrow:ResetPosition()
     end)
 
-    MakeButton(panel, "Rogue", -498, function()
+    MakeButton(panel, "Rogue", -524, function()
         ns.Rogue:Show()
     end)
 
-    MakeButton(panel, "Help / About", -524, function()
+    MakeButton(panel, "Help / About", -550, function()
         Panel:ShowHelpDialog()
     end)
 
-    MakeButton(panel, "Close", -556, function() panel:Hide() end)
+    MakeButton(panel, "Close", -582, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))
@@ -491,6 +495,114 @@ function Panel:ShowCatchUpDialog()
     end
 
     self.catchUpBox = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Resume prompt (shown automatically at login, not from a button)
+--------------------------------------------------------------------------
+
+-- Same scan/jump as the Catch-up dialog above, but triggered unprompted
+-- when login finds the tracker sitting at step 1 while quest flags say
+-- otherwise (SavedVariables loss, or quests done outside the addon).
+function Panel:ShowResumePrompt(furthest)
+    if self.resumeBox then self.resumeBox:Hide() end
+
+    local Core = ns.Core
+    if not Core.active then return end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(360, 150)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Welcome back")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOPLEFT", 20, -46)
+    body:SetPoint("TOPRIGHT", -20, -46)
+    body:SetJustifyH("LEFT")
+    body:SetSpacing(4)
+    body:SetTextColor(unpack(ns.Theme.color.text))
+    body:SetText(("You're at step 1, but quests up to step %d of %d already look done.\nJump the tracker to step %d?"):format(
+        furthest, #Core.active.steps, furthest))
+
+    FitDialogToBody(f, body, 46, 60, 150)
+
+    local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    confirm:SetSize(100, 22)
+    confirm:SetPoint("BOTTOM", -55, 16)
+    confirm:SetText("Jump")
+    confirm:SetScript("OnClick", function()
+        Core:CatchUp(true)
+        f:Hide()
+        Panel:Refresh()
+    end)
+
+    local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    cancel:SetSize(100, 22)
+    cancel:SetPoint("BOTTOM", 55, 16)
+    cancel:SetText("Not now")
+    cancel:SetScript("OnClick", function() f:Hide() end)
+
+    self.resumeBox = f
+    f:Show()
+end
+
+--------------------------------------------------------------------------
+-- Progress code
+--------------------------------------------------------------------------
+
+-- A short, copy-pasteable stand-in for SavedVariables when those can't be
+-- relied on: encodes route + step with a typo-catching checksum.
+function Panel:ShowProgressCode()
+    local Core = ns.Core
+    local code = Core:GetProgressCode()
+    if not code then
+        ns.Print("No route loaded.")
+        return
+    end
+
+    if self.codeBox then self.codeBox:Hide() end
+
+    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetSize(360, 150)
+    f:SetPoint("CENTER")
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:EnableMouse(true)
+    ns.Theme:Skin(f)
+
+    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    t:SetPoint("TOP", 0, -14)
+    t:SetText("Progress code")
+    t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+    local help = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    help:SetPoint("TOP", 0, -42)
+    help:SetTextColor(unpack(ns.Theme.color.dim))
+    help:SetText("Ctrl+C to copy. Restore later with /tuff code <code>")
+
+    local edit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+    edit:SetSize(300, 24)
+    edit:SetPoint("TOP", 0, -68)
+    edit:SetAutoFocus(true)
+    edit:SetText(code)
+    edit:HighlightText()
+    edit:SetScript("OnEscapePressed", function() f:Hide() end)
+    edit:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
+
+    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    ok:SetSize(100, 22)
+    ok:SetPoint("BOTTOM", 0, 16)
+    ok:SetText("Close")
+    ok:SetScript("OnClick", function() f:Hide() end)
+
+    self.codeBox = f
     f:Show()
 end
 

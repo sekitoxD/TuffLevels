@@ -45,6 +45,20 @@ Compat.isClassic   = (flavor == "classic")
 -- Are we on a client with Midnight-era restrictions?
 Compat.restricted  = isMainline and (C_Secrets ~= nil or C_RestrictedActions ~= nil)
 
+-- Capability flags, not client-flavor guesses. Feature code should ask
+-- Compat.has.x rather than Compat.isForever/isMainline/etc, so a feature
+-- degrades correctly if a future client build adds or drops an API,
+-- instead of silently breaking because it only checked the flavor name.
+-- has.questDB is set later by Data:DetectProvider(), once it knows whether
+-- a provider actually attached (Data.lua is the only file allowed to touch
+-- QuestieDB directly, so this file can't determine that value itself).
+Compat.has = {
+    specs       = GetSpecialization ~= nil,
+    secretValues = Compat.restricted,
+    taxiMap     = C_TaxiMap ~= nil,
+    questDB     = false,
+}
+
 --------------------------------------------------------------------------
 -- Safe event registration
 --------------------------------------------------------------------------

@@ -40,6 +40,7 @@ function Data:DetectProvider()
         end
     end
 
+    Compat.has.questDB = (provider ~= nil)
     return provider
 end
 
@@ -49,6 +50,32 @@ end
 
 function Data:ProviderName()
     return provider or "none"
+end
+
+--------------------------------------------------------------------------
+-- Flight points
+--------------------------------------------------------------------------
+
+-- NOTE: TaxiNodeInfo field names (state, Enum.FlightPathState.Known) are
+-- from memory, not verified against this session's client - same caveat
+-- as the QuestieDB assumptions above. Confirm with /tuff verify or a live
+-- flightpath step before shipping a route that relies on this.
+--
+-- A "flightpath" step is identified by step.mapID (the uiMapID the node
+-- lives on) plus either step.node (a numeric nodeID) or step.name.
+function Data:IsFlightPathKnown(step)
+    if not (Compat.has.taxiMap and step.mapID) then return false end
+
+    local nodes = Compat:Guard(C_TaxiMap.GetAllTaxiNodes, step.mapID)
+    if not nodes then return false end
+
+    for _, node in ipairs(nodes) do
+        if (step.node and node.nodeID == step.node)
+            or (step.name and node.name == step.name) then
+            return node.state == Enum.FlightPathState.Known
+        end
+    end
+    return false
 end
 
 --------------------------------------------------------------------------
@@ -149,6 +176,10 @@ function Data:ValidateRoute(route)
 
         if step.type == "grind" and type(step.targetLevel) ~= "number" then
             table.insert(problems, label .. ": grind step needs targetLevel")
+        end
+
+        if step.type == "flightpath" and not (step.mapID and (step.node or step.name)) then
+            table.insert(problems, label .. ": flightpath step needs mapID and node or name")
         end
 
         if step.x and (step.x < 0 or step.x > 100) then

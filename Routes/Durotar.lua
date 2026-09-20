@@ -15,11 +15,19 @@
 -- ###################################################################
 --
 -- STEP FORMAT
---   type      "accept" | "turnin" | "complete" | "grind" | "travel"
---             | "hearth" | "manual" | "note"
+--   type      "accept" | "turnin" | "complete" | "grind" | "level" | "section"
+--             | "trainer" | "death" | "manual" | "travel" | "hearth"
+--             | "flightpath" | "note"
 --   quest     numeric quest ID (accept/turnin/complete)
 --   name      fallback display name if no database is installed
 --   npc       NPC to talk to - puts a marker over their head
+--
+--   Auto-detected without clicking Next: accept/turnin/complete/grind/level
+--   (quest log or player level), trainer (closing the trainer window),
+--   death (dying then reviving), hearth (casting Hearthstone then the zone
+--   changing), travel (reaching the step's target map - coarse, not yards
+--   yet), flightpath (mapID + node/name already known on this character).
+--   flightpath needs mapID (uiMapID) plus node (numeric nodeID) or name.
 --
 -- SECTIONS
 --   { type = "section", name = "Zone or area", levels = { 6, 12 } }
