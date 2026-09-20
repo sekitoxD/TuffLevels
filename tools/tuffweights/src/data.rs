@@ -16,6 +16,45 @@ pub struct ItemsFile {
     pub abilities: HashMap<String, Vec<AbilityRank>>,
     #[serde(default)]
     pub world: World,
+    /// Quests that offer a choice of reward (2+ choices).
+    #[serde(default)]
+    pub quest_choices: Vec<QuestChoice>,
+    /// Choice items missing from `items` (a rogue cannot use them), by id.
+    #[serde(default)]
+    pub choice_others: HashMap<u32, ChoiceOther>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct QuestChoice {
+    pub quest: u32,
+    pub title: String,
+    #[serde(default)]
+    pub min_level: u32,
+    #[serde(default)]
+    pub quest_level: u32,
+    #[serde(default)]
+    pub race_mask: i64,
+    #[serde(default)]
+    pub class_mask: i64,
+    #[serde(default)]
+    pub zone: i64,
+    pub choices: Vec<Choice>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Choice {
+    pub item: u32,
+    #[serde(default)]
+    pub count: u32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ChoiceOther {
+    pub name: String,
+    #[serde(default)]
+    pub sell_price: u64,
+    #[serde(default)]
+    pub why: String,
 }
 
 /// Per-level aggregates from the DB (`[level, value]` rows), see the exporter.
@@ -49,6 +88,12 @@ pub struct Item {
     pub gate_level: u32,
     #[serde(default)]
     pub bonding: u8,
+    /// Vendor sell price in copper.
+    #[serde(default)]
+    pub sell_price: u64,
+    /// Armor value (armor pieces).
+    #[serde(default)]
+    pub armor: f64,
     #[serde(default)]
     pub req_skill: Option<u32>,
     #[serde(default)]

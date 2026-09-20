@@ -301,6 +301,47 @@ def quest_sources(conn, item_ids):
     return out
 
 
+def why_unusable(r):
+    """Short reason a rogue cannot use an item that the item export left out."""
+    cls, sub, inv = r["class"], r["subclass"], r["InventoryType"]
+    if r["AllowableClass"] > 0 and not r["AllowableClass"] & 8:
+        return "other class only"
+    if cls == 4:
+        return {3: "mail", 4: "plate", 6: "shield", 7: "relic"}.get(sub, "armor a rogue cannot wear")
+    if cls == 2:
+        if inv == 17 or sub in (1, 5, 6, 8, 10):
+            return "two-handed"
+        return "weapon type a rogue cannot use"
+    return {0: "consumable", 1: "bag", 6: "ammo", 7: "trade good", 12: "quest item"}.get(cls, "not equipment")
+
+
+def quest_choices(conn, item_ids, max_level):
+    """Quests that offer a choice of reward, and the items those choices name.
+
+    Returns (quests, others): `quests` lists every choice (rogue-usable or not,
+    so the advisor can say why one was skipped); `others` describes the choice
+    items missing from the item export.
+    """
+    cid = ["RewChoiceItemId%d" % i for i in range(1, 7)]
+    cnt = ["RewChoiceItemCount%d" % i for i in range(1, 7)]
+    sel = ["entry", "Title", "MinLevel", "QuestLevel", "RequiredRaces", "RequiredClasses", "ZoneOrSort"] + cid + cnt
+    rows = qdb.query(conn, "SELECT " + ", ".join(sel) + " FROM quest_template WHERE RewChoiceItemId2 <> 0 "
+                           "AND MinLevel <= %d" % max_level)
+    quests, wanted = [], set()
+    for q in rows:
+        choices = [{"item": q[c], "count": max(q[n], 1)} for c, n in zip(cid, cnt) if q[c]]
+        wanted.update(c["item"] for c in choices)
+        quests.append({"quest": q["entry"], "title": q["Title"], "min_level": q["MinLevel"],
+                       "quest_level": q["QuestLevel"], "race_mask": q["RequiredRaces"],
+                       "class_mask": q["RequiredClasses"], "zone": q["ZoneOrSort"], "choices": choices})
+    others = {}
+    for ch in chunks(wanted - set(item_ids)):
+        for r in qdb.query(conn, "SELECT entry, name, class, subclass, InventoryType, AllowableClass, SellPrice "
+                                 "FROM item_template WHERE entry IN (%s)" % in_list(ch)):
+            others[r["entry"]] = {"name": r["name"], "sell_price": r["SellPrice"], "why": why_unusable(r)}
+    return quests, others
+
+
 def group_chances(rows):
     """{(entry, groupid): (sum_of_explicit, count_of_zero_rows)} for loot rows."""
     acc = defaultdict(lambda: [0.0, 0])
@@ -645,10 +686,15 @@ def main():
         "exported_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "note": "DB-derived scratch data. Do not commit (GPL, see tools/qdb.py).",
     }
+    reward_quests, reward_others = quest_choices(conn, ids, args.max_level)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "items": items, "abilities": load_abilities(conn),
-                   "world": load_world(conn, args.max_level)}, f, indent=None, separators=(",", ":"))
+                   "world": load_world(conn, args.max_level),
+                   "quest_choices": reward_quests, "choice_others": reward_others},
+                  f, indent=None, separators=(",", ":"))
+    print("quests with a reward choice: %d (%d choice items are not rogue-usable)" % (
+        len(reward_quests), len(reward_others)))
 
     weapons = [i for i in items if "weapon" in i]
     by_skill = defaultdict(int)

@@ -170,7 +170,7 @@ pub fn compute_rows(
                 let (with, without) = match (in_base, no_gain) {
                     (_, true) => (*bdps, *bdps),
                     (true, false) if !bids.contains(&item.id) => (*bdps, *bdps),
-                    (true, false) => (*bdps, best_of(&Filter { exclude: Some(item.id), ..base_filter.clone() })),
+                    (true, false) => (*bdps, best_of(&Filter { exclude: vec![item.id], ..base_filter.clone() })),
                     (false, false) => (best_of(&Filter { also: Some(item.id), ..base_filter.clone() }), *bdps),
                 };
                 if with > who.get(&level).map_or(f64::MIN, |x| x.0) {

@@ -11,7 +11,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 
 /// Rogue's bit in an item's `class_mask` (class id 4 -> 1 << 3).
-const ROGUE_CLASS_BIT: i64 = 1 << 3;
+pub(crate) const ROGUE_CLASS_BIT: i64 = 1 << 3;
 
 /// How hard an item is to get, easiest first. Derived from the item's sources
 /// only; the DB has no open-world/dungeon flag on quests, so quest rewards are
@@ -72,7 +72,7 @@ pub fn faction_mask(name: &str) -> Option<i64> {
 
 /// False when the item can only come from quests and none of them is open to `mask`.
 /// Vendor and drop sources carry no faction data, so those items always pass.
-fn faction_ok(i: &Item, mask: i64) -> bool {
+pub(crate) fn faction_ok(i: &Item, mask: i64) -> bool {
     let s = &i.sources;
     let quest_only = !s.quest.is_empty() && s.vendor.is_empty() && s.drop.is_empty() && s.craft.is_empty() && s.chest.is_empty();
     !quest_only || s.quest.iter().any(|q| q.race_mask == 0 || q.race_mask & mask != 0)
@@ -101,15 +101,15 @@ pub struct Filter {
     pub include_gated: bool,
     /// Admit this item regardless of `max_tier` (used to ask what one extra weapon is worth).
     pub also: Option<u32>,
-    /// Remove this item from the pool.
-    pub exclude: Option<u32>,
+    /// Remove these items from the pool.
+    pub exclude: Vec<u32>,
     /// Race-mask of a faction (`faction_mask`); drops items whose only source is a quest that faction cannot take.
     pub faction: Option<i64>,
 }
 
 impl Default for Filter {
     fn default() -> Self {
-        Filter { race: None, max_tier: Tier::WorldDrop, include_gated: false, also: None, exclude: None, faction: None }
+        Filter { race: None, max_tier: Tier::WorldDrop, include_gated: false, also: None, exclude: Vec::new(), faction: None }
     }
 }
 
@@ -130,7 +130,7 @@ pub fn candidates<'a>(items: &'a [Item], rules: &Rules, build: &Build, level: u3
             && race_bit.map_or(true, |b| i.race_mask == 0 || i.race_mask & b != 0)
             && (f.include_gated || (i.honor_rank.is_none() && i.req_skill.is_none()))
             && (tier_of(i) <= f.max_tier || Some(i.id) == f.also)
-            && Some(i.id) != f.exclude
+            && !f.exclude.contains(&i.id)
             && f.faction.map_or(true, |m| faction_ok(i, m))
     };
     let pool: Vec<&Item> = items.iter().filter(ok).collect();

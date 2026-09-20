@@ -9,6 +9,7 @@ mod data;
 mod mc;
 mod model;
 mod report;
+mod rewards;
 mod rules;
 mod search;
 mod weights;
@@ -75,6 +76,29 @@ enum Cmd {
         /// worth.md: mean uplift x window length (percent-levels) a detour must reach.
         #[arg(long, default_value_t = 20.0)]
         detour_gain: f64,
+    },
+    /// Quest-reward advisor: rank the choices of every choose-one quest by DPS gained.
+    Rewards {
+        #[arg(long, default_value_t = 1)]
+        min_level: u32,
+        #[arg(long, default_value_t = 59)]
+        max_level: u32,
+        #[arg(long)]
+        race: Option<String>,
+        /// horde or alliance: skips quests that faction cannot take.
+        #[arg(long)]
+        faction: Option<String>,
+        /// Score one build only instead of the best across builds.
+        #[arg(long)]
+        build: Option<String>,
+        /// Percent DPS below which no choice counts as a real pick.
+        #[arg(long, default_value_t = 0.5)]
+        min_uplift: f64,
+        /// Percent DPS within which two choices are a tie.
+        #[arg(long, default_value_t = 0.15)]
+        tie: f64,
+        #[arg(long, default_value = "out")]
+        out: PathBuf,
     },
     /// Break down one loadout: DPS parts, attack table, casts and stat weights.
     Explain {
@@ -176,6 +200,18 @@ fn main() -> anyhow::Result<()> {
                 _ => eprintln!("skipping audit.md: could not read {} and {}", lua.display(), notes.display()),
             }
             println!("{} cells in {:?}; reports in {}", cells.len(), t.elapsed(), out.display());
+        }
+        Cmd::Rewards { min_level, max_level, race, faction, build, min_uplift, tie, out } => {
+            let faction = faction
+                .as_deref()
+                .map(|f| search::faction_mask(f).ok_or_else(|| anyhow::anyhow!("--faction must be horde or alliance")))
+                .transpose()?;
+            let o = rewards::RewardOptions { min_level, max_level: max_level.min(rules.max_level), min_uplift, tie, race: race.as_deref(), faction, build: build.as_deref() };
+            let t = std::time::Instant::now();
+            let md = rewards::rewards_md(&rules, &builds, &file, &o)?;
+            std::fs::create_dir_all(&out)?;
+            std::fs::write(out.join("rewards.md"), md)?;
+            println!("rewards.md written to {} in {:?}", out.display(), t.elapsed());
         }
         Cmd::Explain { build, level, mh, oh, race } => {
             let b = builds
