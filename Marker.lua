@@ -100,6 +100,27 @@ function Marker:WantedNPC()
     return step.npc, step.type
 end
 
+-- The nameplate icon only helps once the NPC is actually on screen. A
+-- chat line covers players who've left friendly nameplates off, or just
+-- want the name up front to scan for or /targetexact themselves - the
+-- addon can't create a secure targeting macro/keybind (CLAUDE.md: no
+-- secure snippets), so this is the unsecure equivalent RestedXP's
+-- targeting macro would otherwise cover. Only announces once per new
+-- wanted NPC, not on every nameplate-driven rescan.
+local lastAnnounced = nil
+
+function Marker:AnnounceWantedNPC()
+    local wanted = self:WantedNPC()
+    if wanted then
+        if wanted ~= lastAnnounced then
+            lastAnnounced = wanted
+            ns.Print("Look for: |cffffd100" .. wanted .. "|r")
+        end
+    else
+        lastAnnounced = nil
+    end
+end
+
 --------------------------------------------------------------------------
 -- Marker creation
 --------------------------------------------------------------------------
@@ -199,6 +220,8 @@ end
 -- The wanted NPC changes whenever the step advances, so re-scan every
 -- visible nameplate rather than waiting for one to spawn.
 function Marker:RescanAll()
+    self:AnnounceWantedNPC()
+
     for plate in pairs(active) do
         HideMarkerOn(plate)
     end
