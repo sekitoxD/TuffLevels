@@ -38,7 +38,7 @@ Core.lua        -- the step engine: route registry, step advancement, slash comm
 Automation.lua  -- opt-in, step-matched auto accept/turn-in (off by default)
 Pace.lua        -- per-section timing, personal-best splits, XP/hour and level ETA
 Recorder.lua    -- turns live play (accept/turn-in events) into route step data
-Marker.lua      -- nameplate icons over quest NPCs / objective mobs
+Marker.lua      -- nameplate icons over quest NPCs / objective mobs; pauses under instance/secret-value restrictions (Compat:HasSecretRestrictions et al, /tuff debugrestrict to test)
 UI.lua          -- the tracker window
 Arrow.lua       -- pointer + distance readout to the current step
 Panel.lua       -- button menu wrapping the slash commands, first-run setup

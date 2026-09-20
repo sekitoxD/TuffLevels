@@ -78,7 +78,7 @@ read_globals = {
     -- Unit info
     "UnitClass", "UnitRace", "UnitLevel", "UnitXP", "UnitXPMax",
     "UnitName", "UnitPosition", "UnitFactionGroup", "GetPlayerFacing",
-    "IsXPUserDisabled", "GetSpecialization",
+    "IsXPUserDisabled", "GetSpecialization", "IsInInstance",
 
     -- Quest/gossip actions (Automation.lua)
     "AcceptQuest", "GetQuestReward", "GetNumQuestChoices", "GetQuestID",

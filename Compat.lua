@@ -60,6 +60,50 @@ Compat.has = {
 }
 
 --------------------------------------------------------------------------
+-- Secret values / instance restrictions
+--------------------------------------------------------------------------
+
+-- NOTE: C_Secrets.HasSecretRestrictions/ShouldUnitIdentityBeSecret and the
+-- issecretvalue() global are from Midnight's patch 12.0.0 API notes, not
+-- verified against this session's actual client - same caveat as the
+-- QuestieDB/flightpath assumptions elsewhere in this addon. Every call
+-- here already degrades to "not restricted" if the API isn't present, so
+-- a wrong guess just means the (already-optional) safety check no-ops,
+-- not that anything breaks.
+
+-- Broadly: is the client currently restricting addon access to some Lua
+-- values at all, regardless of which unit is involved?
+function Compat:HasSecretRestrictions()
+    if C_Secrets and C_Secrets.HasSecretRestrictions then
+        if self:Guard(C_Secrets.HasSecretRestrictions) then return true end
+    end
+    if C_RestrictedActions and C_RestrictedActions.IsAddOnRestrictionActive then
+        if self:Guard(C_RestrictedActions.IsAddOnRestrictionActive) then return true end
+    end
+    return false
+end
+
+-- Narrowly: would THIS unit's identity (name) specifically come back as
+-- an opaque secret value right now?
+function Compat:IsUnitIdentitySecret(unit)
+    if not (C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret) then return false end
+    return self:Guard(C_Secrets.ShouldUnitIdentityBeSecret, unit) == true
+end
+
+-- Belt-and-suspenders: is this specific already-read value itself secret
+-- (opaque, not safely comparable/stringable), independent of whether we
+-- expected it to be.
+function Compat:IsSecretValue(value)
+    if not _G.issecretvalue then return false end
+    local ok, result = pcall(_G.issecretvalue, value)
+    return ok and result == true
+end
+
+function Compat:IsInInstance()
+    return self:Guard(IsInInstance) == true
+end
+
+--------------------------------------------------------------------------
 -- Safe event registration
 --------------------------------------------------------------------------
 

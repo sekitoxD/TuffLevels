@@ -28,6 +28,17 @@ jobs:
           python-version: "3.x"
       - name: Validate route structure (no DB - offline structural checks only)
         run: python tools/validate_route.py --no-db Routes/
+      - name: Smoke-test merge_routes.py
+        # No fixture-based test suite for this tool yet - this at least
+        # exercises it against two real route files on every push/PR
+        # (a trivial self-merge, and a merge of two genuinely different
+        # routes to hit the "missing from"/conflict-reporting paths) and
+        # confirms the merged output is itself well-formed Lua.
+        run: |
+          python tools/merge_routes.py Routes/Durotar.lua Routes/Durotar.lua -o /tmp/self_merge.lua
+          python tools/validate_route.py --no-db /tmp/self_merge.lua
+          python tools/merge_routes.py Routes/Durotar.lua Routes/Horde1-60.lua -o /tmp/cross_merge.lua
+          python tools/validate_route.py --no-db /tmp/cross_merge.lua
 
   busted:
     runs-on: ubuntu-latest

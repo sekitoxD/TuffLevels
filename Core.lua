@@ -908,6 +908,17 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Core:Reconcile()
         Print("Reset to step 1.")
 
+    elseif cmd == "debugrestrict" then
+        -- Test hook for the instance-safety guard (G1): flips a forced
+        -- restricted state so it can be checked without actually being
+        -- in an instance or on a client with secret values active.
+        if ns.Marker then
+            ns.Marker.debugForceRestricted = not ns.Marker.debugForceRestricted
+            ns.Marker:RescanAll()
+            Print("Marker restricted-mode simulation " ..
+                (ns.Marker.debugForceRestricted and "ON (markers paused)" or "off"))
+        end
+
     else
         Print("Commands: show | next | back | resume | catchup [confirm] | where | goto <n> | routes | load <name>")
         Print("          verify | capture | client | errors | reset | help | code [<code>] | pace | write")

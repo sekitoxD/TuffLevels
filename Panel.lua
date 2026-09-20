@@ -289,15 +289,26 @@ function Panel:Build()
         ns.Arrow:ToggleDeferToTomTom() ; Panel:Refresh()
     end)
 
-    MakeButton(panel, "Rogue", -654, function()
-        ns.Rogue:Show()
-    end)
+    -- Rogue.lua already refuses to do anything for any other class; this
+    -- just keeps the button from cluttering the menu for the 8 classes
+    -- that can never use it, closing the gap it would otherwise leave
+    -- rather than just hiding it in place. Class never changes
+    -- mid-session, so this is decided once here, not on every Refresh().
+    local y = -654
+    local _, playerClass = UnitClass("player")
+    if playerClass == "ROGUE" then
+        MakeButton(panel, "Rogue", y, function()
+            ns.Rogue:Show()
+        end)
+        y = y - 26
+    end
 
-    MakeButton(panel, "Help / About", -680, function()
+    MakeButton(panel, "Help / About", y, function()
         Panel:ShowHelpDialog()
     end)
+    y = y - 32
 
-    MakeButton(panel, "Close", -712, function() panel:Hide() end)
+    MakeButton(panel, "Close", y, function() panel:Hide() end)
 
     ns.Theme:SkinChildren(panel)
     t:SetTextColor(unpack(ns.Theme.color.lilac))

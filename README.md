@@ -97,6 +97,8 @@ This is the actual work. The engine is done; the route is not.
 
 Two ways to skip hand-writing Lua tables: `/tuff write` opens an in-addon compact text editor (one line per step — `CompactGuide.lua`'s header has the format), or import an existing spreadsheet/community guide via the menu. Outside the game, `python tools/validate_route.py Routes/` runs the same structural checks as `/tuff verify` plus offline quest-DB checks (race/class/level/prerequisite order) against a local cmangos database — the CI workflow runs it in `--no-db` (structure-only) mode on every push.
 
+**Crowd-sourcing a route from more than one recording.** Two people recording the same zone will disagree here and there. `python tools/merge_routes.py A.lua B.lua -o Merged.lua` groups their steps by quest ID, takes the median of the coordinates, keeps whichever order was most common, and prints a conflict report — it's a merging aid, not an authority; see `CONTRIBUTING.md` for the full workflow (record → export → merge if needed → verify → PR) and what still needs a human read-through afterward.
+
 **Step types:**
 
 | Type | Auto-advances when |
