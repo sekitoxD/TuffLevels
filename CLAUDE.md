@@ -63,6 +63,12 @@ Every file shares one addon-private namespace via `local ADDON, ns = ...`, and e
 - **Route authoring is the actual content of this addon.** `/tuff capture` dumps the live quest log as pasteable step lines (avoids hand-looking-up quest IDs), `/tuff verify` runs `Data:ValidateRoute` to catch bad IDs / missing coords / malformed grind steps before a route ships. Treat routes in `Routes/*.lua` as authored data, not something to auto-generate from an algorithm — see the README's "Why it's built this way" for why nearest-neighbor/algorithmic route generation is explicitly rejected.
 - **Persistence**: `Core:Save`/`Core:Load` persist `{route, index}` into `TuFFlevelsCharDB` via `Compat:InitSavedVar`. On Forever this is best-effort only (see the SavedVariables bug above) — the addon warns rather than pretending it works.
 
+## Checkpoints for grouped plans
+
+When the work is a **grouped set of plans split into many pieces** (a `plans/<group>/` directory of numbered documents, e.g. `plans/optimal/`), the checkpoint lives **in that directory** as `plans/<group>/CHECKPOINT.md` — one file per group, overwritten on each save (git history is the record of earlier states). Do not put it in `.claude/checkpoints/`, and do not write a dated file or `LATEST.md` for it. Resuming work on the group starts by reading `plans/<group>/CHECKPOINT.md`.
+
+Standalone work that is not part of a plan group keeps using `.claude/checkpoints/<date>-<slug>.md` + `LATEST.md` (see the `checkpoint` skill). Group checkpoints follow the same structure as the skill's template and are commit-able like the plans beside them.
+
 ## Conventions to follow when editing
 
 - New WoW API calls that might not exist on all three targets go through a `Compat:` wrapper that `pcall`s the call and degrades gracefully — follow the pattern already used for quest-log accessors in `Compat.lua`.
