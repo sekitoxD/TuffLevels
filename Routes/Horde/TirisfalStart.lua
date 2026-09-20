@@ -164,7 +164,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         { type = "accept", questName = "A Putrid Task", zone = "Tirisfal Glades", location = "Brill" },
         { type = "turnin", questName = "Vital Intelligence", zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "accept", questName = "At War with the Scarlet Crusade",
+          type = "accept", name = "At War with the Scarlet Crusade (part 1)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
         },
         {
@@ -180,9 +180,9 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "Brill",
           note = "Bind your hearthstone here. Train level 6 skills here. Buy level 5 food/drink. Skip First Aid for now (money).",
         },
-        { type = "accept", questName = "A New Plague", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "accept", name = "A New Plague (part 1)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "complete", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "complete", name = "A New Plague (part 1)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           note = "Partial progress - work on this while you are here, then move on. Kill dogs outside the house, then near the Zeppelin, then large loop from zep tower to farmstead.",
         },
         {
@@ -195,7 +195,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "Multiple Areas",
         },
         {
-          type = "complete", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "complete", name = "A New Plague (part 1)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "Cold Hearth Manor",
         },
         {
@@ -232,9 +232,9 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         { type = "turnin", questName = "Graverobbers", zone = "Tirisfal Glades", location = "Brill" },
         { type = "accept", questName = "Forsaken Duties", zone = "Tirisfal Glades", location = "Brill" },
         { type = "accept", questName = "The Prodigal Lich", zone = "Tirisfal Glades", location = "Brill" },
-        { type = "turnin", questName = "A New Plague", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "turnin", name = "A New Plague (part 1)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "accept", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "accept", name = "A New Plague (part 2)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "Brill", note = "Part 2, for killing murlocs.",
         },
         { type = "turnin", questName = "A Putrid Task", zone = "Tirisfal Glades", location = "Brill" },
@@ -277,13 +277,13 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           note = "Can carry this quest with you thoughout the zone. Worth 700 XP, adjust level 10 turn in calculations accordingly (See 89E).",
         },
         {
-          type = "complete", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "complete", name = "A New Plague (part 2)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "West Coast",
           note = "Partial progress - work on this while you are here, then move on.",
         },
-        { type = "complete", questName = "A New Plague", zone = "Tirisfal Glades", location = "West Coast" },
+        { type = "complete", name = "A New Plague (part 2)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "West Coast" },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 1)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Solliden Farmstead",
           note = "Partial progress - work on this while you are here, then move on.",
         },
@@ -298,7 +298,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           note = "Partial progress - work on this while you are here, then move on.",
         },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 1)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Solliden Farmstead",
         },
         {
@@ -322,19 +322,19 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         { type = "turnin", questName = "Deaths in the Family", zone = "Tirisfal Glades", location = "Brill" },
         { type = "accept", questName = "Speak with Sevren", zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "turnin", questName = "At War with the Scarlet Crusade",
+          type = "turnin", name = "At War with the Scarlet Crusade (part 1)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
         },
         {
-          type = "accept", questName = "At War with the Scarlet Crusade",
+          type = "accept", name = "At War with the Scarlet Crusade (part 2)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill", note = "Part 2, for Captian Perrine.",
         },
         { type = "turnin", questName = "Proof of Demise", zone = "Tirisfal Glades", location = "Brill" },
         { type = "turnin", questName = "Speak with Sevren", zone = "Tirisfal Glades", location = "Brill" },
         { type = "turnin", questName = "The Mills Overrun", zone = "Tirisfal Glades", location = "Brill" },
-        { type = "turnin", questName = "A New Plague", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "turnin", name = "A New Plague (part 2)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "accept", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "accept", name = "A New Plague (part 3)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "Brill", note = "Part 3, for killing spiders.",
         },
         { type = "turnin", questName = "Fields of Grief", zone = "Tirisfal Glades", location = "Brill" },
@@ -365,16 +365,16 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "The Magic Quarter",
         },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 2)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Nightmare Vale",
           note = "Exit the sewers from Undercity to get here.",
         },
         {
-          type = "turnin", questName = "At War with the Scarlet Crusade",
+          type = "turnin", name = "At War with the Scarlet Crusade (part 2)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
         },
         {
-          type = "accept", questName = "At War with the Scarlet Crusade",
+          type = "accept", name = "At War with the Scarlet Crusade (part 3)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
           note = "Part 3, for killing Captain Vachon.",
         },
@@ -383,7 +383,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "Gunther's Retreat",
         },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 3)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Crusader Outpost",
           note = "Partial progress - work on this while you are here, then move on. Approach Crusader Outpost from the West, drop down into Balnir Farmstead",
         },
@@ -393,11 +393,11 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           note = "Partial progress - work on this while you are here, then move on. Go from West to East through farmstead as you loop south of Crusader Outpost",
         },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 3)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Crusader Outpost",
           note = "Approach tower from the Southeast and complete quest on the way to Venomweb Vale",
         },
-        { type = "complete", questName = "A New Plague", zone = "Tirisfal Glades", location = "Venomweb Vale" },
+        { type = "complete", name = "A New Plague (part 3)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Venomweb Vale" },
         {
           type = "complete", questName = "Rear Guard Patrol", zone = "Tirisfal Glades",
           location = "Balnir Farmstead",
@@ -412,11 +412,11 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         },
         { type = "accept", questName = "Return the Book", zone = "Undercity", location = "The Magic Quarter" },
         {
-          type = "turnin", questName = "At War with the Scarlet Crusade",
+          type = "turnin", name = "At War with the Scarlet Crusade (part 3)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
         },
         {
-          type = "accept", questName = "At War with the Scarlet Crusade",
+          type = "accept", name = "At War with the Scarlet Crusade (part 4)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
           note = "Part 4, for killing Captain Melrache",
         },
@@ -424,14 +424,14 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           type = "turnin", questName = "Return to the Magistrate", zone = "Tirisfal Glades",
           location = "Brill",
         },
-        { type = "turnin", questName = "A New Plague", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "turnin", name = "A New Plague (part 3)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
         { type = "accept", questName = "Delivery to Silverpine", zone = "Tirisfal Glades", location = "Brill" },
         {
-          type = "accept", questName = "A New Plague", zone = "Tirisfal Glades",
+          type = "accept", name = "A New Plague (part 4)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "Brill", note = "Part 4, give drink to dwarf in basement.",
         },
         { type = "trainer", name = "First Aid", zone = "Tirisfal Glades", location = "Brill" },
-        { type = "turnin", questName = "A New Plague", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "turnin", name = "A New Plague (part 4)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
         {
           type = "complete", questName = "Return the Book", zone = "Tirisfal Glades",
           location = "Gunther's Retreat",
@@ -453,7 +453,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "Gunther's Retreat",
         },
         {
-          type = "complete", questName = "At War with the Scarlet Crusade",
+          type = "complete", name = "At War with the Scarlet Crusade (part 4)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Scarlet Watch Post",
           note = "Northeast of Gunther's Retreat, can approach directly instead of taking the road that loops around south of the tower.",
         },
@@ -463,7 +463,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           note = "Use your hearthstone. You must be XXXX/8800 into Level 11 to hit 12 before Silverpine with all turn ins.",
         },
         {
-          type = "turnin", questName = "At War with the Scarlet Crusade",
+          type = "turnin", name = "At War with the Scarlet Crusade (part 4)", questName = "At War with the Scarlet Crusade", ambiguous = true,
           zone = "Tirisfal Glades", location = "Brill",
         },
         {
@@ -596,7 +596,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "The Sepulcher",
         },
         {
-          type = "accept", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "accept", name = "Arugal's Folly (part 1)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
         },
         {
@@ -616,7 +616,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "The Ivar Patch",
         },
         {
-          type = "complete", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "complete", name = "Arugal's Folly (part 1)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "Valgan's Field",
         },
         {
@@ -636,31 +636,31 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "The Sepulcher",
         },
         {
-          type = "turnin", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "turnin", name = "Arugal's Folly (part 1)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
         },
         {
-          type = "accept", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "accept", name = "Arugal's Folly (part 2)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
           note = "Part 2, for collecting Glutton/Darksoul shackles.",
         },
         {
-          type = "complete", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "complete", name = "Arugal's Folly (part 2)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "North Tide's Hollow",
         },
         {
-          type = "turnin", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "turnin", name = "Arugal's Folly (part 2)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
         },
         {
-          type = "accept", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "accept", name = "Arugal's Folly (part 3)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
           note = "Part 3, for killing Grimson the Pale in the Deep Elm Mine.",
         },
 
         { type = "section", name = "Silverpine Forest 3rd Loop" },
         {
-          type = "complete", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "complete", name = "Arugal's Folly (part 3)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "Deep Elem Mine",
         },
         {
@@ -685,7 +685,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "The Sepulcher",
         },
         {
-          type = "turnin", questName = "Arugal's Folly", zone = "Silverpine Forest",
+          type = "turnin", name = "Arugal's Folly (part 3)", questName = "Arugal's Folly", ambiguous = true, zone = "Silverpine Forest",
           location = "The Sepulcher",
         },
         {

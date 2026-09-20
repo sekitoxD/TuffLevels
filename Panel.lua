@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.5.2"
+local CHANGELOG_VERSION = "1.5.3"
 local CHANGELOG = {
+    "Tagged all 36 repeated-name chain-link steps in the Tirisfal Start route (A New Plague, At War with the Scarlet Crusade, Arugal's Folly) as ambiguous so they resolve against your live quest log instead of risking a silent multi-step skip. Fixed 3 /tuff verify findings in the Solo route: an unidentified turn-in near Malaka'Jin is now an honest manual note instead of a broken empty quest name, and two hearth steps no longer carry a bogus placeholder coordinate.",
     "Removed the confusing duplicate 'Durotar (Orc/Troll)' sample route from Available Guides - it's superseded by the real generated Durotar leg. The sample file itself stays on disk (it's the schema-doc reference and a CI test fixture), just no longer loaded as a selectable route.",
     "Fixed SheetImport.lua tagging every imported step with minLevel from the sheet's level column - that HIDES a step below that level, so it was silently removing steps for anyone under the route's intended pace instead of just showing where the route expects you to be. Uses the same display-only atLevel field the generated ONSLAUGHT routes already use.",
     "Menu condensed from 26 buttons to ~13: occasional-use route setup/backup buttons moved into a new Content & Import submenu, display toggles moved into a new Display settings submenu, and Add a note here/Mark this spot now only show up while actively recording.",

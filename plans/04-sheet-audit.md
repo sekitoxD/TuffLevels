@@ -248,19 +248,37 @@ the addon knows nothing about.
 
 ## Still to do, by hand
 
-1. **Run `/tuff verify`** on all three routes in game. Nothing here has been executed — there
-   is no headless Lua runner in this repo, so the generated files have been checked
-   structurally (quote balance, brace balance, field shape across all 41 files) and no further.
+1. ~~**Run `/tuff verify`** on all three routes in game~~ **Partly done.** Run on the Solo and
+   Horde1-60 routes in-game: Horde1-60 came back clean. Solo route found 3 problems, all fixed:
+   step 588 (turnin, `Stonetalon Mts/Malaka'Jin`) had `questName = ""` (blank in the source
+   sheet) - converted to a `note` step rather than guessing a quest name, since the logCount
+   drop (17→16) confirms a real turn-in happened here, just an unidentified one. Steps 1007 and
+   1717 (both `hearth`) carried the identical placeholder coordinate pair (52.8, 49.0) tagged
+   `zone = "Ragefire Chasm"` regardless of the step's real destination - coordinates dropped
+   (hearth steps auto-complete on cast+zone-change, not position, so this loses nothing), zone
+   left as-is since it wasn't safe to guess what it should have said instead. **The Dungeon and
+   Tirisfal routes still haven't been run through `/tuff verify` in-game.**
 2. **Coordinates for the dungeon and Tirisfal routes** (D1, T1). Both are usable without them
    and much better with them.
 3. **Trainer-step coordinates in the solo route** (F7) — 28 of 29 are blank.
 4. **The four quest-log count breaks** (F9) and the one level regression (F10) need someone to
    decide which number is right.
-5. **Tag the Tirisfal chain links `ambiguous`** (T4). Until that is done those steps can
-   mis-resolve the way F2 describes.
-6. ~~**`SheetImport.lua` still has the F4 bug**~~ **Fixed.** It now writes the sheet's level
+5. **T3 - quest-name mismatch, investigated, not fixed.** Row 120 accepts `Delivery to
+   Silverpine` (`TirisfalStart.lua:428`); row 144 turns in `Delivery to Silverpine Forest`
+   (`TirisfalStart.lua:521`). Whichever one doesn't match the live quest log's actual title will
+   never auto-resolve for that step - not a silent-skip risk like T4, just a lost auto-advance
+   on one step. Left both strings as they were rather than guessing which is the real title;
+   needs an in-game or DB check.
+6. ~~**Tag the Tirisfal chain links `ambiguous`**~~ **Fixed.** All 36 steps across the three
+   repeated-name chains (`A New Plague` x4 links/13 steps, `At War with the Scarlet Crusade`
+   x4 links/14 steps, `Arugal's Folly` x3 links/9 steps) now carry `ambiguous = true` and a
+   `name = "<quest> (part N)"` label, using the existing "Part N, for ..." notes on each link's
+   `accept` step as the source of truth for numbering, and row order (per F6) to assign the
+   `complete`/`turnin` steps in between to the right link. Verified no occurrence of any of the
+   three quest names was left untagged.
+7. ~~**`SheetImport.lua` still has the F4 bug**~~ **Fixed.** It now writes the sheet's level
    into `atLevel`, same as the generated routes, instead of `minLevel`.
-7. ~~**`Routes/Horde/Durotar.lua` ... candidate for deletion**~~ **Un-loaded, not deleted.**
+8. ~~**`Routes/Horde/Durotar.lua` ... candidate for deletion**~~ **Un-loaded, not deleted.**
    Turns out the file is load-bearing as documentation/tooling, not just a leftover sample:
    `.github/workflows/lint.yml`'s `merge_routes.py` smoke test merges it with itself and with
    `Horde1-60.lua`, and `.claude/skills/route-check/SKILL.md` + `CLAUDE.md` cite its header

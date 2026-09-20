@@ -52,8 +52,14 @@ Leg(17, "Stranglethorn Vale", {
       logCount = 7, x = 75.0, y = 34.0,
     },
     {
+      -- x/y dropped: this exact coordinate pair (52.8, 49.0) also appears
+      -- verbatim on the unrelated Feralas hearth step below in the route,
+      -- so it reads as a placeholder the sheet reused rather than this
+      -- spot's real position - not safe to trust or "correct" by guessing.
+      -- hearth steps auto-complete on hearth-cast + zone change, not on
+      -- coordinates, so this loses nothing functional.
       type = "hearth", name = "Hearth to The Crossroads", zone = "Ragefire Chasm",
-      atLevel = 34, logCount = 7, x = 52.8, y = 49.0,
+      atLevel = 34, logCount = 7,
       note = "Bind your hearthstone here even if it costs you the old bind.",
     },
     {
