@@ -13,20 +13,46 @@ use std::collections::HashMap;
 /// Rogue's bit in an item's `class_mask` (class id 4 -> 1 << 3).
 pub(crate) const ROGUE_CLASS_BIT: i64 = 1 << 3;
 
-/// How hard an item is to get, easiest first. Derived from the item's sources
-/// only; the DB has no open-world/dungeon flag on quests, so quest rewards are
-/// a single tier.
+/// How hard an item is to get, easiest first. Derived from the item's sources;
+/// a quest reward's tier follows the quest's effort (solo, group, dungeon), which
+/// is the hardest step in its prerequisite chain. Raid and PvP quests do not count.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, clap::ValueEnum)]
 pub enum Tier {
     Vendor,
-    Quest,
+    QuestSolo,
+    QuestGroup,
     /// Needs a profession and its materials; deterministic once you have them.
     Crafted,
     OpenDrop,
+    QuestDungeon,
     DungeonDrop,
     WorldDrop,
     /// No known source (PvP, event, unexported); excluded by every `--max-tier` below `None`.
     None,
+}
+
+impl Tier {
+    /// Tier of a quest reward from the quest's effort; `None` for quests a levelling player cannot do (raid, PvP).
+    pub fn of_quest(effort: &str) -> Option<Tier> {
+        match effort {
+            "solo" => Some(Tier::QuestSolo),
+            "group" => Some(Tier::QuestGroup),
+            "dungeon" => Some(Tier::QuestDungeon),
+            _ => None,
+        }
+    }
+
+    /// Latest tier whose items count as "what you would have anyway" when judging an item of this tier.
+    /// Vendor and solo-quest gear is judged against itself minus the item; everything else against
+    /// gear that is strictly easier, stopping at group quests: crafting needs a profession and drops
+    /// are luck, so neither is something you can plan around, and dungeons are exactly what is being judged.
+    pub fn baseline_cap(self) -> Tier {
+        match self {
+            Tier::Vendor => Tier::Vendor,
+            Tier::QuestSolo | Tier::QuestGroup => Tier::QuestSolo,
+            _ => Tier::QuestGroup,
+        }
+    }
 }
 
 pub fn tier_of(item: &Item) -> Tier {
@@ -34,10 +60,12 @@ pub fn tier_of(item: &Item) -> Tier {
     let mut best = Tier::None;
     // A vendor entry with a condition (typically a reputation rank) is not a normal purchase.
     for v in s.vendor.iter().filter(|v| v.requires.is_none()) {
-        best = best.min(if v.limited_stock { Tier::Quest } else { Tier::Vendor });
+        best = best.min(if v.limited_stock { Tier::QuestSolo } else { Tier::Vendor });
     }
-    if !s.quest.is_empty() {
-        best = best.min(Tier::Quest);
+    for q in &s.quest {
+        if let Some(t) = Tier::of_quest(&q.effort) {
+            best = best.min(t);
+        }
     }
     for d in &s.drop {
         let t = if d.world_drop == Some(true) {
@@ -59,6 +87,21 @@ pub fn tier_of(item: &Item) -> Tier {
         best = best.min(if c.open_world.unwrap_or(c.instance.is_none()) { Tier::OpenDrop } else { Tier::DungeonDrop });
     }
     best
+}
+
+/// Best drop chance (0-1) among the item's drop sources of the kind `tier` names (instance bosses
+/// and mobs for `DungeonDrop`, open-world mobs for `OpenDrop`), if it has any.
+pub fn best_drop_chance(item: &Item, tier: Tier) -> Option<f64> {
+    item.sources
+        .drop
+        .iter()
+        .filter(|d| match tier {
+            Tier::DungeonDrop => d.world_drop != Some(true) && (d.unspawned == Some(true) || !d.open_world.unwrap_or(d.instance.is_none())),
+            Tier::OpenDrop => d.world_drop != Some(true) && d.open_world.unwrap_or(d.instance.is_none()),
+            _ => false,
+        })
+        .map(|d| d.chance)
+        .fold(None, |m: Option<f64>, c| Some(m.map_or(c, |m| m.max(c))))
 }
 
 /// Race-mask of a faction, for `Filter::faction`.
@@ -227,7 +270,8 @@ mod tests {
         assert_eq!(tier_of(&i), Tier::None);
         i.sources = Sources { vendor: vec![VendorSrc { name: "v".into(), limited_stock: false, requires: None }], ..Default::default() };
         assert_eq!(tier_of(&i), Tier::Vendor);
-        assert!(Tier::Vendor < Tier::Quest && Tier::Quest < Tier::Crafted && Tier::Crafted < Tier::OpenDrop && Tier::DungeonDrop < Tier::WorldDrop);
+        assert!(Tier::Vendor < Tier::QuestSolo && Tier::QuestSolo < Tier::QuestGroup && Tier::QuestGroup < Tier::Crafted);
+        assert!(Tier::Crafted < Tier::OpenDrop && Tier::OpenDrop < Tier::QuestDungeon && Tier::QuestDungeon < Tier::DungeonDrop && Tier::DungeonDrop < Tier::WorldDrop);
     }
 
     #[test]

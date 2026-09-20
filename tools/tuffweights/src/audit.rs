@@ -71,6 +71,7 @@ pub fn describe_source(i: &Item) -> String {
     for v in i.sources.vendor.iter().take(1) {
         match &v.requires {
             Some(r) => parts.push(format!("vendor {} (requires {r})", v.name)),
+            None if v.limited_stock => parts.push(format!("vendor {} (limited stock)", v.name)),
             None => parts.push(format!("vendor {}", v.name)),
         }
     }

@@ -1,59 +1,37 @@
-//! "Is this weapon worth a detour?" report.
+//! "Is this item worth the effort?" report, for weapons and for armor.
 //!
-//! For each candidate weapon the question is not its absolute DPS but how much it adds over
-//! what you would be wearing anyway: the best loadout built only from vendor and quest weapons
-//! (the things you pick up while levelling normally), with the weapon itself taken out of that
-//! pool if it belongs there. That uplift, per level, is combined with how hard the weapon is to
-//! get (its source tier) to sort it into one of three classes:
+//! The question is not an item's absolute DPS but how much it adds over what you would be
+//! wearing anyway, and that depends on how you get it. Each item is judged against the best
+//! gear you could plan on that is easier to get (see `Tier::baseline_cap`): a vendor belt against
+//! other vendor belts, a group quest reward against vendor and solo-quest gear, a dungeon reward
+//! against everything short of a dungeon (crafting and drops are never assumed). That uplift, per level, and the
+//! item's acquisition method combine into a `Verdict` (see `verdict.rs`).
 //!
-//! - **Detour**: a deterministic source (vendor/quest) that adds a solid, lasting DPS gain.
-//! - **If convenient**: worth having if you are already at the source, or it drops; never chase it.
-//! - **Skip**: adds under `min_uplift` percent, i.e. inside the model's noise.
-//!
-//! Thresholds are judgement calls, exposed as options. The model does not know how long a quest
-//! chain takes, whether a quest needs a group, or which faction can do it, so the class is a
-//! candidate for a human to confirm, not a verdict.
+//! Weapons are scored by re-running the loadout search with and without the item; armor,
+//! jewelry and cloaks by their stats times the stat weights (`armor.rs`). Thresholds are
+//! judgement calls, exposed as options. The model does not know quest-chain lengths beyond
+//! what the export records, so a verdict is a candidate for a human to confirm.
 
+use crate::armor::{slot_count, wearable, StatValue};
 use crate::audit::{describe_source, norm, parse_lua, parse_markdown};
 use crate::data::Item;
-use crate::model::AbilityTable;
+use crate::model::{AbilityTable, Prepared};
 use crate::report::{Cell, RunOptions};
 use crate::rules::{Build, Rules};
-use crate::search::{search, tier_of, Filter, Tier};
+use crate::search::{best_drop_chance, search, tier_of, Filter, Tier};
+use crate::verdict::{classify, Verdict, VerdictOptions};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Write as _;
 
 pub struct WorthOptions {
-    /// Uplift (percent) below which a weapon is not worth having at all.
-    pub min_uplift: f64,
-    /// Mean uplift (percent) over its window that makes a deterministic source a detour.
-    pub detour_uplift: f64,
-    /// Mean uplift x window length (percent-levels) a detour must reach, so a short spike can qualify too.
-    pub detour_gain: f64,
+    pub verdict: VerdictOptions,
     /// How many of each cell's best weapons to consider as subjects.
     pub top_subjects: usize,
 }
 
 impl Default for WorthOptions {
     fn default() -> Self {
-        WorthOptions { min_uplift: 1.0, detour_uplift: 2.5, detour_gain: 20.0, top_subjects: 30 }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Class {
-    Detour,
-    IfConvenient,
-    Skip,
-}
-
-impl Class {
-    fn title(self) -> &'static str {
-        match self {
-            Class::Detour => "Worth a detour",
-            Class::IfConvenient => "Worth it if convenient (never chase it)",
-            Class::Skip => "Not worth it",
-        }
+        WorthOptions { verdict: VerdictOptions::default(), top_subjects: 30 }
     }
 }
 
@@ -61,13 +39,34 @@ impl Class {
 pub struct Row {
     pub id: u32,
     pub name: String,
+    pub slot: String,
+    pub weapon: bool,
     pub tier: Tier,
     pub first: u32,
     pub last: u32,
     pub mean: f64,
     pub peak: f64,
     pub build: String,
-    pub class: Class,
+    pub verdict: Verdict,
+}
+
+/// Best loadout per (build index, level, baseline cap): DPS and the item ids used.
+type Bases = HashMap<(usize, u32, Tier), (f64, Vec<u32>)>;
+
+fn build_bases(rules: &Rules, abilities: &AbilityTable, builds: &[Build], items: &[Item], o: &RunOptions, caps: &BTreeSet<Tier>) -> Bases {
+    let mut bases = Bases::new();
+    for &cap in caps {
+        let filter = Filter { max_tier: cap, ..o.filter.clone() };
+        for (bi, b) in builds.iter().enumerate() {
+            for level in o.min_level..=o.max_level {
+                let r = search(rules, abilities, b, items, level, o.race, &filter, 1);
+                if let Some(l) = r.best() {
+                    bases.insert((bi, level, cap), (l.dps, std::iter::once(l.mh.id).chain(l.oh.map(|x| x.id)).collect()));
+                }
+            }
+        }
+    }
+    bases
 }
 
 /// Longest run of consecutive levels with `uplift >= min`: (first, last, mean uplift over the run).
@@ -101,18 +100,6 @@ fn best_run(by_level: &BTreeMap<u32, f64>, min: f64) -> Option<(u32, u32, f64)> 
     best
 }
 
-pub fn classify(tier: Tier, run_len: u32, mean: f64, peak: f64, o: &WorthOptions) -> Class {
-    if peak < o.min_uplift {
-        return Class::Skip;
-    }
-    let deterministic = matches!(tier, Tier::Vendor | Tier::Quest);
-    if deterministic && mean >= o.detour_uplift && mean * run_len as f64 >= o.detour_gain {
-        Class::Detour
-    } else {
-        Class::IfConvenient
-    }
-}
-
 /// Weapons worth scoring: each cell's best few, plus everything on the hand-authored lists.
 fn subjects<'a>(cells: &[Cell], items: &'a [Item], listed: &BTreeSet<String>, top: usize) -> Vec<&'a Item> {
     let mut ids: BTreeSet<u32> = BTreeSet::new();
@@ -128,6 +115,140 @@ fn subjects<'a>(cells: &[Cell], items: &'a [Item], listed: &BTreeSet<String>, to
         .collect()
 }
 
+
+/// Turn per-level uplifts into a row: the longest window over `min_uplift`, its mean, the peak and the verdict.
+fn make_row(item: &Item, uplift: &BTreeMap<u32, f64>, who: &BTreeMap<u32, String>, w: &WorthOptions) -> Row {
+    let tier = tier_of(item);
+    let peak = uplift.values().copied().fold(0.0_f64, f64::max);
+    let (first, last, mean) = best_run(uplift, w.verdict.min_uplift).unwrap_or((0, 0, 0.0));
+    let build = who
+        .iter()
+        .filter(|(l, _)| (first..=last).contains(l))
+        .fold(BTreeMap::<&str, usize>::new(), |mut m, (_, b)| {
+            *m.entry(b.as_str()).or_default() += 1;
+            m
+        })
+        .into_iter()
+        .max_by_key(|x| x.1)
+        .map(|x| x.0.to_string())
+        .unwrap_or_default();
+    let run_len = if first == 0 { 0 } else { last - first + 1 };
+    let verdict = classify(tier, run_len, mean, peak, best_drop_chance(item, tier), &w.verdict);
+    Row { id: item.id, name: item.name.clone(), slot: item.slot.clone(), weapon: item.weapon.is_some(), tier, first, last, mean, peak, build, verdict }
+}
+
+/// Variants sharing a name (level-scaled copies): keep the one with the largest peak.
+fn dedupe(rows: Vec<Row>) -> Vec<Row> {
+    let mut by_name: BTreeMap<(bool, String), Row> = BTreeMap::new();
+    for r in rows {
+        let key = (r.weapon, r.name.clone());
+        match by_name.get(&key) {
+            Some(old) if old.peak >= r.peak => {}
+            _ => {
+                by_name.insert(key, r);
+            }
+        }
+    }
+    by_name.into_values().collect()
+}
+
+fn weapon_rows(
+    rules: &Rules,
+    abilities: &AbilityTable,
+    builds: &[Build],
+    items: &[Item],
+    cells: &[Cell],
+    listed: &BTreeSet<String>,
+    bases: &Bases,
+    o: &RunOptions,
+    w: &WorthOptions,
+) -> Vec<Row> {
+    let full: HashMap<(&str, u32), &Cell> = cells.iter().map(|c| ((c.build.as_str(), c.level), c)).collect();
+    let mut rows = Vec::new();
+    for item in subjects(cells, items, listed, w.top_subjects) {
+        let tier = tier_of(item);
+        let cap = tier.baseline_cap();
+        let in_pool = tier <= cap;
+        let base_filter = Filter { max_tier: cap, ..o.filter.clone() };
+        let mut uplift: BTreeMap<u32, f64> = BTreeMap::new();
+        let mut who: BTreeMap<u32, (f64, String)> = BTreeMap::new();
+        for level in item.gate_level.max(o.min_level)..=o.max_level {
+            // Per build: best DPS with and without the item, then the player's best across builds.
+            let mut with_max = f64::MIN;
+            let mut without_max = f64::MIN;
+            for (bi, b) in builds.iter().enumerate() {
+                let Some((bdps, bids)) = bases.get(&(bi, level, cap)) else { continue };
+                // The full pool's best DPS with this item bounds what it can add.
+                let bound = full.get(&(b.name.as_str(), level)).and_then(|c| c.all.get(&item.id)).copied();
+                let no_gain = bound.map_or(true, |d| d <= *bdps + 1e-9);
+                let best_of = |f: &Filter| search(rules, abilities, b, items, level, o.race, f, 1).best().map_or(f64::MIN, |l| l.dps);
+                let (with, without) = match (in_pool, no_gain) {
+                    (_, true) => (*bdps, *bdps),
+                    (true, false) if !bids.contains(&item.id) => (*bdps, *bdps),
+                    (true, false) => (*bdps, best_of(&Filter { exclude: vec![item.id], ..base_filter.clone() })),
+                    (false, false) => (best_of(&Filter { also: Some(item.id), ..base_filter.clone() }), *bdps),
+                };
+                if with > who.get(&level).map_or(f64::MIN, |x| x.0) {
+                    who.insert(level, (with, b.name.clone()));
+                }
+                with_max = with_max.max(with);
+                without_max = without_max.max(without);
+            }
+            if with_max > f64::MIN && without_max > 0.0 {
+                uplift.insert(level, (with_max / without_max - 1.0) * 100.0);
+            }
+        }
+        let who: BTreeMap<u32, String> = who.into_iter().map(|(l, (_, b))| (l, b)).collect();
+        rows.push(make_row(item, &uplift, &who, w));
+    }
+    rows
+}
+
+/// Armor, jewelry and cloaks: stats valued around the best loadout at each (build, level), minus
+/// the slot's baseline among items as easy or easier. Only items that clear the minimum uplift are kept.
+fn armor_rows(rules: &Rules, abilities: &AbilityTable, builds: &[Build], items: &[Item], bases: &Bases, o: &RunOptions, w: &WorthOptions) -> Vec<Row> {
+    let by_id: HashMap<u32, &Item> = items.iter().map(|i| (i.id, i)).collect();
+    let pool: Vec<&Item> = items.iter().filter(|i| wearable(i, &o.filter) && tier_of(i) != Tier::None && i.gate_level <= o.max_level).collect();
+    let mut uplift: HashMap<u32, BTreeMap<u32, f64>> = HashMap::new();
+    let mut who: HashMap<u32, BTreeMap<u32, String>> = HashMap::new();
+    for (bi, b) in builds.iter().enumerate() {
+        for level in o.min_level..=o.max_level {
+            let Some((_, ids)) = bases.get(&(bi, level, Tier::QuestGroup)) else { continue };
+            let refs: Vec<&Item> = ids.iter().filter_map(|id| by_id.get(id).copied()).collect();
+            let Some(&mh) = refs.first() else { continue };
+            let prep = Prepared::new(rules, abilities, b, level, o.race, None);
+            let value = StatValue::around(&prep, mh, refs.get(1).copied());
+            // Per slot, every wearable item's gain, best first, with its tier for the baseline lookup.
+            let mut lists: HashMap<&str, Vec<(f64, Tier, u32)>> = HashMap::new();
+            for i in pool.iter().filter(|i| i.gate_level <= level) {
+                lists.entry(i.slot.as_str()).or_default().push((value.gain(i), tier_of(i), i.id));
+            }
+            for l in lists.values_mut() {
+                l.sort_by(|a, b| b.0.total_cmp(&a.0));
+            }
+            for i in pool.iter().filter(|i| i.gate_level <= level) {
+                let cap = tier_of(i).baseline_cap();
+                let n = slot_count(&i.slot);
+                let base = lists[i.slot.as_str()].iter().filter(|(_, t, id)| *t <= cap && *id != i.id).nth(n - 1).map_or(0.0, |x| x.0.max(0.0));
+                let gain = lists[i.slot.as_str()].iter().find(|x| x.2 == i.id).map_or(0.0, |x| x.0);
+                let u = (gain - base) / value.base_dps * 100.0;
+                let e = uplift.entry(i.id).or_default().entry(level).or_insert(f64::MIN);
+                if u > *e {
+                    *e = u;
+                    who.entry(i.id).or_default().insert(level, b.name.clone());
+                }
+            }
+        }
+    }
+    pool.iter()
+        .filter_map(|i| {
+            let up = uplift.get(&i.id)?;
+            let peak = up.values().copied().fold(0.0_f64, f64::max);
+            (peak >= w.verdict.min_uplift).then(|| make_row(i, up, &who[&i.id], w))
+        })
+        .collect()
+}
+
 pub fn compute_rows(
     rules: &Rules,
     abilities: &AbilityTable,
@@ -138,80 +259,14 @@ pub fn compute_rows(
     o: &RunOptions,
     w: &WorthOptions,
 ) -> Vec<Row> {
-    let base_filter = Filter { max_tier: Tier::Quest, ..o.filter.clone() };
-    // Best loadout from the no-detour pool per (build, level): (dps, ids used).
-    let mut base: HashMap<(usize, u32), (f64, Vec<u32>)> = HashMap::new();
-    for (bi, b) in builds.iter().enumerate() {
-        for level in o.min_level..=o.max_level {
-            let r = search(rules, abilities, b, items, level, o.race, &base_filter, 1);
-            if let Some(l) = r.best() {
-                base.insert((bi, level), (l.dps, std::iter::once(l.mh.id).chain(l.oh.map(|x| x.id)).collect()));
-            }
-        }
-    }
-    let full: HashMap<(&str, u32), &Cell> = cells.iter().map(|c| ((c.build.as_str(), c.level), c)).collect();
-
-    let mut rows = Vec::new();
-    for item in subjects(cells, items, listed, w.top_subjects) {
-        let tier = tier_of(item);
-        let in_base = tier <= Tier::Quest;
-        let mut uplift: BTreeMap<u32, f64> = BTreeMap::new();
-        let mut who: BTreeMap<u32, (f64, &str)> = BTreeMap::new();
-        for level in item.gate_level.max(o.min_level)..=o.max_level {
-            // Per build: best DPS with and without the item, then the player's best across builds.
-            let mut with_max = f64::MIN;
-            let mut without_max = f64::MIN;
-            for (bi, b) in builds.iter().enumerate() {
-                let Some((bdps, bids)) = base.get(&(bi, level)) else { continue };
-                // The full pool's best DPS with this item bounds what it can add.
-                let bound = full.get(&(b.name.as_str(), level)).and_then(|c| c.all.get(&item.id)).copied();
-                let no_gain = bound.map_or(true, |d| d <= *bdps + 1e-9);
-                let best_of = |f: &Filter| search(rules, abilities, b, items, level, o.race, f, 1).best().map_or(f64::MIN, |l| l.dps);
-                let (with, without) = match (in_base, no_gain) {
-                    (_, true) => (*bdps, *bdps),
-                    (true, false) if !bids.contains(&item.id) => (*bdps, *bdps),
-                    (true, false) => (*bdps, best_of(&Filter { exclude: vec![item.id], ..base_filter.clone() })),
-                    (false, false) => (best_of(&Filter { also: Some(item.id), ..base_filter.clone() }), *bdps),
-                };
-                if with > who.get(&level).map_or(f64::MIN, |x| x.0) {
-                    who.insert(level, (with, b.name.as_str()));
-                }
-                with_max = with_max.max(with);
-                without_max = without_max.max(without);
-            }
-            if with_max > f64::MIN && without_max > 0.0 {
-                uplift.insert(level, (with_max / without_max - 1.0) * 100.0);
-            }
-        }
-        let peak = uplift.values().copied().fold(0.0_f64, f64::max);
-        let (first, last, mean) = best_run(&uplift, w.min_uplift).unwrap_or((0, 0, 0.0));
-        let build = who
-            .iter()
-            .filter(|(l, _)| (first..=last).contains(l))
-            .map(|(_, v)| v.1)
-            .fold(BTreeMap::<&str, usize>::new(), |mut m, b| {
-                *m.entry(b).or_default() += 1;
-                m
-            })
-            .into_iter()
-            .max_by_key(|x| x.1)
-            .map(|x| x.0.to_string())
-            .unwrap_or_default();
-        let run_len = if first == 0 { 0 } else { last - first + 1 };
-        rows.push(Row { id: item.id, name: item.name.clone(), tier, first, last, mean, peak, build, class: classify(tier, run_len, mean, peak, w) });
-    }
-    // Variants sharing a name (level-scaled copies): keep the one with the largest peak.
-    let mut by_name: BTreeMap<String, Row> = BTreeMap::new();
-    for r in rows {
-        match by_name.get(&r.name) {
-            Some(old) if old.peak >= r.peak => {}
-            _ => {
-                by_name.insert(r.name.clone(), r);
-            }
-        }
-    }
-    let mut out: Vec<Row> = by_name.into_values().collect();
-    out.sort_by(|a, b| a.class.cmp(&b.class).then(a.first.cmp(&b.first)).then(b.peak.total_cmp(&a.peak)));
+    // Baselines are needed at each subject's cap, and at the group-quest cap for armor weights.
+    let mut caps: BTreeSet<Tier> = subjects(cells, items, listed, w.top_subjects).iter().map(|i| tier_of(i).baseline_cap()).collect();
+    caps.insert(Tier::QuestGroup);
+    let bases = build_bases(rules, abilities, builds, items, o, &caps);
+    let mut rows = weapon_rows(rules, abilities, builds, items, cells, listed, &bases, o, w);
+    rows.extend(armor_rows(rules, abilities, builds, items, &bases, o, w));
+    let mut out = dedupe(rows);
+    out.sort_by(|a, b| a.verdict.cmp(&b.verdict).then(a.first.cmp(&b.first)).then(b.peak.total_cmp(&a.peak)));
     out
 }
 
@@ -232,35 +287,56 @@ pub fn worth_md(
     }
     let listed: BTreeSet<String> = lists.keys().cloned().collect();
     let rows = compute_rows(rules, abilities, builds, items, cells, &listed, o, w);
-    let by_name: HashMap<&str, &Item> = items.iter().filter(|i| i.weapon.is_some()).map(|i| (i.name.as_str(), i)).collect();
+    let by_id: HashMap<u32, &Item> = items.iter().map(|i| (i.id, i)).collect();
+    let v = &w.verdict;
 
-    let mut s = String::from("# Worth: which weapons justify effort\n\n");
+    let mut s = String::from("# Worth: which items justify the effort\n\n");
     let _ = write!(
         s,
-        "Uplift is how much DPS the weapon adds over the best loadout built only from vendor and quest weapons (the ones you pick up while levelling normally), with the weapon itself removed from that pool if it is a vendor/quest item. It is the best across builds. `window` is the longest run of levels where uplift is at least {:.1}%; `mean` is the average uplift over that run and `peak` the largest at any level.\n\n\
-Classes: **Detour** = vendor/quest source, mean uplift of at least {:.1}% and mean x window length (percent-levels) of at least {:.0}, so a big short spike or a modest long one both count. **If convenient** = adds at least {:.1}% at some level but is chancy to get (drop) or only a modest gain. **Not worth it** = under {:.1}% at every level, i.e. inside the model's noise.\n\n\
-The model does not know how long a quest chain takes, whether it needs a group, or which faction can do it, and the baseline includes both factions' quest rewards. Treat the class as a candidate for a human to confirm.\n",
-        w.min_uplift, w.detour_uplift, w.detour_gain, w.min_uplift, w.min_uplift
+        "Every weapon, armor piece, ring, neck and cloak a rogue can obtain is judged the same way. **Uplift** is percent DPS the item adds over the best gear you could plan on that is easier to get: a vendor item is compared with the other vendor items, a solo-quest reward with vendor and other solo-quest gear, a group-quest reward with vendor and solo-quest gear, and a dungeon reward, crafted piece or drop with everything doable without a dungeon (vendor, solo and group quests; crafting and drops are never assumed). Weapons are scored by re-running the loadout search with and without the item; armor by its stats times the model's stat weights around the best loadout (Stamina and armor value are not scored). Best across builds. `window` is the longest run of levels where uplift is at least {:.1}%; `mean` is the average over it, `peak` the largest at any level.\n\n\
+**Method**, from the item's easiest source: *vendor*; *solo quest* (normal quest, no elite or boss objective, none of its prerequisite quests is harder); *group quest* (elite quest, elite/boss objective mob, or 2+ suggested players, or a group quest earlier in its chain); *dungeon* (a dungeon quest, or a drop inside an instance); *crafted*; *open-world drop*; *world drop*. Raid and PvP rewards are left out.\n\n\
+**Verdicts:** vendor and solo-quest items count once they add {:.1}%. A group quest is *worth the extra time* at a mean of {:.1}% and {:.0} percent-levels (mean x window), otherwise *only if a group is already formed*. A dungeon item is *very worth it* at {:.1}% mean and {:.0} percent-levels, *kinda* at {:.1}% and {:.0}, otherwise *not worth it*; a dungeon drop below a {:.0}% chance drops one step, below {:.0}% never counts. Anything under {:.1}% at every level is *not worth it*. The vendor/quest baseline is thin below level 25, so early uplifts are overstated.\n\n\
+The model does not see how long a quest chain takes beyond the chain length shown, or whether a mob is a group boss, and it is Classic Era 1.12 data. Treat each verdict as a candidate for a human to confirm.\n",
+        v.min_uplift, v.min_uplift, v.detour_uplift, v.detour_gain, v.dungeon_very.0, v.dungeon_very.1, v.dungeon_kinda.0, v.dungeon_kinda.1, v.min_drop_chance * 100.0, v.min_drop_chance * 20.0, v.min_uplift
     );
-    for class in [Class::Detour, Class::IfConvenient, Class::Skip] {
-        let group: Vec<&Row> = rows.iter().filter(|r| r.class == class).collect();
-        let _ = write!(s, "\n## {} ({})\n\n", class.title(), group.len());
+
+    s.push_str("\n## Summary\n\n| verdict | weapons | armor & jewelry |\n|---|---|---|\n");
+    for vd in Verdict::ALL {
+        let (wn, an) = rows.iter().filter(|r| r.verdict == vd).fold((0, 0), |(w, a), r| if r.weapon { (w + 1, a) } else { (w, a + 1) });
+        let _ = writeln!(s, "| {} | {wn} | {an} |", vd.label());
+    }
+
+    for vd in Verdict::ALL {
+        let group: Vec<&Row> = rows.iter().filter(|r| r.verdict == vd).collect();
+        let _ = write!(s, "\n## {} ({})\n\n", vd.label(), group.len());
         if group.is_empty() {
             continue;
         }
-        if class == Class::Skip {
-            s.push_str("| weapon | tier | peak uplift | on list |\n|---|---|---|---|\n");
+        if vd == Verdict::NotWorth {
+            // Armor that never clears the bar is not listed at all (it never enters `rows`); weapons that fail are.
+            s.push_str("| item | slot | method | peak uplift | on list |\n|---|---|---|---|---|\n");
             for r in group {
                 let on = lists.get(&norm(&r.name)).map(|l| l.iter().cloned().collect::<Vec<_>>().join(", ")).unwrap_or_default();
-                let _ = writeln!(s, "| {} | {:?} | {:+.1}% | {on} |", r.name, r.tier, r.peak);
+                let _ = writeln!(s, "| {} | {} | {:?} | {:+.1}% | {on} |", r.name, r.slot, r.tier, r.peak);
             }
             continue;
         }
-        s.push_str("| window | weapon | tier | mean / peak | best build | source | on list |\n|---|---|---|---|---|---|---|\n");
+        s.push_str("| window | item | slot | mean / peak | best build | how to get it | on list |\n|---|---|---|---|---|---|---|\n");
         for r in group {
             let on = lists.get(&norm(&r.name)).map(|l| l.iter().cloned().collect::<Vec<_>>().join(", ")).unwrap_or_default();
-            let src = by_name.get(r.name.as_str()).map(|i| describe_source(i)).unwrap_or_default();
-            let _ = writeln!(s, "| {}-{} | {} | {:?} | {:+.1}% / {:+.1}% | {} | {src} | {on} |", r.first, r.last, r.name, r.tier, r.mean, r.peak, r.build);
+            let it = by_id.get(&r.id);
+            let src = it.map(|i| describe_source(i)).unwrap_or_default();
+            let chain = it
+                .and_then(|i| i.sources.quest.iter().filter(|q| Tier::of_quest(&q.effort) == Some(r.tier)).map(|q| q.chain).min())
+                .filter(|&c| c > 1)
+                .map(|c| format!(" (chain of {c} quests)"))
+                .unwrap_or_default();
+            let chance = it
+                .filter(|_| matches!(r.tier, Tier::DungeonDrop | Tier::OpenDrop))
+                .and_then(|i| best_drop_chance(i, r.tier))
+                .map(|c| if c >= 0.1 { format!(" [{:.0}% drop]", c * 100.0) } else { format!(" [{:.1}% drop]", c * 100.0) })
+                .unwrap_or_default();
+            let _ = writeln!(s, "| {}-{} | {} | {} | {:+.1}% / {:+.1}% | {} | {src}{chain}{chance} | {on} |", r.first, r.last, r.name, r.slot, r.mean, r.peak, r.build);
         }
     }
     s
@@ -275,15 +351,5 @@ mod tests {
         let m: BTreeMap<u32, f64> = [(10, 0.2), (11, 3.0), (12, 5.0), (13, 0.0), (14, 2.0), (15, 2.0), (16, 2.0)].into();
         assert_eq!(best_run(&m, 1.0), Some((14, 16, 2.0)));
         assert_eq!(best_run(&m, 10.0), None);
-    }
-
-    #[test]
-    fn classes_follow_tier_and_size() {
-        let w = WorthOptions::default();
-        assert_eq!(classify(Tier::Quest, 8, 4.0, 6.0, &w), Class::Detour);
-        assert_eq!(classify(Tier::Quest, 4, 6.0, 8.0, &w), Class::Detour); // short but big
-        assert_eq!(classify(Tier::Quest, 2, 3.0, 4.0, &w), Class::IfConvenient); // too little in total
-        assert_eq!(classify(Tier::WorldDrop, 10, 9.0, 12.0, &w), Class::IfConvenient); // lottery
-        assert_eq!(classify(Tier::Quest, 8, 0.5, 0.8, &w), Class::Skip);
     }
 }

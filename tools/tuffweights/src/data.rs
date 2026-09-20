@@ -38,6 +38,12 @@ pub struct QuestChoice {
     pub class_mask: i64,
     #[serde(default)]
     pub zone: i64,
+    /// How the quest has to be done: solo, group, dungeon, raid or pvp (hardest step in its chain).
+    #[serde(default = "solo")]
+    pub effort: String,
+    /// Quests in the prerequisite chain up to and including this one.
+    #[serde(default)]
+    pub chain: u32,
     pub choices: Vec<Choice>,
 }
 
@@ -271,6 +277,11 @@ pub struct QuestSrc {
     pub min_level: u32,
     #[serde(default)]
     pub race_mask: i64,
+    /// solo | group | dungeon | raid | pvp (see `QuestChoice::effort`).
+    #[serde(default = "solo")]
+    pub effort: String,
+    #[serde(default)]
+    pub chain: u32,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -324,6 +335,10 @@ pub struct AbilityRank {
 
 fn yes() -> bool {
     true
+}
+
+fn solo() -> String {
+    "solo".into()
 }
 
 pub fn load_items(path: &str) -> anyhow::Result<ItemsFile> {

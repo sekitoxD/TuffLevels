@@ -4,6 +4,7 @@
 //! a ruleset and build definitions (TOML), and writes reports to a gitignored
 //! directory. Run from `tools/tuffweights/`.
 
+mod armor;
 mod audit;
 mod data;
 mod mc;
@@ -13,6 +14,7 @@ mod rewards;
 mod rules;
 mod search;
 mod weights;
+mod verdict;
 mod worth;
 
 use clap::{Parser, Subcommand};
@@ -46,7 +48,7 @@ enum Cmd {
         /// horde or alliance: drops items whose only source is a quest that faction cannot take.
         #[arg(long)]
         faction: Option<String>,
-        /// Hardest acceptable source: vendor, quest, open-drop, dungeon-drop, world-drop, none.
+        /// Hardest acceptable source: vendor, quest-solo, crafted, quest-group, open-drop, quest-dungeon, dungeon-drop, world-drop, none.
         #[arg(long, value_enum, default_value = "world-drop")]
         max_tier: search::Tier,
         /// Shortlist size per build and level.
@@ -67,13 +69,13 @@ enum Cmd {
         /// notable_rogue_items.md, read for its progression tables when writing audit.md.
         #[arg(long, default_value = "../../plans/classes/notable_rogue_items.md")]
         notes: PathBuf,
-        /// worth.md: uplift (percent over the best vendor/quest loadout) below which a weapon is not worth having.
+        /// worth.md: uplift (percent over the best equally-easy gear) below which an item is not worth having.
         #[arg(long, default_value_t = 1.0)]
         min_uplift: f64,
-        /// worth.md: mean uplift (percent) over its window that makes a vendor/quest weapon worth a detour.
+        /// worth.md: mean uplift (percent) over its window that makes a group quest worth the extra time.
         #[arg(long, default_value_t = 2.5)]
         detour_uplift: f64,
-        /// worth.md: mean uplift x window length (percent-levels) a detour must reach.
+        /// worth.md: mean uplift x window length (percent-levels) a group quest must reach.
         #[arg(long, default_value_t = 20.0)]
         detour_gain: f64,
     },
@@ -193,7 +195,7 @@ fn main() -> anyhow::Result<()> {
             match (std::fs::read_to_string(&lua), std::fs::read_to_string(&notes)) {
                 (Ok(l), Ok(n)) => {
                     std::fs::write(out.join("audit.md"), audit::audit_md(&cells, &file.items, &l, &n, &opts))?;
-                    let wo = worth::WorthOptions { min_uplift, detour_uplift, detour_gain, ..Default::default() };
+                    let wo = worth::WorthOptions { verdict: verdict::VerdictOptions { min_uplift, detour_uplift, detour_gain, ..Default::default() }, ..Default::default() };
                     let md = worth::worth_md(&rules, &file.abilities, &builds, &file.items, &cells, &l, &n, &opts, &wo);
                     std::fs::write(out.join("worth.md"), md)?;
                 }
@@ -206,7 +208,7 @@ fn main() -> anyhow::Result<()> {
                 .as_deref()
                 .map(|f| search::faction_mask(f).ok_or_else(|| anyhow::anyhow!("--faction must be horde or alliance")))
                 .transpose()?;
-            let o = rewards::RewardOptions { min_level, max_level: max_level.min(rules.max_level), min_uplift, tie, race: race.as_deref(), faction, build: build.as_deref() };
+            let o = rewards::RewardOptions { min_level, max_level: max_level.min(rules.max_level), min_uplift, tie, race: race.as_deref(), faction, build: build.as_deref(), verdict: verdict::VerdictOptions { min_uplift, ..Default::default() } };
             let t = std::time::Instant::now();
             let md = rewards::rewards_md(&rules, &builds, &file, &o)?;
             std::fs::create_dir_all(&out)?;

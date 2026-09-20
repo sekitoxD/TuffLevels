@@ -245,16 +245,36 @@ level is the item's or quest's minimum level.
   table (~0.001%). It would add about +5% at 51-59, but nothing while levelling can reach it. `Rogue.upgrades` now files it
   under "worth it if convenient": equip one if it turns up, never plan around it.
 
-### Effort classes (what `Rogue.upgrades` uses)
+### Effort verdicts (weapons and armor, same scale)
 
-`tuffweights run --faction horde` also writes `worth.md`. For each weapon it measures how much DPS it adds over the best
-loadout built only from vendor and quest weapons (what you wear anyway), best across builds, then sorts by how hard it is
-to get: **detour** = vendor/quest source with mean uplift >= 2.5% and mean x levels >= 20 percent-levels;
-**convenient** = adds >= 1% somewhere but is a drop or a small gain; **skip** = under 1% everywhere. The model cannot see
-quest-chain length, group requirements or that many quest rewards sit inside dungeons, so the classes were confirmed by hand.
-Horde detours: Wingblade (15-20, ~+17%), Outlaw Sabre (21-24, ~+14%), Sword of Omen (33-36, ~+7%), Vanquisher's Sword
-(37-48, +3% mean), Thrash Blade (45-50, +3.5%). The vendor/quest baseline is thin below level 25, so early uplifts are
-overstated.
+`tuffweights run` also writes `worth.md`, which judges every weapon, armor piece, ring, neck and cloak a rogue can obtain the same
+way: percent DPS added over the best gear you could plan on that is *easier* to get, best across builds, together with how the item
+is acquired. The acquisition method comes from the DB: vendor; solo quest; group quest (an elite quest, an elite/boss objective mob,
+2+ suggested players, or a group quest earlier in its chain); dungeon (a dungeon quest, or an instance drop); crafted; open-world
+drop; world drop. A quest reward inherits the hardest quest in its prerequisite chain, so a solo turn-in that needs a dungeon quest
+first counts as a dungeon. The baseline is what makes the comparison fair: a vendor or solo-quest item is compared with the rest of
+the vendor/solo pool, a group-quest item with vendor and solo gear, and dungeon, crafted and drop items with everything doable
+without a dungeon (crafting and drops are never assumed).
+
+| Verdict | Rule (defaults) |
+|---|---|
+| Vendor: pick it up | vendor source, adds >= 1% |
+| Solo quest: do it | solo quest, adds >= 1% |
+| Group quest: worth the extra time | group quest, mean uplift >= 2.5% and mean x window >= 20 percent-levels |
+| Group quest: only if a group is already formed | group quest, adds >= 1% but under that bar |
+| Dungeon: very worth it | dungeon quest or drop, mean >= 4% and >= 30 percent-levels |
+| Dungeon: kinda worth it | mean >= 2% and >= 12 percent-levels |
+| Dungeon: not worth it | anything smaller that still adds >= 1% |
+| Crafted / open-world drop / world drop | shown as "if you have the profession", "use it if it drops, never farm it", "luck only" |
+| Not worth it | under 1% at every level |
+
+A dungeon drop below a 10% chance is downgraded one step, below 2% it never counts. Thresholds are options (`--min-uplift`,
+`--detour-uplift`, `--detour-gain`); the dungeon and drop-chance thresholds are in `src/verdict.rs`. The model cannot see how long a
+quest chain takes beyond the chain length it prints, whether a mob is a group boss, or item durability/survival (armor value and
+Stamina are never scored), so verdicts were confirmed by hand. The vendor/solo baseline is thin below level 25, so early uplifts
+are overstated. `Rogue.upgrades` in `Rogue.lua` now uses these same verdicts (its `verdict` field and `Rogue.verdicts` table), so a weapon there
+reads exactly as it does in `worth.md`; run `tuffweights run --faction horde` to refresh the numbers in its notes.
+Horde weapons: Wingblade, Outlaw Sabre and Vanquisher's Sword are "Dungeon: very worth it"; Sword of Omen and Thrash Blade "kinda".
 
 ### Listed above, but the model rates it clearly below the best option at its listed level
 
@@ -275,6 +295,37 @@ Gap is to the best loadout at the item's listed level; gaps under 4% are omitted
 Everything else on the tables scores within ~4% of the best loadout at its level. Of the 43 listed weapons, 17 are in
 the model's top 5 (Sword of Serenity/Omen, Black Menace, Vanquisher's Sword, Thrash Blade, Blade of Reckoning, Cruel Barb,
 Satyr's Lash and others).
+
+### Quest-reward picks (choose-one quests)
+
+`tuffweights rewards` scores the choose-one rewards of 387 quests (rogue-usable items only) as percent DPS over the baseline that
+matches the quest's effort, and prints the same verdict beside each pick. A quest is scored at the best of the start, middle and end
+of the levels you can do it at. 73 quests have a clear pick; for the rest choose the sturdiest item (armor, then Stamina) or the
+highest vendor price. The non-weapon picks below were checked with `tools/qdb.py` (quest ID, faction, minimum level, reward list).
+Percent is the gain at its best level; the vendor/solo baseline is thin early, so small early gains are overstated.
+
+| Quest (ID) | Faction | Min lvl | Pick | Gain | Verdict |
+|---|---|---|---|---|---|
+| Stolen Silver (3281) | Horde | 9 | Rambling Boots | +2.0% | Solo quest: do it |
+| The Everstill Bridge (89), needs "The Lost Tools" (125) | Alliance | 15 | Smith's Trousers (over Riding Gloves) | +0.9% | Solo quest: do it |
+| Je'neu of the Earthen Ring (824) | Horde | 23 | Deftkin Belt | +2.9% | Solo quest: do it |
+| Rescue OOX-22/FE! (2767) | Both | 40 | Failed Flying Experiment (shoulders) | +1.7% | Solo quest: do it |
+| Return to Apothecary Zinge (864) | Horde | 38 | Loreskin Shoulders | +1.4% | Solo quest: do it |
+| Oran's Gratitude (8273) | Horde | 42 | Undercity Reservist's Cap | +1.4% | Solo quest: do it |
+| Bone-Bladed Weapons (4300) | Horde | 48 | White Bone Band (over the off-hand fist) | +1.9% | Solo quest: do it |
+| Tremors of the Earth (717) / Broken Alliances (793), elite | Alliance / Horde | 40 | Blazewind Breastplate | +2.5% | Group quest: worth the extra time |
+| The Defias Brotherhood (166), Deadmines, 7-quest chain | Alliance | 14 | Tunic of Westfall | +4.6% | Dungeon: very worth it |
+| Rig Wars (2841) / The Grand Betrayal (2929), Gnomeregan | Horde / Alliance | 25 | Triprunner Dungarees | +4.5% | Dungeon: very worth it |
+| The Azure Key (8236), Rogue-only, needs "Encoded Fragments" (8235) | Both | 50 | Ebon Mask (over Duskbat Drape) | +2.1% | Dungeon: kinda worth it |
+| Shadowshard Fragments (7068 H / 7070 A), Maraudon | Both | 38 | Zealous Shadowshard Pendant | +1.4% | Dungeon: not worth it |
+| Divino-matic Rod (2768) | Both | 40 | Masons Fraternity Ring | +1.7% | Dungeon: not worth it |
+
+- **Saving Sharpbeak (2994).** Both choices come out small (Leggings +1.1% at best); the Stormhammer's larger gain is at 40-44
+  (see the table at the top of this section), so do the quest early for the Stormhammer, late for the Leggings.
+- **Group quests scored solo.** Type "Elite" in the DB includes quests that are soloable for a strong character; the verdict says
+  a group is *needed by the quest's flags*, not that it is impossible alone.
+- Armor from drops and chests, plus crafted pieces, are in `worth.md` under their verdicts; none of them is routable, so they are
+  not listed here.
 
 ### Regenerating this
 

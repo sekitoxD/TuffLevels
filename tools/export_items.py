@@ -280,7 +280,60 @@ def load_spells(conn, rows):
     return spells
 
 
-def quest_sources(conn, item_ids):
+# quest_template.Type in this DB: 1 elite, 41 PvP, 62 raid, 81 dungeon (0 normal, 84 escort, 82 event).
+TYPE_EFFORT = {1: "group", 41: "pvp", 62: "raid", 81: "dungeon"}
+EFFORT_ORDER = ["solo", "group", "dungeon", "raid", "pvp"]
+
+
+def quest_efforts(conn):
+    """quest id -> (effort, chain_len).
+
+    Effort is how the quest has to be done: solo, group (elite quest or an elite/boss
+    objective mob, or 2+ suggested players), dungeon, raid or pvp. A quest inherits the
+    hardest effort in its prerequisite chain (PrevQuestId either sign, and whoever offers
+    it through NextQuestInChain), because you have to do those first.
+    """
+    rows = qdb.query(conn, "SELECT entry, Type, SuggestedPlayers, PrevQuestId, NextQuestInChain, "
+                           "ReqCreatureOrGOId1, ReqCreatureOrGOId2, ReqCreatureOrGOId3, ReqCreatureOrGOId4 "
+                           "FROM quest_template")
+    mobs = {r["entry"]: [r["ReqCreatureOrGOId%d" % n] for n in range(1, 5) if r["ReqCreatureOrGOId%d" % n] > 0]
+            for r in rows}
+    ranks = {}
+    ids = sorted({m for v in mobs.values() for m in v})
+    for ch in chunks(ids):
+        for r in qdb.query(conn, "SELECT Entry, Rank FROM creature_template WHERE Entry IN (%s)" % in_list(ch)):
+            ranks[r["Entry"]] = r["Rank"]
+    own, parents = {}, defaultdict(set)
+    for r in rows:
+        e = TYPE_EFFORT.get(r["Type"])
+        if e is None:
+            elite = any(1 <= ranks.get(m, 0) <= 3 for m in mobs[r["entry"]])
+            e = "group" if elite or r["SuggestedPlayers"] >= 2 else "solo"
+        own[r["entry"]] = e
+        if r["PrevQuestId"]:
+            parents[r["entry"]].add(abs(r["PrevQuestId"]))
+        if r["NextQuestInChain"]:
+            parents[r["NextQuestInChain"]].add(r["entry"])
+    memo = {}
+
+    def walk(q, seen=()):
+        if q in memo:
+            return memo[q]
+        if q not in own or q in seen:
+            return ("solo", 0)
+        effort, depth = own[q], 1
+        for p in parents.get(q, ()):
+            pe, pd = walk(p, seen + (q,))
+            if EFFORT_ORDER.index(pe) > EFFORT_ORDER.index(effort):
+                effort = pe
+            depth = max(depth, pd + 1)
+        memo[q] = (effort, min(depth, 12))
+        return memo[q]
+
+    return {q: walk(q) for q in own}
+
+
+def quest_sources(conn, item_ids, efforts):
     """item id -> [quest reward sources], both 'choose one' and guaranteed."""
     cols = (["RewChoiceItemId%d" % i for i in range(1, 7)], ["RewItemId%d" % i for i in range(1, 5)])
     sel = ["entry", "Title", "MinLevel", "QuestLevel", "RequiredRaces", "RequiredClasses", "ZoneOrSort"]
@@ -297,6 +350,7 @@ def quest_sources(conn, item_ids):
                         "min_level": q["MinLevel"], "quest_level": q["QuestLevel"],
                         "race_mask": q["RequiredRaces"], "class_mask": q["RequiredClasses"],
                         "zone": q["ZoneOrSort"],
+                        "effort": efforts[q["entry"]][0], "chain": efforts[q["entry"]][1],
                     })
     return out
 
@@ -315,7 +369,7 @@ def why_unusable(r):
     return {0: "consumable", 1: "bag", 6: "ammo", 7: "trade good", 12: "quest item"}.get(cls, "not equipment")
 
 
-def quest_choices(conn, item_ids, max_level):
+def quest_choices(conn, item_ids, max_level, efforts):
     """Quests that offer a choice of reward, and the items those choices name.
 
     Returns (quests, others): `quests` lists every choice (rogue-usable or not,
@@ -333,7 +387,8 @@ def quest_choices(conn, item_ids, max_level):
         wanted.update(c["item"] for c in choices)
         quests.append({"quest": q["entry"], "title": q["Title"], "min_level": q["MinLevel"],
                        "quest_level": q["QuestLevel"], "race_mask": q["RequiredRaces"],
-                       "class_mask": q["RequiredClasses"], "zone": q["ZoneOrSort"], "choices": choices})
+                       "class_mask": q["RequiredClasses"], "zone": q["ZoneOrSort"],
+                       "effort": efforts[q["entry"]][0], "chain": efforts[q["entry"]][1], "choices": choices})
     others = {}
     for ch in chunks(wanted - set(item_ids)):
         for r in qdb.query(conn, "SELECT entry, name, class, subclass, InventoryType, AllowableClass, SellPrice "
@@ -653,7 +708,8 @@ def main():
     items = [build_item(r, spells, unmodelled) for r in rows]
     ids = {i["id"] for i in items}
 
-    quests = quest_sources(conn, ids)
+    efforts = quest_efforts(conn)
+    quests = quest_sources(conn, ids, efforts)
     drops = drop_sources(conn, ids)
     vendors = vendor_sources(conn, ids)
     crafts = craft_sources(conn, ids)
@@ -686,7 +742,7 @@ def main():
         "exported_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "note": "DB-derived scratch data. Do not commit (GPL, see tools/qdb.py).",
     }
-    reward_quests, reward_others = quest_choices(conn, ids, args.max_level)
+    reward_quests, reward_others = quest_choices(conn, ids, args.max_level, efforts)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "items": items, "abilities": load_abilities(conn),
