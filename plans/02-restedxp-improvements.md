@@ -190,14 +190,19 @@ All six items (R1-R6) are implemented as of 2026-09-20 — see each section abov
 what shipped. In-game verification (2026-09-20):
 
 - [x] R1: quest-log objective text parses fine, but the nameplate objective-mob
-  marker never lit up in testing. Root cause found and fixed: `CheckUnit` in
-  `Marker.lua` matched a parsed objective name against a nameplate name with an
-  *exact* hash lookup (`mobs[name:lower()]`), while the quest-giver check a few
-  lines above already knew exact matching was too strict and used a substring
-  match instead. Objective text names the plural creature ("Mottled Boars slain:
-  3/10") while the nameplate shows the singular ("Mottled Boar"), so the exact
-  match never fired for the common case. Fixed by adding the same substring
-  fallback (both directions) used for quest givers. Needs a follow-up in-game
+  marker never lit up in testing, through two rounds of in-game verification.
+  A plural/singular name-matching gap (fixed, still a real improvement) turned
+  out not to be the actual blocker: `/tuff debugmarker` showed
+  `restricted=true` while standing in Durotar, an ordinary outdoor leveling
+  zone with no instance and nothing secret about a normal kill quest.
+  `Marker:IsRestricted()` OR'd in `Compat:HasSecretRestrictions()`, an
+  unverified Midnight-era API that Compat.lua's own comment already flagged
+  as untested against a live client — it was returning `true`
+  unconditionally on this Forever build, so `RescanAll`/`CheckUnit` bailed
+  before ever reaching any name-matching logic. Fixed by dropping that
+  coarse gate from Marker.lua; it now relies on the long-stable
+  `IsInInstance()` plus the narrower per-unit/per-value secret checks that
+  already run on the specific read in question. Awaiting a third in-game
   check to confirm the marker now appears.
 - [x] R2: a route with a `via`-annotated multi-map travel step shows the label in
   the arrow's "Via:" line, and `/tuff verify` still passes.
