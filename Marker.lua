@@ -375,21 +375,28 @@ end
 
 -- Friendly NPC nameplates are off by default for most people, which would
 -- make the whole feature invisible. Offer it rather than forcing it.
--- SetCVar returns nothing on success, so Compat:Guard's "did the pcall
--- succeed" result was always non-nil and the old code printed failure
--- text on every success. Call it directly and confirm by reading the CVar
--- back instead. SetCVar is also blocked in combat.
+-- plans/01-bug-fixes.md V4: confirmed live that the readback failure isn't
+-- a global-vs-C_CVar API problem (both work identically - both returned "1"
+-- for a known-good cvar) - "nameplateShowFriends" simply isn't a registered
+-- cvar on Forever at all (C_CVar.GetCVarDefault returns nothing for it
+-- there), while "nameplateShowFriendlyNPCs" is (default "0"). This feature
+-- only ever marks NPCs (quest givers/objective mobs), never other players,
+-- so the NPC cvar is also the one actually worth confirming success
+-- against - it exists on every targeted client, unlike the player one.
+-- SetCVarSafe still sets both, since "nameplateShowFriends" may exist and
+-- matter on Classic Era/Retail even though it doesn't on Forever. SetCVar
+-- is also blocked in combat.
 function Marker:EnableFriendlyPlates()
     if InCombatLockdown() then
         ns.Print("Can't change nameplate settings in combat. Try again out of combat.")
         return
     end
 
-    pcall(SetCVar, "nameplateShowFriends", 1)
-    pcall(SetCVar, "nameplateShowFriendlyNPCs", 1)
+    Compat:SetCVarSafe("nameplateShowFriends", 1)
+    Compat:SetCVarSafe("nameplateShowFriendlyNPCs", 1)
 
-    local ok, cur = pcall(GetCVar, "nameplateShowFriends")
-    if ok and cur == "1" then
+    local cur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
+    if cur == "1" then
         ns.Print("Friendly nameplates on. NPC markers will show now.")
     else
         ns.Print("Could not change nameplate settings on this client.")
@@ -403,8 +410,8 @@ function Marker:DisableFriendlyPlates()
         return
     end
 
-    pcall(SetCVar, "nameplateShowFriends", 0)
-    pcall(SetCVar, "nameplateShowFriendlyNPCs", 0)
+    Compat:SetCVarSafe("nameplateShowFriends", 0)
+    Compat:SetCVarSafe("nameplateShowFriendlyNPCs", 0)
     ns.Print("Friendly nameplates disabled.")
 end
 

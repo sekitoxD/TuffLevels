@@ -14,7 +14,7 @@
 --
 -- Confirmed live (2026-09-19) that AcceptQuest/GetQuestReward work from a
 -- plain event handler with no hardware event on the Forever beta - see
--- plans/02-restedxp-improvements.md Phase C0.
+-- commit "Fix auto accept/turn-in never firing on Forever" (5f2b417).
 
 local ADDON, ns = ...
 local Compat = ns.Compat

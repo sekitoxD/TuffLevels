@@ -272,6 +272,33 @@ function Compat:GetItemSellPrice(item)
     return type(sellPrice) == "number" and sellPrice or nil
 end
 
+-- plans/01-bug-fixes.md V4: on Forever, pcall(SetCVar, ...) reports success
+-- but a GetCVar readback right after never shows the new value - the same
+-- shape of problem GetItemSellPrice above already has to work around for
+-- item info. Leading hypothesis is that the global SetCVar/GetCVar pair is
+-- deprecated in favor of a namespaced C_CVar.SetCVar/C_CVar.GetCVar on
+-- Forever, mirroring the C_Item precedent, so prefer C_CVar.* when present
+-- and fall back to the legacy globals otherwise.
+--
+-- SetCVar/C_CVar.SetCVar return nothing on success, so Guard's own return
+-- value can't tell "threw" apart from "succeeded and returned nothing" -
+-- same trap Data.lua's Attempt() already works around for SetWaypoint.
+-- Diff Compat:ErrorCount() around the call instead of trusting the return.
+function Compat:SetCVarSafe(name, value)
+    local setter = (C_CVar and C_CVar.SetCVar) or _G.SetCVar
+    if not setter then return false end
+    if self:ErrorBudgetExhausted() then return false end
+    local before = self:ErrorCount()
+    self:Guard(setter, name, value)
+    return self:ErrorCount() == before
+end
+
+function Compat:GetCVarSafe(name)
+    local getter = (C_CVar and C_CVar.GetCVar) or _G.GetCVar
+    if not getter then return nil end
+    return self:Guard(getter, name)
+end
+
 -- GetTitleText() reads whatever quest frame is currently open (detail,
 -- progress, or complete) - the ONLY way to get a not-yet-accepted quest's
 -- title, since it isn't in the quest log yet and C_QuestLog can't see it.

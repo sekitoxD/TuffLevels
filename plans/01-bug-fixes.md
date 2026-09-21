@@ -100,33 +100,46 @@ watch and one delivered-quest turn-in for the recording-recovery check).
 | V6 | Which TOC loads | `/tuff client` | 3.4's `16001`-first ordering is actually what Forever picks up | **PASS** |
 | V1 | Arrow bearing | Walk toward a known coordinate | `Compat.Atan2` (1.1) points correctly regardless of which branch it took | **PASS** — continues tracking the target while moving |
 | V2 | Back sticks | Accept/complete/turn in a quest, hit Back, do a quest action | `Core.pinned` (1.2) actually blocks `Reconcile` from re-advancing | **PASS** — stays put, does not snap forward |
-| V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat | **FAIL** — reports "Could not change nameplate settings on this client." even out of combat. See "New finding" below |
+| V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat | **PASS (2026-09-20, re-tested)** — fixed; see "New finding" below for the real root cause and fix |
 | V3 | No error spam | 10 minutes of normal play | `Compat:Wrap` (1.3) per-module budgets hold under real event traffic | **PASS** — no errors over the session |
 | V8 | Rogue spellbook scan (rogue character) | Run the scan from the Rogue tab | `Compat:GetSpellBookName` (1.8) returns real names | **PASS** — real spell names returned |
 | V7 | QuestieDB adapter, if Questie is available | `/tuff verify` on a route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct | **PASS (mechanism)** — DB loaded, adapter validated a 2781-step route without erroring; 2 quest IDs (788, 804) reported "not found in database" in that route's data, which is a data-completeness note about that specific (non-shipped, imported) route, not an adapter bug. Client used for this check wasn't confirmed — see "Open question" below |
 | V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path | **INCOMPLETE** — recording toggle on/off confirmed working, but the relog + `extract_recording.py` comparison wasn't run this session. Re-test needed |
 
-### New finding: V4, nameplate CVar toggle fails out of combat
+### New finding: V4, nameplate CVar toggle fails out of combat — fixed (2026-09-20)
 
 `Marker:EnableFriendlyPlates` (`Marker.lua:309-325`) always hit its failure branch:
 `pcall(GetCVar, "nameplateShowFriends")` succeeded (`ok == true`) but the immediate
-readback never equals `"1"`. The `Compat:Guard`-return bug that 1.6 fixed is not back —
-this is a new, narrower problem. Leading hypothesis, based on this same codebase's own
-precedent (`Compat:GetItemSellPrice` in `Compat.lua:248-261` already has to prefer
-`C_Item.GetItemInfo` over the global `GetItemInfo`, which the CLAUDE.md load-order notes
-say Forever drops): the global `SetCVar`/`GetCVar` pair may likewise be deprecated in
-favor of a `C_CVar.SetCVar`/`C_CVar.GetCVar` namespace on Forever, and the old globals
-either no-op or lag a frame instead of throwing — which is exactly what "pcall succeeds,
-but the value never changes" looks like.
+readback never equals `"1"`. The original hypothesis here (a global-vs-`C_CVar` API split,
+by analogy with `Compat:GetItemSellPrice`'s `C_Item.GetItemInfo` precedent) was **wrong** —
+live diagnostics confirmed both `GetCVar` and `C_CVar.GetCVar` work identically (both
+returned `"1"` for a known-good cvar, `Sound_EnableAllSound`). The real root cause:
+`"nameplateShowFriends"` is not a registered cvar on Forever at all —
+`C_CVar.GetCVarDefault("nameplateShowFriends")` returns nothing there, while
+`C_CVar.GetCVarDefault("nameplateShowFriendlyNPCs")` returns `"0"` (i.e. it exists). Since
+this feature only ever marks NPCs (quest givers/objective mobs), never other players,
+`"nameplateShowFriendlyNPCs"` was also always the more correct cvar to confirm success
+against, independent of the Forever gap.
 
-**Before writing a fix**, one live diagnostic would nail it down instead of guessing:
-`/run print(C_CVar and C_CVar.GetCVar and C_CVar.GetCVar("nameplateShowFriends"), GetCVar("nameplateShowFriends"))`
-right after toggling. If `C_CVar.GetCVar` reports the value changed while the global
-`GetCVar` still shows the old one, that confirms the hypothesis and the fix is a
-`Compat:SetCVarSafe`/`GetCVarSafe` pair preferring `C_CVar.*` when present, mirroring
-`Compat:GetItemSellPrice`'s existing pattern. Scoped separately from this plan per its
-own rule below — small, isolated to `Marker.lua`'s two functions plus a new `Compat`
-shim.
+**Fix:** `Compat:SetCVarSafe`/`GetCVarSafe` (`Compat.lua`) prefer `C_CVar.*` when present,
+falling back to the legacy globals — kept even though it didn't turn out to be the root
+cause, since it's a correct hardening in its own right and matches the `GetItemSellPrice`
+pattern. `Marker:EnableFriendlyPlates`/`DisableFriendlyPlates` and `Panel.lua`'s nameplates
+button and `FirstRunSetup` (three call sites total, the latter two found by follow-up code
+review, not by the original plan) now all read back `"nameplateShowFriendlyNPCs"` instead
+of `"nameplateShowFriends"`, and all go through the new `Compat` wrappers instead of raw
+`SetCVar`/`GetCVar`/`Compat:Guard(SetCVar, ...)`. 4 new tests in `spec/compat_spec.lua`.
+Confirmed in-game (2026-09-20): toggle reports success, Panel button state tracks
+correctly, and Blizzard's own friendly nameplates now actually render.
+
+**Separate, unrelated finding from the same in-game session:** the marker (purple diamond)
+icon itself does not render over an objective NPC even with friendly nameplates now
+correctly on. This is not a V4 regression — V4 only concerns whether the *cvar toggle*
+reports and takes effect correctly, which it now does. The diamond not appearing is a
+distinct bug in `Marker.lua`'s scan/match logic and needs its own investigation, scoped
+separately per this plan's own rule (see `/tuff debugmarker` for a starting point, and
+commit "Fix wrong objective-mob marker icon (guessed atlas coordinates)" (e0ad43e) for
+precedent — a similar diamond-rendering issue was already found and fixed once before).
 
 ### Open question: which client was V7 run on
 
@@ -144,7 +157,7 @@ have that bug at all. Needs one line of confirmation from whoever ran it.
 - [x] `luacheck` passes with no warnings — CI green.
 - [x] `busted` passes — CI green.
 - [x] V1, V2, V3, V6, V8 confirmed live — all pass.
-- [ ] V4 — real bug found, fix scoped above, not yet implemented (waiting on one
-      diagnostic command before writing it, to avoid a second guess-and-retest cycle).
+- [x] V4 — fixed and confirmed live (2026-09-20); see "New finding" above. Uncovered a
+      separate, unrelated marker-rendering bug, tracked outside this plan.
 - [ ] V5 — recording toggle confirmed, end-to-end recovery re-test still needed.
 - [ ] V7 — mechanism confirmed; which client it ran on needs confirming.

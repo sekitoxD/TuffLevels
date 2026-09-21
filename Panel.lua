@@ -98,9 +98,13 @@ function Panel:FirstRunSetup()
     if db.setupDone then return false end
     db.setupDone = true
 
-    -- NPC markers attach to nameplates, which are off by default.
-    Compat:Guard(SetCVar, "nameplateShowFriends", 1)
-    Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 1)
+    -- NPC markers attach to nameplates, which are off by default. Goes
+    -- through Compat:SetCVarSafe (plans/01-bug-fixes.md V4), same as
+    -- Marker:EnableFriendlyPlates and the Panel nameplates button below -
+    -- a raw Guard(SetCVar, ...) here can't detect or work around
+    -- "nameplateShowFriends" not existing as a cvar on Forever.
+    Compat:SetCVarSafe("nameplateShowFriends", 1)
+    Compat:SetCVarSafe("nameplateShowFriendlyNPCs", 1)
 
     -- Recording is opt-in, off by default (unlike Automation, which
     -- defaults on): it's a route-authoring tool (Recorder.lua), not
@@ -481,13 +485,18 @@ function Panel:ShowDisplayMenu()
         mobBtn:SetText(ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
     end)
 
+    -- plans/01-bug-fixes.md V4: "nameplateShowFriends" isn't a registered
+    -- cvar on Forever at all - read the same "nameplateShowFriendlyNPCs"
+    -- cvar Marker:EnableFriendlyPlates/DisableFriendlyPlates confirm success
+    -- against, via the same C_CVar-preferring Compat wrapper, or this
+    -- button's label and on/off click logic silently invert on Forever.
     local platesBtn
-    local plateCur = Compat:Guard(GetCVar, "nameplateShowFriends")
+    local plateCur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
     platesBtn = MakeButton(f, plateCur == "1" and "Nameplates: on" or "Nameplates: off", -68, function()
-        local cur = Compat:Guard(GetCVar, "nameplateShowFriends")
+        local cur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
         if cur == "1" then ns.Marker:DisableFriendlyPlates()
         else ns.Marker:EnableFriendlyPlates() end
-        local now = Compat:Guard(GetCVar, "nameplateShowFriends")
+        local now = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
         platesBtn:SetText(now == "1" and "Nameplates: on" or "Nameplates: off")
     end)
 

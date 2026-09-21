@@ -78,3 +78,76 @@ describe("Compat:Wrap", function()
         assert.equals("ok", fine())
     end)
 end)
+
+describe("Compat:SetCVarSafe / GetCVarSafe", function()
+    -- plans/01-bug-fixes.md V4: prefer C_CVar.* when present, fall back to
+    -- the legacy globals otherwise; success/failure must not depend on the
+    -- setter's return value, since both forms return nothing on success.
+    --
+    -- Several tests below overwrite _G.SetCVar/_G.GetCVar directly (some
+    -- with throwing stubs, to prove C_CVar.* took priority over them) -
+    -- wow_stubs.Install()'s `_G.SetCVar = _G.SetCVar or function() end`
+    -- default only applies once per process, so a leaked stub here would
+    -- silently poison every spec file that runs afterward. Snapshot and
+    -- restore both globals, not just C_CVar, around every test.
+    local savedSetCVar, savedGetCVar
+
+    before_each(function()
+        savedSetCVar, savedGetCVar = _G.SetCVar, _G.GetCVar
+    end)
+
+    after_each(function()
+        _G.C_CVar = nil
+        _G.SetCVar, _G.GetCVar = savedSetCVar, savedGetCVar
+    end)
+
+    it("falls back to the legacy globals when C_CVar is absent", function()
+        local Compat = NewCompat()
+        local stored
+        _G.SetCVar = function(name, value) stored = { name, value } end
+        _G.GetCVar = function(name) return stored and stored[1] == name and tostring(stored[2]) end
+
+        assert.is_true(Compat:SetCVarSafe("nameplateShowFriends", 1))
+        assert.equals("1", Compat:GetCVarSafe("nameplateShowFriends"))
+    end)
+
+    it("prefers C_CVar.* when present", function()
+        local Compat = NewCompat()
+        local stored
+        _G.C_CVar = {
+            SetCVar = function(name, value) stored = { name, value } end,
+            GetCVar = function(name) return stored and stored[1] == name and tostring(stored[2]) end,
+        }
+        -- Legacy globals would report the opposite of what actually happened
+        -- if they were used by mistake - proves C_CVar.* took priority.
+        _G.SetCVar = function() error("legacy SetCVar should not be called") end
+        _G.GetCVar = function() return "0" end
+
+        assert.is_true(Compat:SetCVarSafe("nameplateShowFriends", 1))
+        assert.equals("1", Compat:GetCVarSafe("nameplateShowFriends"))
+    end)
+
+    it("reports failure when the setter throws, regardless of its return shape", function()
+        local Compat = NewCompat()
+        _G.C_CVar = {
+            SetCVar = function() error("boom") end,
+            GetCVar = function() return nil end,
+        }
+
+        assert.is_false(Compat:SetCVarSafe("nameplateShowFriends", 1))
+        assert.equals(1, Compat:ErrorCount())
+    end)
+
+    it("reports failure, not false success, once the error budget is exhausted", function()
+        local Compat = NewCompat()
+        for _ = 1, 25 do Compat:Guard(function() error("boom") end) end
+        assert.is_true(Compat:ErrorBudgetExhausted())
+
+        -- Guard() short-circuits once the budget is spent, never calling the
+        -- setter and never moving ErrorCount() - a naive before/after diff
+        -- would misread that silence as success.
+        _G.C_CVar = { SetCVar = function() error("should never run") end }
+
+        assert.is_false(Compat:SetCVarSafe("nameplateShowFriends", 1))
+    end)
+end)
