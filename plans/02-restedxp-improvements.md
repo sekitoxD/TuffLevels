@@ -210,8 +210,8 @@ what shipped. In-game verification (2026-09-20):
   texture coordinates, and that atlas's layout showed the wrong icon on
   this client. Fixed by replacing it with a plain white square rotated 45°
   and tinted purple instead of depending on any icon atlas's guessed
-  layout. Awaiting one more in-game check to confirm the diamond renders
-  correctly.
+  layout. Confirmed in-game: the purple diamond now renders correctly over
+  the objective mob's nameplate.
 - [x] R2: a route with a `via`-annotated multi-map travel step shows the label in
   the arrow's "Via:" line, and `/tuff verify` still passes.
 - [x] R3: completing a multi-choice quest with automation on prints the best-value
