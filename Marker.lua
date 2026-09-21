@@ -15,11 +15,17 @@ ns.Marker = Marker
 Marker.enabled = true
 Marker.markMobs = true
 
+-- The "mob" entry used to crop a quadrant out of the
+-- Interface\Minimap\ObjectIcons atlas by guessed texture coordinates, which
+-- in-game testing showed pointing at the wrong icon on this client - that
+-- atlas's layout isn't stable/verified across clients. WHITE8x8 is a plain
+-- blank square present on every client version; ShowMarkerOn rotates and
+-- tints it into a diamond instead of depending on any icon atlas's layout.
 local ICON = {
     accept   = "Interface\\GossipFrame\\AvailableQuestIcon",
     turnin   = "Interface\\GossipFrame\\ActiveQuestIcon",
     complete = "Interface\\GossipFrame\\ActiveQuestIcon",
-    mob      = "Interface\\Minimap\\ObjectIcons",
+    mob      = "Interface\\Buttons\\WHITE8x8",
     default  = "Interface\\GossipFrame\\AvailableQuestIcon",
 }
 
@@ -186,14 +192,15 @@ local function ShowMarkerOn(plate, stepType)
     end
 
     marker.icon:SetTexture(ICON[stepType] or ICON.default)
+    marker.icon:SetTexCoord(0, 1, 0, 1)
 
     if stepType == "mob" then
-        marker.icon:SetTexCoord(0.5, 0.75, 0, 0.25)
         marker.icon:SetVertexColor(unpack(TINT.mob))
-        marker:SetSize(22, 22)
+        marker.icon:SetRotation(math.rad(45))
+        marker:SetSize(16, 16)
     else
-        marker.icon:SetTexCoord(0, 1, 0, 1)
         marker.icon:SetVertexColor(1, 1, 1)
+        marker.icon:SetRotation(0)
         marker:SetSize(32, 32)
     end
 
