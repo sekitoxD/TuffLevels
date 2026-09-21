@@ -8,6 +8,11 @@
 -- Forever is the Retail client wearing a Classic-looking build number. That
 -- combination breaks the usual detection idiom, so never gate on the
 -- interface number alone.
+--
+-- Confirmed in-game (2026-09-20, plans/06-architecture-ideas-followup.md item 5):
+-- Forever's Map button reports "waypoint set" with no TomTom installed, so
+-- Data:SetWaypoint's native fallback (C_Map.SetUserWaypoint + UiMapPoint) is
+-- a working API path on this client, not just a TomTom passthrough.
 
 local ADDON, ns = ...
 

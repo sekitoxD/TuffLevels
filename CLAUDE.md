@@ -19,11 +19,13 @@ The addon ships **three TOC files** for three different WoW clients, all sharing
 | Client | TOC | Interface | Project | Notes |
 |---|---|---|---|---|
 | Classic Era | `TuFFlevels_Vanilla.toc` | 11507 | CLASSIC | QuestieDB available |
-| Forever (`_classic_beta_`) | `TuFFlevels_Mainline.toc` | 16001 | MAINLINE | no quest DB exists |
+| Forever (`_classic_beta_`) | `TuFFlevels_Mainline.toc` | 16001 | MAINLINE | no built-in quest DB, but a manually-installed Questie works (confirmed 2026-09-20) |
 | Retail/Midnight | `TuFFlevels_Mainline.toc` | 120100+ | MAINLINE | no quest DB needed |
 | (default) | `TuFFlevels.toc` | all three | — | lists all interface versions |
 
 **The critical trap**: Forever reports build number 16001 (looks Classic) but is actually the Retail/Mainline client (`WOW_PROJECT_ID == WOW_PROJECT_MAINLINE`). The near-universal `tocVersion >= 100000` check for "modern client" misreads Forever as Classic. `Compat.lua` detects flavor by `WOW_PROJECT_ID` first, build number second — always route new client-detection logic through `Compat.flavor` / `Compat.isForever` / `Compat.isMainline` rather than checking `GetBuildInfo()` directly. When porting API usage, copy from Retail code, not Classic code — Forever has dropped Classic-only globals like `GetItemInfo`, `GetSpellInfo`, `UnitAura`, `GetTalentInfo`, `CombatLogGetCurrentEventInfo`.
+
+**Questie on Forever**: the client itself ships no quest database, but Questie is a separate third-party addon, not a client feature — installing it manually on Forever alongside TuFFlevels works, its DB update runs and completes, and `Data:DetectProvider`'s `QuestieLoader:ImportModule("QuestieDB")` path picks it up like on any other client. Don't assume `Compat.isForever` implies "no QuestieDB, skip that code path" — `Data.lua` already treats the database as optional everywhere and this is exactly that case working as designed, not a special one to add a branch for.
 
 Three Forever-specific bugs `Compat.lua` works around (don't "fix" these by removing the workaround):
 - **Unknown events abort the whole file.** `RegisterEvent` on an event the client doesn't recognize throws and kills every line after it in that file. All event registration must go through `Compat:RegisterEvents(frame, events)`, which `pcall`s each one individually and reports rejects via `/tuff client`.

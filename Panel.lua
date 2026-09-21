@@ -23,9 +23,10 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.5.4"
+local CHANGELOG_VERSION = "1.5.5"
 local CHANGELOG = {
-    "Recording is now off by default on a fresh install, same as every other opt-in feature - it's a route-authoring tool, not something a player following a route needs running from session one. Turn it on from Menu > Recording.",
+    "Moved the Recording toggle off the main panel into the Content & Import submenu, alongside Save this as a route - now that both default off, they're occasional-use actions rather than something to keep on the main list.",
+    "Recording is now off by default on a fresh install, same as every other opt-in feature - it's a route-authoring tool, not something a player following a route needs running from session one. Turn it on from Menu > Content & Import > Recording.",
     "Tagged all 36 repeated-name chain-link steps in the Tirisfal Start route (A New Plague, At War with the Scarlet Crusade, Arugal's Folly) as ambiguous so they resolve against your live quest log instead of risking a silent multi-step skip. Fixed 3 /tuff verify findings in the Solo route: an unidentified turn-in near Malaka'Jin is now an honest manual note instead of a broken empty quest name, and two hearth steps no longer carry a bogus placeholder coordinate.",
     "Removed the confusing duplicate 'Durotar (Orc/Troll)' sample route from Available Guides - it's superseded by the real generated Durotar leg. The sample file itself stays on disk (it's the schema-doc reference and a CI test fixture), just no longer loaded as a selectable route.",
     "Fixed SheetImport.lua tagging every imported step with minLevel from the sheet's level column - that HIDES a step below that level, so it was silently removing steps for anyone under the route's intended pace instead of just showing where the route expects you to be. Uses the same display-only atLevel field the generated ONSLAUGHT routes already use.",
@@ -145,7 +146,7 @@ function Panel:ShowWelcome()
         "A |cffffd100!|r or |cffffd100?|r will float over the head of any NPC your " ..
         "current step needs.\n\n" ..
         "Want to record your own route instead of following one? Click |cffffd100Menu|r " ..
-        "on the tracker and hit Recording.")
+        "on the tracker, then |cffffd100Content & Import|r, and hit Recording.")
 
     FitDialogToBody(w, body, 52, 60, 250)
 
@@ -175,7 +176,7 @@ function Panel:Build()
     if panel then return end
 
     panel = CreateFrame("Frame", "TuFFlevelsPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(240, 480)
+    panel:SetSize(240, 438)
     panel:SetFrameStrata("DIALOG")
     panel:EnableMouse(true)
     panel:SetMovable(true)
@@ -190,53 +191,47 @@ function Panel:Build()
     t:SetPoint("TOP", 0, -14)
     t:SetText("TuFFlevels")
 
-    panel.recBtn = MakeButton(panel, "Recording", -40, function()
-        if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
-        Panel:Refresh()
-    end)
-
-    panel.status = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    panel.status:SetPoint("TOP", 0, -64)
-    panel.status:SetTextColor(unpack(ns.Theme.color.dim))
-
     -- Guides / routes
-    panel.routeBtn = MakeButton(panel, "Available Guides", -82, function()
+    panel.routeBtn = MakeButton(panel, "Available Guides", -40, function()
         Panel:ShowRoutePicker()
     end)
 
-    MakeButton(panel, "Where to go next", -108, function()
+    MakeButton(panel, "Where to go next", -66, function()
         ns.Zones:Show()
     end)
 
-    MakeButton(panel, "Progress / completed", -134, function()
+    MakeButton(panel, "Progress / completed", -92, function()
         ns.Progress:Toggle()
     end)
 
-    MakeButton(panel, "Catch up on quests", -160, function()
+    MakeButton(panel, "Catch up on quests", -118, function()
         Panel:ShowCatchUpDialog()
     end)
 
-    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -186, function()
+    panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -144, function()
         ns.Automation:Toggle() ; Panel:Refresh()
     end)
 
-    panel.arrowBtn = MakeButton(panel, "Arrow", -212, function()
+    panel.arrowBtn = MakeButton(panel, "Arrow", -170, function()
         ns.Arrow:Toggle() ; Panel:Refresh()
     end)
 
-    panel.markerBtn = MakeButton(panel, "NPC markers", -238, function()
+    panel.markerBtn = MakeButton(panel, "NPC markers", -196, function()
         ns.Marker:Toggle()
         Panel:Refresh()
     end)
 
     -- Recording extras - meaningless unless actively recording. Kept at a
     -- fixed slot rather than reflowing the rest of the menu when toggled;
-    -- Panel:Refresh() drives whether they're shown.
-    panel.noteBtn = MakeButton(panel, "Add a note here", -264, function()
+    -- Panel:Refresh() drives whether they're shown. The Recording toggle
+    -- itself lives in the Content & Import submenu now, alongside "Save
+    -- this as a route" - these two stay here since they're only useful
+    -- mid-recording, right next to the tracker, not buried a menu deeper.
+    panel.noteBtn = MakeButton(panel, "Add a note here", -222, function()
         Panel:PromptNote()
     end)
 
-    panel.markBtn = MakeButton(panel, "Mark this spot", -290, function()
+    panel.markBtn = MakeButton(panel, "Mark this spot", -248, function()
         ns.Recorder:AddMark("Travel")
         Panel:Refresh()
     end)
@@ -244,11 +239,11 @@ function Panel:Build()
     -- Content management and display settings both moved into their own
     -- submenus (see Panel:ShowContentMenu / Panel:ShowDisplayMenu below) -
     -- occasional-use buttons that don't need to sit in the main list.
-    MakeButton(panel, "Content & Import", -316, function()
+    MakeButton(panel, "Content & Import", -274, function()
         Panel:ShowContentMenu()
     end)
 
-    MakeButton(panel, "Display settings", -342, function()
+    MakeButton(panel, "Display settings", -300, function()
         Panel:ShowDisplayMenu()
     end)
 
@@ -257,7 +252,7 @@ function Panel:Build()
     -- that can never use it, closing the gap it would otherwise leave
     -- rather than just hiding it in place. Class never changes
     -- mid-session, so this is decided once here, not on every Refresh().
-    local y = -368
+    local y = -326
     local _, playerClass = UnitClass("player")
     if playerClass == "ROGUE" then
         MakeButton(panel, "Rogue", y, function()
@@ -281,9 +276,6 @@ function Panel:Refresh()
     if not panel then return end
 
     local rec = ns.Recorder and ns.Recorder.active
-    panel.recBtn:SetText(rec and "Stop recording" or "Start recording")
-    panel.status:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
-
     panel.noteBtn:SetShown(rec)
     panel.markBtn:SetShown(rec)
 
@@ -411,14 +403,16 @@ end
 
 -- Occasional-use route setup/backup actions, split out of the main list.
 -- Rebuilt fresh on every open (same pattern as ShowRoutePicker/
--- ShowCatchUpDialog below) rather than persisted and live-refreshed - none
--- of these buttons have on/off state to keep in sync while the panel sits
--- open, unlike the toggles on the main panel.
+-- ShowCatchUpDialog below) rather than persisted and live-refreshed - most
+-- of these buttons have no on/off state to keep in sync while the panel
+-- sits open, unlike the toggles on the main panel. Recording is the one
+-- exception here, and its own click handler updates its own text directly
+-- (see below) rather than needing this menu to be a persisted frame.
 function Panel:ShowContentMenu()
     if self.contentMenu then self.contentMenu:Hide() end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(240, 260)
+    f:SetSize(240, 306)
     f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
     f:SetFrameStrata("DIALOG")
     f:EnableMouse(true)
@@ -441,10 +435,32 @@ function Panel:ShowContentMenu()
     MakeButton(f, "Recover past quests", -120, function()
         ns.Import:Show()
     end)
-    MakeButton(f, "Save this as a route", -146, function()
+
+    -- Recording moved here from the main panel (2026-09-20): a
+    -- route-authoring tool that's off by default, sitting right next to
+    -- "Save this as a route" now that both are occasional-use actions
+    -- rather than something a player following a route needs on the main
+    -- list. This menu is rebuilt fresh on every open, but Recording (unlike
+    -- the other buttons here) has on/off state that can change while the
+    -- menu is left open, so its own click handler updates its own text
+    -- directly, the same pattern ShowDisplayMenu's mobBtn already uses.
+    local recBtn, recStatus
+    recBtn = MakeButton(f, ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording", -146, function()
+        if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
+        recBtn:SetText(ns.Recorder.active and "Stop recording" or "Start recording")
+        recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
+        Panel:Refresh()
+    end)
+
+    recStatus = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    recStatus:SetPoint("TOP", 0, -166)
+    recStatus:SetTextColor(unpack(ns.Theme.color.dim))
+    recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
+
+    MakeButton(f, "Save this as a route", -192, function()
         ns.Recorder:ShowExport()
     end)
-    MakeButton(f, "Progress code", -172, function()
+    MakeButton(f, "Progress code", -218, function()
         Panel:ShowProgressCode()
     end)
 
