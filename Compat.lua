@@ -272,6 +272,16 @@ function Compat:GetItemSellPrice(item)
     return type(sellPrice) == "number" and sellPrice or nil
 end
 
+-- GetTitleText() reads whatever quest frame is currently open (detail,
+-- progress, or complete) - the ONLY way to get a not-yet-accepted quest's
+-- title, since it isn't in the quest log yet and C_QuestLog can't see it.
+-- Automation.lua needs this to match a questName-only "accept" step before
+-- acceptance, when the normal quest-log name cache has nothing to match
+-- against yet.
+function Compat:GetOpenQuestTitle()
+    return self:Guard(_G.GetTitleText)
+end
+
 --------------------------------------------------------------------------
 -- Gossip quest lists
 --------------------------------------------------------------------------

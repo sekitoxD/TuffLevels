@@ -39,7 +39,7 @@ Compat.lua      -- client/flavor detection, safe event reg, SavedVariables bridg
 Theme.lua       -- shared color palette for all frames
 Data.lua        -- QuestieDB adapter (the ONE file to touch if QuestieDB's API changes)
 Core.lua        -- the step engine: route registry, step advancement, slash commands
-Automation.lua  -- opt-in, step-matched auto accept/turn-in (off by default)
+Automation.lua  -- step-matched auto accept/turn-in (on by default every login on Forever, since SavedVariables can't persist an "off" choice there — see Automation:Load)
 Pace.lua        -- per-section timing, personal-best splits, XP/hour and level ETA
 Recorder.lua    -- turns live play (accept/turn-in events) into route step data
 Marker.lua      -- nameplate icons over quest NPCs / objective mobs; pauses in instances (Compat:IsInInstance), and per-unit against secret values (Compat:IsUnitIdentitySecret/IsSecretValue) rather than the coarser Compat:HasSecretRestrictions, which in-game testing found returning true in ordinary outdoor content and silently disabling every marker (/tuff debugrestrict to test the instance-pause path, /tuff debugmarker to dump live matching state)

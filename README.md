@@ -117,13 +117,13 @@ Two ways to skip hand-writing Lua tables: `/tuff write` opens an in-addon compac
 
 Steps filter by `races`, `class`, `minLevel`, and `skipIfLevel` (hides/skips once you're past that level — the inverse of `minLevel`), so one file can serve Orc and Troll with occasional divergences rather than maintaining two. `optional = true` marks a step as skippable — it's shown dimmed in the Progress list but never blocks auto-advance. `requires = { n, ... }` gates a step on other step numbers in the same route also being done, for dependencies that aren't just "the step right before it." A step's `path` (an ordered list of intermediate waypoints, possibly across zones) is what the arrow guides through before finally pointing at the step's own coordinates — see `Routes/Horde/Durotar.lua`'s header comment for the authoritative field-by-field reference, or write routes in the compact text syntax instead (`/tuff write`, see `CompactGuide.lua`'s header) rather than hand-writing Lua tables.
 
-Auto accept/turn-in (opt-in, off by default — toggle on the tracker or in the menu) and per-section pace tracking with personal-best splits (always on, no toggle needed) both build on this same step data — see "Known constraints" below and `Pace.lua`'s header.
+Auto accept/turn-in (opt-in, off by default on Classic Era/Retail, on by default every login on Forever — toggle on the tracker or in the menu) and per-section pace tracking with personal-best splits (always on, no toggle needed) both build on this same step data — see "Known constraints" below and `Pace.lua`'s header.
 
 ---
 
 ## Known constraints
 
-**Auto-accept and auto-turn-in are implemented, opt-in, off by default.** Confirmed live that `AcceptQuest`/`GetQuestReward` work from a plain event handler with no hardware event on the Forever beta. `Automation.lua` only ever acts on the quest matching your current step, never guesses a reward when there's a real choice, and Shift bypasses it for a single dialog. Toggle it on the tracker itself or in the menu — see `Automation.lua`'s header for the exact rules.
+**Auto-accept and auto-turn-in are implemented, opt-in.** Off by default on Classic Era/Retail, where SavedVariables persist correctly and an explicit off choice is remembered. On Forever it instead defaults to on at every login/reload, since that client's SavedVariables never restore (see "Known constraints" below) and a remembered off there is indistinguishable from "never set" — a manual `Toggle()` off only lasts for the current session. Confirmed live that `AcceptQuest`/`GetQuestReward` work from a plain event handler with no hardware event on the Forever beta. `Automation.lua` only ever acts on the quest matching your current step, never guesses a reward when there's a real choice, and Shift bypasses it for a single dialog. Toggle it on the tracker itself or in the menu — see `Automation.lua`'s header for the exact rules.
 
 **Interface versions.** Mainline TOC lists `16001, 120100` — Forever first. Bump when either client patches.
 

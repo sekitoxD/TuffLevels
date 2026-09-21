@@ -740,6 +740,12 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "mobs" then
         ns.Marker:ToggleMobs()
 
+    elseif cmd == "auto" then
+        if ns.Automation then ns.Automation:Toggle() end
+
+    elseif cmd == "debugauto" then
+        if ns.Automation then ns.Automation:DebugDump() end
+
     elseif cmd == "next" then
         Core:Advance()
 
@@ -883,6 +889,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
             Compat.flavor, Compat.tocVersion, tostring(Compat.isMainline)))
         Print(("Restricted API: %s  |  Database: %s"):format(
             tostring(Compat.restricted), Data:ProviderName()))
+        if ns.Automation then
+            Print(("Auto accept/turn-in: %s"):format(ns.Automation.enabled and "on" or "off"))
+        end
         if #(Core.missingEvents or {}) > 0 then
             Print("|cffffff00Events this client rejected: " ..
                 table.concat(Core.missingEvents, ", ") .. "|r")
@@ -929,6 +938,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
         Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc | /tuff debugmarker")
+        Print("Automation: /tuff auto | /tuff debugauto")
         Print("(/tuff, /tufflevels and /sl all work the same)")
     end
 end)

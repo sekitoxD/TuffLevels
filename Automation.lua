@@ -1,10 +1,16 @@
 -- TuFFlevels / Automation.lua
 --
--- Opt-in, step-aware auto accept/turn-in. Off by default. Only ever acts
--- on the quest that matches the CURRENT step - never a blanket "accept
--- everything", and never guesses between multiple reward choices (that
--- turn-in is just left for you to click). Holding Shift while a quest
--- dialog opens bypasses automation for that one interaction.
+-- Step-aware auto accept/turn-in. Opt-in, remembered, off by default on
+-- Classic Era/Retail. On Forever it instead defaults to ON at every login
+-- (see Automation:Load below) because that client's broken SavedVariables
+-- restore means a remembered "off" can't be told apart from "never set" -
+-- rather than silently reverting to opt-in-off every session there, it errs
+-- toward staying on; Toggle() still flips it off for the rest of that one
+-- session. Only ever acts on the quest that matches the CURRENT step -
+-- never a blanket "accept everything", and never guesses between multiple
+-- reward choices (that turn-in is just left for you to click). Holding
+-- Shift while a quest dialog opens bypasses automation for that one
+-- interaction.
 --
 -- Confirmed live (2026-09-19) that AcceptQuest/GetQuestReward work from a
 -- plain event handler with no hardware event on the Forever beta - see
@@ -21,7 +27,18 @@ Automation.enabled = false
 
 function Automation:Load()
     local db = Compat:InitSavedVar("TuFFlevelsDB")
-    self.enabled = db.autoAcceptTurnin or false
+    if Compat:SavedVarsAreBroken() then
+        -- Forever never restores SavedVariables on login/reload (see
+        -- CLAUDE.md), so on THIS client a remembered "off" is
+        -- indistinguishable from "never set" - default to on rather than
+        -- silently reverting to opt-in-off every session. Toggle() still
+        -- flips it off for the rest of the current session. Classic
+        -- Era/Retail don't have this bug, so they keep the real opt-in-off
+        -- default below and correctly remember an explicit off choice.
+        self.enabled = db.autoAcceptTurnin ~= false
+    else
+        self.enabled = db.autoAcceptTurnin or false
+    end
 end
 
 function Automation:Toggle()
@@ -37,11 +54,32 @@ end
 
 -- Resolves name-based steps the same way Core does, so automation works
 -- on spreadsheet-imported routes too, not just numeric-ID ones.
+--
+-- Core.ResolveQuest only ever finds a name in the quest LOG - which means
+-- it can never resolve an "accept" step before the quest has been
+-- accepted, i.e. at exactly the moment automation needs to match it. Fall
+-- back to the currently-open quest-detail frame's own title (the one
+-- source that DOES know an unaccepted quest's name) for that case only.
 local function CurrentStepFor(stepType, questID)
     local step = Core:CurrentStep()
     if not (step and step.type == stepType) then return nil end
     if not step.quest and step.questName then Core.ResolveQuest(step) end
-    if step.quest and step.quest == questID then return step end
+    if step.quest then return step.quest == questID and step or nil end
+
+    if stepType == "accept" and step.questName then
+        local title = Compat:GetOpenQuestTitle()
+        if title and title:lower() == step.questName:lower() then
+            -- Same rule as Core.ResolveQuest: don't cache an ambiguous
+            -- (shared-name chain-link) step's ID, since a later link would
+            -- then wrongly resolve to this one's ID from the cache.
+            if not step.ambiguous then
+                step.quest = questID
+                Compat:CacheQuestName(step.questName, questID)
+                Compat:SaveNameCache()
+            end
+            return step
+        end
+    end
     return nil
 end
 
@@ -124,3 +162,36 @@ f:SetScript("OnEvent", Compat:Wrap("Automation", function(self, event)
         end
     end
 end))
+
+--------------------------------------------------------------------------
+-- Debug
+--------------------------------------------------------------------------
+
+-- Run with a quest dialog actually open (/tuff debugauto) - shows exactly
+-- why automation did or didn't fire, same idea as Marker:DebugDump for the
+-- same class of "silently did nothing" report.
+function Automation:DebugDump()
+    ns.Print(("Automation: enabled=%s savedVarsBroken=%s"):format(
+        tostring(self.enabled), tostring(Compat:SavedVarsAreBroken())))
+
+    local step = Core:CurrentStep()
+    if not step then
+        ns.Print("No current step.")
+        return
+    end
+    if not step.quest and step.questName then Core.ResolveQuest(step) end
+    ns.Print(("Step: type=%s quest=%s questName=%s"):format(
+        tostring(step.type), tostring(step.quest), tostring(step.questName)))
+
+    local openQuestID = Compat:Guard(GetQuestID)
+    local openTitle = Compat:GetOpenQuestTitle()
+    ns.Print(("Open quest dialog: questID=%s title=%s (nil means no quest " ..
+        "dialog is open right now - open one, then re-run this)"):format(
+        tostring(openQuestID), tostring(openTitle)))
+
+    if openQuestID then
+        local match = CurrentStepFor(step.type, openQuestID)
+        ns.Print(("Match check via CurrentStepFor(%s, %s) -> %s"):format(
+            tostring(step.type), tostring(openQuestID), match and "MATCH" or "no match"))
+    end
+end

@@ -102,9 +102,10 @@ function Panel:FirstRunSetup()
     Compat:Guard(SetCVar, "nameplateShowFriends", 1)
     Compat:Guard(SetCVar, "nameplateShowFriendlyNPCs", 1)
 
-    -- Recording is opt-in, off by default, same as Automation: it's a
-    -- route-authoring tool (Recorder.lua), not something a player just
-    -- following a route wants running from their very first session.
+    -- Recording is opt-in, off by default (unlike Automation, which
+    -- defaults on): it's a route-authoring tool (Recorder.lua), not
+    -- something a player just following a route wants running from their
+    -- very first session.
 
     return true
 end
@@ -861,11 +862,13 @@ function Panel:ShowHelpDialog()
         "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
         "The |cffffd100Catch up on quests|r button on this menu does the same " ..
         "thing with a confirm dialog instead of typing commands.\n\n" ..
-        "|cffffd100Auto accept/turn-in|r (off by default, toggle top-left on the " ..
-        "tracker or in this menu) accepts and turns in quests for you, but only " ..
-        "the ones matching your current step, and never guesses when a turn-in " ..
-        "has more than one reward to choose from. Hold Shift to skip it for a " ..
-        "single dialog without turning it off.\n\n" ..
+        "|cffffd100Auto accept/turn-in|r (off by default, on by default every " ..
+        "login on Forever since it can't remember an explicit off there - " ..
+        "toggle top-left on the tracker or in this menu) accepts and turns " ..
+        "in quests for you, but only the ones matching your current step, " ..
+        "and never guesses when a turn-in has more than one reward to " ..
+        "choose from. Hold Shift to skip it for a single dialog without " ..
+        "turning it off.\n\n" ..
         "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
         "how long your current section is taking versus your best time for it, " ..
         "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
