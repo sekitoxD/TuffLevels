@@ -1,15 +1,15 @@
 # Plan 1: Bug fixes from the initial audit
 
-Status: **Phases 1-4 done and committed on master.** Rewritten 2026-09-20 after an
+Status: **Complete.** All 4 phases done and committed on master, and all 8 in-game
+verification checks (V1-V8) confirmed 2026-09-20. Rewritten 2026-09-20 after an
 audit against the actual codebase (see
 `.claude/checkpoints/2026-09-20-plan-01-bug-fixes-audit.md` for the full evidence
 trail). Original source: audit of the repo on 2026-09-18 (Forever beta day 2).
 
-There is no headless Lua runner for WoW, so nothing here can be proven correct
+There is no headless Lua runner for WoW, so nothing here could be proven correct
 outside the client — CI (`luacheck`, `busted spec/`, `validate_route.py --no-db`)
-covers what's mechanically checkable and is green on the current `master`
-(`gh run list`), but live behavior still needs a play session. That play session is
-the only work this plan has left; see "Remaining: in-game verification" below.
+covers what's mechanically checkable and is green on `master` (`gh run list`); live
+behavior was confirmed in-game, see the results table below.
 
 Ground rules from `CLAUDE.md` still apply and were followed by everything below:
 - Route all client detection through `Compat`.
@@ -81,12 +81,11 @@ All four items shipped, one under a different name than originally specified:
 
 ---
 
-## Remaining: in-game verification
+## In-game verification (complete)
 
-This is the only work left, and it's not code — it's a play session on the Forever
-beta (and Classic Era / Retail if convenient) to confirm the defensively-written
-fixes above actually behave as intended live, and to close out the plan's original
-"Done when" checklist.
+A play session on the Forever beta to confirm the defensively-written fixes above
+actually behave as intended live, closing out the plan's original "Done when"
+checklist.
 
 **Impact:** none — this is a read/observe pass, no files change unless a check
 surfaces an actual bug, in which case that becomes its own small, separately-scoped
@@ -103,8 +102,8 @@ watch and one delivered-quest turn-in for the recording-recovery check).
 | V4 | Nameplate CVar toggle | `/tuff plates`, in and out of combat | `Marker:EnableFriendlyPlates` (1.6) reports correctly and blocks in combat | **PASS (2026-09-20, re-tested)** — fixed; see "New finding" below for the real root cause and fix |
 | V3 | No error spam | 10 minutes of normal play | `Compat:Wrap` (1.3) per-module budgets hold under real event traffic | **PASS** — no errors over the session |
 | V8 | Rogue spellbook scan (rogue character) | Run the scan from the Rogue tab | `Compat:GetSpellBookName` (1.8) returns real names | **PASS** — real spell names returned |
-| V7 | QuestieDB adapter, if Questie is available | `/tuff verify` on a route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct | **PASS (mechanism)** — DB loaded, adapter validated a 2781-step route without erroring; 2 quest IDs (788, 804) reported "not found in database" in that route's data, which is a data-completeness note about that specific (non-shipped, imported) route, not an adapter bug. Client used for this check wasn't confirmed — see "Open question" below |
-| V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path | **INCOMPLETE** — recording toggle on/off confirmed working, but the relog + `extract_recording.py` comparison wasn't run this session. Re-test needed |
+| V7 | QuestieDB adapter, if Questie is available | `/tuff verify` on a route with Questie installed | 1.7's `QuestieLoader:ImportModule` call form is correct | **PASS (2026-09-20)** — confirmed run on Forever. DB loaded, adapter validated a 2781-step route without erroring; 2 quest IDs (788, 804) reported "not found in database" in that route's data, which is a data-completeness note about that specific (non-shipped, imported) route, not an adapter bug. See "Open question" below for a separate, non-blocking loose thread this result raised |
+| V5 | Recording recovery | Record steps, exit the game, run `tools/extract_recording.py`, compare with the in-game export | End-to-end 2.1 data-loss recovery path | **PASS (2026-09-20)** — `extract_recording.py`'s recovered output matches the in-game export. Recording state not resuming automatically after relaunch is the already-documented Forever SavedVariables bug (expected), not a new gap |
 
 ### New finding: V4, nameplate CVar toggle fails out of combat — fixed (2026-09-20)
 
@@ -141,16 +140,17 @@ separately per this plan's own rule (see `/tuff debugmarker` for a starting poin
 commit "Fix wrong objective-mob marker icon (guessed atlas coordinates)" (e0ad43e) for
 precedent — a similar diamond-rendering issue was already found and fixed once before).
 
-### Open question: which client was V7 run on
+### Open question (resolved, one loose thread carried forward): which client was V7 run on
 
-The screenshot for V7 also printed "Progress and saved settings are not restored on
-this client," which `Compat:SavedVarsAreBroken()` (per `CLAUDE.md`) is meant to be a
-**Forever-specific** warning. If V7 (QuestieDB + Questie) was actually run on Forever
-rather than Classic Era, that's notable on two counts: Questie apparently still loads
-something there despite `CLAUDE.md` stating no quest DB exists for Forever, and the
-SavedVariables warning firing there is expected, not new. If it was run on Classic Era,
-the warning firing there would be a real finding, since Classic Era isn't supposed to
-have that bug at all. Needs one line of confirmation from whoever ran it.
+**Resolved 2026-09-20: Forever.** The SavedVariables warning firing there is expected,
+not a new bug — matches `Compat:SavedVarsAreBroken()`'s documented Forever-only scope.
+
+**Loose thread, not blocking this plan:** `CLAUDE.md`'s client table states Forever has
+"no quest DB exists," yet this same Forever run had Questie load and the adapter validate
+a 2,781-step route without erroring. Those two facts are in tension. Worth a targeted
+re-check later (does the loaded data actually resolve real quest names on Forever, or did
+it just load without crashing) before touching the documented assumption either way — not
+urgent, not evidence of an addon bug, just flagged so it isn't lost.
 
 ## Done when
 
@@ -159,5 +159,9 @@ have that bug at all. Needs one line of confirmation from whoever ran it.
 - [x] V1, V2, V3, V6, V8 confirmed live — all pass.
 - [x] V4 — fixed and confirmed live (2026-09-20); see "New finding" above. Uncovered a
       separate, unrelated marker-rendering bug, tracked outside this plan.
-- [ ] V5 — recording toggle confirmed, end-to-end recovery re-test still needed.
-- [ ] V7 — mechanism confirmed; which client it ran on needs confirming.
+- [x] V5 — confirmed 2026-09-20: recovered data matches the in-game export.
+- [x] V7 — confirmed 2026-09-20: ran on Forever, as expected.
+
+**Plan complete.** The separate marker-rendering bug (noted under V4) and the
+Questie-on-Forever loose thread (noted above) are both carried forward outside this
+plan's scope, not reopened here.

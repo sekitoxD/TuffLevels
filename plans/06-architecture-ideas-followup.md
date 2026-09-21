@@ -47,6 +47,7 @@ removing the need to reload in the first place.
   frame repaints without a `/reload`. Separately confirm the addon's existing
   `SavedVarsAreBroken()` login warning is what a player sees if they do `/reload` and the
   palette reverts — i.e. that the failure mode is "warned", not "silent".
+  **Result (2026-09-20): PASS — works as intended.**
 
 ## Item 2 — Kill/item objective counts not updating
 
@@ -70,6 +71,7 @@ guard (`Core.lua:277-278`, comment at `272-276`), and `Reconcile` already runs o
   partially complete it, `/reload`, confirm the count picked back up from the live quest
   log rather than showing 0 or stale data (it should, since `Objectives()` re-reads by
   `questID` every call and caches nothing).
+  **Result (2026-09-20): PASS — works as intended.**
 
 ## Item 3 — No menu explanation of auto-progress/catchup mode
 
@@ -89,6 +91,7 @@ the CHANGELOG already claims this was added (`Panel.lua:33`).
   whether "Help / About" is found before giving up. If it is not obviously discoverable,
   that's a follow-up UX nit (make the button more prominent), not a missing feature — flag
   it back rather than assuming this plan should silently expand to cover it.
+  **Result (2026-09-20): PASS — easy to find.**
 
 ## Item 4 — "Stop recording" / "Save as a route" still cluttering the menu
 
@@ -126,6 +129,9 @@ change.
   with "Start recording" and "0 steps recorded". On Forever specifically, confirm the
   "Recording state was reset on login" message on that first login is at most a minor
   wording nit and not confusing enough to warrant a follow-up.
+  **Result (2026-09-20): PASS — panel opens with "Start recording"; the reset message does
+  fire on Forever on that first login, as anticipated above, and reads as expected rather
+  than confusing.**
 - **Not done: the submenu-move question is still open** (see below) — this pass only
   changed the default state, not where the button lives.
 
@@ -169,6 +175,9 @@ button print an explicit success/failure message (`UI.lua:277-279`).
   supported API look unsupported — `CLAUDE.md` doesn't currently document Forever's
   waypoint-API support one way or the other, so this is worth confirming and adding a note
   to `Compat.lua`'s header if it turns out to be a hard "no" on that client.
+  **Result (2026-09-20): PASS — reports "waypoint set," i.e. Forever does have a working
+  waypoint API path. Worth a follow-up note in `Compat.lua`'s header confirming which API
+  it used, but not blocking.**
 
 ## Item 6 — Class icon instead of the red "?"
 
@@ -190,6 +199,7 @@ texture in the tracker header next to `frame.sectionText` (`UI.lua:200-207`).
   the user can do this comparison). Flag any mismatch in icon size/position/atlas coords as
   a follow-up, since the current code looks correct but hasn't been checked against that
   specific reference.
+  **Result (2026-09-20): PASS — working as intended.**
 
 ## Item 7 — Panel default position, centered intro, changelog notice
 
@@ -216,26 +226,28 @@ worth scheduling; noted here only so it isn't rediscovered and treated as a new 
   annoys the user in practice).
 - **Verify [G]:** confirm a fresh install opens left-aligned, the welcome popup is centered,
   and the "What's new" badge shows once and can be dismissed within a single session.
+  **Result (2026-09-20): PASS — opens left-aligned as stated.**
 
 ---
 
 ## Recommended order of work
 
 1. ~~Item 4 decision + implementation~~ — **done** (2026-09-20): recording now defaults off,
-   welcome text reworded, CHANGELOG/version bumped to 1.5.4. Commit is pending (ask first,
-   per standing rule) until this is reviewed.
-2. **One in-game verification pass**, still open, covering all 7 items above (~1 hour total
-   on Forever, since that's the client the original complaints referenced) — items 1/2/3/5/6/7
-   because this plan expects code already fixes them and wants to catch anything code-reading
-   missed (e.g. Forever genuinely lacking waypoint APIs, per item 5), item 4 to confirm the
-   new default and the reworded welcome text read correctly in-game.
-3. Once verified, update `Architecture/Ideas-for-architecture.md` and
-   `Architecture/last-update.md` to reflect that this list is resolved (or file the specific
-   items that verification turns up as real bugs, if any do).
+   welcome text reworded, CHANGELOG/version bumped to 1.5.4.
+2. ~~One in-game verification pass, covering all 7 items~~ — **done** (2026-09-20). All 7
+   items confirmed PASS in-game on Forever; see each item's "Result" line above. No
+   verification turned up a code-reading miss.
+3. ~~Update `Architecture/Ideas-for-architecture.md`~~ — **done**, pointed at this plan.
+   `Architecture/last-update.md` still reads as a stale session marker ("i ran out of
+   tokens...") — low-priority cleanup, not required for this plan to be closed.
 4. Separately, decide whether the "Recording" toggle should also move into the
-   "Content & Import" submenu (see item 4's "still open" note) — independent of the above.
+   "Content & Import" submenu (see item 4's "still open" note) — independent of the above,
+   a cosmetic layout choice, not a bug.
 
-## Remaining work
+## Status
 
-~1 hour of in-game verification (all 7 items). No further code is expected unless
-verification turns up something code-reading missed.
+**Complete.** All 7 items confirmed working as intended in-game (2026-09-20). Two small
+loose threads carried forward, neither blocking: (a) whether the "Recording" toggle should
+move into the "Content & Import" submenu (item 4, cosmetic, needs a user decision, not a
+bug), and (b) a follow-up note for `Compat.lua`'s header on which waypoint API Forever
+actually used for item 5's "waypoint set" result.
