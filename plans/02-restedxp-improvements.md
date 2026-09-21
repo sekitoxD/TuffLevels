@@ -202,8 +202,16 @@ what shipped. In-game verification (2026-09-20):
   before ever reaching any name-matching logic. Fixed by dropping that
   coarse gate from Marker.lua; it now relies on the long-stable
   `IsInInstance()` plus the narrower per-unit/per-value secret checks that
-  already run on the specific read in question. Awaiting a third in-game
-  check to confirm the marker now appears.
+  already run on the specific read in question. Confirmed in-game: the
+  marker now appears, and name-matching works correctly (`debugmarker`
+  showed the parsed objective name matching the live nameplate).
+  One more issue found in that same pass: the "mob" icon cropped a
+  quadrant out of the `Interface\Minimap\ObjectIcons` atlas by hardcoded
+  texture coordinates, and that atlas's layout showed the wrong icon on
+  this client. Fixed by replacing it with a plain white square rotated 45°
+  and tinted purple instead of depending on any icon atlas's guessed
+  layout. Awaiting one more in-game check to confirm the diamond renders
+  correctly.
 - [x] R2: a route with a `via`-annotated multi-map travel step shows the label in
   the arrow's "Via:" line, and `/tuff verify` still passes.
 - [x] R3: completing a multi-choice quest with automation on prints the best-value
