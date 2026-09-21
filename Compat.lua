@@ -85,6 +85,16 @@ Compat.has = {
 
 -- Broadly: is the client currently restricting addon access to some Lua
 -- values at all, regardless of which unit is involved?
+--
+-- Confirmed unreliable as a blanket gate: in-game testing on Forever found
+-- this returning true while standing in an ordinary outdoor leveling zone
+-- (Durotar, no instance, nothing secret about a normal kill quest), which
+-- made Marker.lua pause nameplate matching everywhere, all the time.
+-- Marker.lua no longer OR's this into its restricted-check; it relies on
+-- IsInInstance() plus the narrower per-unit/per-value checks below
+-- instead. Kept here in case a future, more targeted use for it turns up,
+-- but don't wire it back into a feature-wide pause without re-verifying
+-- against a live client first.
 function Compat:HasSecretRestrictions()
     if C_Secrets and C_Secrets.HasSecretRestrictions then
         if self:Guard(C_Secrets.HasSecretRestrictions) then return true end

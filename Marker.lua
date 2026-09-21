@@ -220,8 +220,19 @@ end
 -- in an instance or on a client with secret values active.
 Marker.debugForceRestricted = false
 
+-- Compat:HasSecretRestrictions() used to be OR'd in here too, but in-game
+-- testing on Forever found it returning true in an ordinary outdoor
+-- leveling zone (not an instance, nothing secret about a normal kill
+-- quest), which silently disabled every marker all the time - confirming
+-- Compat.lua's own caveat that this API is unverified against a real
+-- client. The actual per-read safety net (Compat:IsUnitIdentitySecret /
+-- Compat:IsSecretValue, both called below on the specific unit/value in
+-- play) doesn't depend on that coarse global flag being accurate, so
+-- dropping it here only removes a false-positive pause, not real
+-- protection. IsInInstance() is a long-stable Blizzard API and stays as
+-- the legitimate coarse pause.
 local function IsRestricted()
-    return Marker.debugForceRestricted or Compat:IsInInstance() or Compat:HasSecretRestrictions()
+    return Marker.debugForceRestricted or Compat:IsInInstance()
 end
 Marker.IsRestricted = IsRestricted
 
@@ -273,8 +284,9 @@ end
 -- since the failure mode here ("marker never appears") gives no error and
 -- can't be diagnosed by reading code alone - /tuff debugmarker.
 function Marker:DebugDump()
-    ns.Print(("Marker: enabled=%s markMobs=%s restricted=%s"):format(
-        tostring(self.enabled), tostring(self.markMobs), tostring(IsRestricted())))
+    ns.Print(("Marker: enabled=%s markMobs=%s restricted=%s (forced=%s inInstance=%s)"):format(
+        tostring(self.enabled), tostring(self.markMobs), tostring(IsRestricted()),
+        tostring(self.debugForceRestricted), tostring(Compat:IsInInstance())))
 
     local step = ns.Core and ns.Core:CurrentStep()
     if not step then
