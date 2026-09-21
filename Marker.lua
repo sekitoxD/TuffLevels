@@ -245,11 +245,25 @@ local function CheckUnit(unit)
         end
     end
 
-    -- 2. Is it something an active objective needs dead?
+    -- 2. Is it something an active objective needs dead? Objective text
+    -- names the plural creature ("Mottled Boars slain: 3/10") while the
+    -- nameplate shows the singular ("Mottled Boar"), so an exact-string
+    -- hash lookup never fires for the common case - fall back to a
+    -- substring match in both directions, same as the quest-giver check
+    -- above already does for its own name-matching gap.
     local mobs = Marker:WantedMobs()
-    if mobs and mobs[name:lower()] then
-        ShowMarkerOn(plate, "mob")
-        return
+    if mobs then
+        local lname = name:lower()
+        if mobs[lname] then
+            ShowMarkerOn(plate, "mob")
+            return
+        end
+        for wantedMob in pairs(mobs) do
+            if lname:find(wantedMob, 1, true) or wantedMob:find(lname, 1, true) then
+                ShowMarkerOn(plate, "mob")
+                return
+            end
+        end
     end
 
     HideMarkerOn(plate)

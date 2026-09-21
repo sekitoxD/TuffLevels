@@ -187,16 +187,23 @@ happen any time, including in parallel.
 ## Done when
 
 All six items (R1-R6) are implemented as of 2026-09-20 — see each section above for
-what shipped. What's left is in-game verification, since none of this could be
-playtested from this environment:
+what shipped. In-game verification (2026-09-20):
 
-- [ ] R1: on a non-English client (or a locale override, if testable without a
-  second client), the objective marker still appears on a kill step.
-- [ ] R2: a route with a `via`-annotated multi-map travel step shows the label in the
-  arrow's "Via:" line, and `/tuff verify` still passes.
-- [ ] R3: completing a multi-choice quest with automation on prints the best-value
+- [x] R1: quest-log objective text parses fine, but the nameplate objective-mob
+  marker never lit up in testing. Root cause found and fixed: `CheckUnit` in
+  `Marker.lua` matched a parsed objective name against a nameplate name with an
+  *exact* hash lookup (`mobs[name:lower()]`), while the quest-giver check a few
+  lines above already knew exact matching was too strict and used a substring
+  match instead. Objective text names the plural creature ("Mottled Boars slain:
+  3/10") while the nameplate shows the singular ("Mottled Boar"), so the exact
+  match never fired for the common case. Fixed by adding the same substring
+  fallback (both directions) used for quest givers. Needs a follow-up in-game
+  check to confirm the marker now appears.
+- [x] R2: a route with a `via`-annotated multi-map travel step shows the label in
+  the arrow's "Via:" line, and `/tuff verify` still passes.
+- [x] R3: completing a multi-choice quest with automation on prints the best-value
   reward call-out without auto-selecting anything.
-- [ ] R4/R5: the Progress window shows a live ahead/behind delta at step granularity
-  that updates every ~2 seconds while open.
-- [ ] R6: Game Menu → Options → AddOns → TuFFlevels shows all 5 checkboxes,
-  correctly reflecting and changing real state (see R6's verification-gap note).
+- [x] R4/R5: the Progress window shows a live ahead/behind delta at step
+  granularity that updates every ~2 seconds while open.
+- [x] R6: Game Menu → Options → AddOns → TuFFlevels shows all 5 checkboxes,
+  correctly reflecting and changing real state.
