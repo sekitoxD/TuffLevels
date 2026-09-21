@@ -287,6 +287,7 @@ function Pace:ShowExport()
         close:SetPoint("BOTTOM", 0, 14)
         close:SetText("Close")
         close:SetScript("OnClick", function() exportFrame:Hide() end)
+        ns.Theme:SkinChildren(exportFrame)
     end
 
     local lines = { ("Route: %s"):format(Core.active and Core.active.name or "?") }

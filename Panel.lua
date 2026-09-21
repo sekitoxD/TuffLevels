@@ -23,19 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.5.5"
+local CHANGELOG_VERSION = "1.6.0"
 local CHANGELOG = {
-    "Moved the Recording toggle off the main panel into the Content & Import submenu, alongside Save this as a route - now that both default off, they're occasional-use actions rather than something to keep on the main list.",
-    "Recording is now off by default on a fresh install, same as every other opt-in feature - it's a route-authoring tool, not something a player following a route needs running from session one. Turn it on from Menu > Content & Import > Recording.",
-    "Tagged all 36 repeated-name chain-link steps in the Tirisfal Start route (A New Plague, At War with the Scarlet Crusade, Arugal's Folly) as ambiguous so they resolve against your live quest log instead of risking a silent multi-step skip. Fixed 3 /tuff verify findings in the Solo route: an unidentified turn-in near Malaka'Jin is now an honest manual note instead of a broken empty quest name, and two hearth steps no longer carry a bogus placeholder coordinate.",
-    "Removed the confusing duplicate 'Durotar (Orc/Troll)' sample route from Available Guides - it's superseded by the real generated Durotar leg. The sample file itself stays on disk (it's the schema-doc reference and a CI test fixture), just no longer loaded as a selectable route.",
-    "Fixed SheetImport.lua tagging every imported step with minLevel from the sheet's level column - that HIDES a step below that level, so it was silently removing steps for anyone under the route's intended pace instead of just showing where the route expects you to be. Uses the same display-only atLevel field the generated ONSLAUGHT routes already use.",
-    "Menu condensed from 26 buttons to ~13: occasional-use route setup/backup buttons moved into a new Content & Import submenu, display toggles moved into a new Display settings submenu, and Add a note here/Mark this spot now only show up while actively recording.",
-    "Fixed the Map button silently doing nothing on an enabled step: the native map-pin/TomTom calls weren't error-guarded and could throw without any visible feedback. Now reports success or failure explicitly.",
-    "Added a Help / About section explaining auto progress and catch-up mode.",
-    "Map button now greys out (with feedback) instead of silently doing nothing on steps with no coordinates.",
-    "The SavedVariables-loss warning now mentions saved settings/theme, not just step progress.",
-    "Tracker now defaults to the left side of the screen on a fresh install.",
+    "Alliance leveling routes added: Human, Dwarf/Gnome, and Night Elf, each a full 1-60 path (TuFFlevels had zero Alliance content before this). Converted from RXPGuides' Classic-flavored guides - see the Credits & License section at the bottom of each Routes/Alliance/*.lua file; unlike the rest of this addon (MIT), those three files are CC BY-NC-SA 4.0. Marked as sample routes (unverified IDs) until run through /tuff verify and played.",
+    "Tauren leveling route added (Routes/Horde/Mulgore.lua, full 1-60) - Horde previously had no Mulgore-starting route at all. Same conversion/licensing approach as the Alliance routes above; self-contained, doesn't touch the existing Orc/Troll Solo/ route. About 24 steps reference a continent-level zone (Kalimdor/Eastern Kingdoms) this addon's zone table doesn't resolve yet - everything except those steps' arrows works.",
+    "Added a Rogue-specific class-quest chain to the Horde Durotar route (Gornek -> Rwag, Encrypted Tablet/Parchment, Backstab training) - the existing generic 'Class Trainer - check the whole area' placeholder had nothing Rogue-specific.",
+    "Added an RXPGuides (RestedXP) guide importer (/tuff rxp, or Menu > Content & Import) alongside the existing Guidelime importer - paste in a Classic-flavored guide you already have installed and get a TuFFlevels route back. Ships no RXPGuides content itself, same isolation as the QuestieDB/Guidelime integrations.",
 }
 
 function Panel:ShowChangelogDialog()
@@ -77,6 +70,7 @@ function Panel:ShowChangelogDialog()
     ok:SetPoint("BOTTOM", 0, 16)
     ok:SetText("Close")
     ok:SetScript("OnClick", function() f:Hide() end)
+    ns.Theme:SkinChildren(f)
 
     self.changelogBox = f
     f:Show()
@@ -155,6 +149,7 @@ function Panel:ShowWelcome()
     ok:SetPoint("BOTTOM", 0, 18)
     ok:SetText("Got it")
     ok:SetScript("OnClick", function() w:Hide() end)
+    ns.Theme:SkinChildren(w)
 
     w:Show()
 end
@@ -412,7 +407,7 @@ function Panel:ShowContentMenu()
     if self.contentMenu then self.contentMenu:Hide() end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(240, 306)
+    f:SetSize(240, 332)
     f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
     f:SetFrameStrata("DIALOG")
     f:EnableMouse(true)
@@ -429,10 +424,13 @@ function Panel:ShowContentMenu()
     MakeButton(f, "Import a guide", -68, function()
         ns.GuideImport:Show()
     end)
-    MakeButton(f, "Write a route (text)", -94, function()
+    MakeButton(f, "Import RXPGuides guide", -94, function()
+        ns.RXPImport:Show()
+    end)
+    MakeButton(f, "Write a route (text)", -120, function()
         ns.CompactGuide:Show()
     end)
-    MakeButton(f, "Recover past quests", -120, function()
+    MakeButton(f, "Recover past quests", -146, function()
         ns.Import:Show()
     end)
 
@@ -445,7 +443,7 @@ function Panel:ShowContentMenu()
     -- menu is left open, so its own click handler updates its own text
     -- directly, the same pattern ShowDisplayMenu's mobBtn already uses.
     local recBtn, recStatus
-    recBtn = MakeButton(f, ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording", -146, function()
+    recBtn = MakeButton(f, ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording", -172, function()
         if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
         recBtn:SetText(ns.Recorder.active and "Stop recording" or "Start recording")
         recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
@@ -453,14 +451,14 @@ function Panel:ShowContentMenu()
     end)
 
     recStatus = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    recStatus:SetPoint("TOP", 0, -166)
+    recStatus:SetPoint("TOP", 0, -192)
     recStatus:SetTextColor(unpack(ns.Theme.color.dim))
     recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
 
-    MakeButton(f, "Save this as a route", -192, function()
+    MakeButton(f, "Save this as a route", -218, function()
         ns.Recorder:ShowExport()
     end)
-    MakeButton(f, "Progress code", -218, function()
+    MakeButton(f, "Progress code", -244, function()
         Panel:ShowProgressCode()
     end)
 
@@ -662,11 +660,23 @@ function Panel:ShowRoutePicker()
         none:SetTextColor(unpack(ns.Theme.color.dim))
     end
 
+    -- Height was fixed at the original 260 regardless of how many routes
+    -- exist - with enough routes registered the last rows ran past the
+    -- frame's own bottom edge and collided with the Close button anchored
+    -- there, which is why Close looked "dead" (a route button was drawn on
+    -- top of it and ate the click instead). Grow to fit instead.
+    f:SetHeight(math.max(260, 42 + count * 26 + 60))
+
     local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     close:SetSize(100, 22)
     close:SetPoint("BOTTOM", 0, 14)
     close:SetText("Close")
     close:SetScript("OnClick", function() f:Hide() end)
+
+    -- Route buttons above were left on Blizzard's default UIPanelButtonTemplate
+    -- look - every other dialog in this addon re-skins its buttons via
+    -- SkinChildren right before showing; this one just never got it.
+    ns.Theme:SkinChildren(f)
 
     self.picker = f
     f:Show()
@@ -737,6 +747,7 @@ function Panel:ShowCatchUpDialog()
         confirm:SetText("Close")
         confirm:SetScript("OnClick", function() f:Hide() end)
     end
+    ns.Theme:SkinChildren(f)
 
     self.catchUpBox = f
     f:Show()
@@ -793,6 +804,7 @@ function Panel:ShowResumePrompt(furthest)
     cancel:SetPoint("BOTTOM", 55, 16)
     cancel:SetText("Not now")
     cancel:SetScript("OnClick", function() f:Hide() end)
+    ns.Theme:SkinChildren(f)
 
     self.resumeBox = f
     f:Show()
@@ -845,6 +857,7 @@ function Panel:ShowProgressCode()
     ok:SetPoint("BOTTOM", 0, 16)
     ok:SetText("Close")
     ok:SetScript("OnClick", function() f:Hide() end)
+    ns.Theme:SkinChildren(f)
 
     self.codeBox = f
     f:Show()
@@ -910,6 +923,7 @@ function Panel:ShowHelpDialog()
     ok:SetPoint("BOTTOM", 0, 16)
     ok:SetText("Close")
     ok:SetScript("OnClick", function() f:Hide() end)
+    ns.Theme:SkinChildren(f)
 
     self.helpBox = f
     f:Show()
@@ -1008,6 +1022,7 @@ function Panel:ShowColorPicker()
     close:SetPoint("BOTTOM", 0, 14)
     close:SetText("Close")
     close:SetScript("OnClick", function() f:Hide() end)
+    ns.Theme:SkinChildren(f)
 
     self.colorPicker = f
     f:Show()

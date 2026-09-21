@@ -719,6 +719,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "guide" then
         ns.GuideImport:Show()
 
+    elseif cmd == "rxp" then
+        ns.RXPImport:Show()
+
     elseif cmd == "write" then
         if ns.CompactGuide then ns.CompactGuide:Show() end
 

@@ -1,6 +1,6 @@
 # TuFFlevels
 
-Step-by-step leveling route addon for WoW Classic Era. Horde 1–60.
+Step-by-step leveling route addon for WoW Classic Era. Horde and Alliance, 1–60.
 
 Architecture: **QuestieDB is the data layer, routes are authored, the addon is a step engine.**
 
@@ -68,6 +68,7 @@ Three beta bugs the addon handles:
 | `/tuff verify` | Validate the active route against the database |
 | `/tuff capture` | Dump your quest log as pasteable route steps |
 | `/tuff guide` | Import a community guide (Guidelime format) |
+| `/tuff rxp` | Import an RXPGuides (RestedXP) guide |
 | `/tuff write` | Author a route in the compact line-based syntax |
 | `/tuff where` | Print current step number |
 | `/tuff goto <n>` | Jump to a step (progress recovery); pauses auto-advance |
@@ -137,12 +138,12 @@ Auto accept/turn-in (opt-in, off by default on Classic Era/Retail, on by default
 
 TuFFlevels itself is **MIT**-licensed (see `LICENSE`).
 
-QuestieDB is **GPL-3.0**.
+QuestieDB is **GPL-3.0**. RXPGuides (RestedXP) guide text is **CC BY-NC-SA 4.0**.
 
 - Reading it at runtime as an optional dependency — you license TuFFlevels however you want.
-- Bundling or copying its data into your addon — TuFFlevels must be GPL-3.0.
+- Bundling or copying its data into your addon — TuFFlevels must relicense to match (GPL-3.0 for QuestieDB, CC BY-NC-SA 4.0 for RXPGuides, which is also incompatible with MIT redistribution anyway).
 
-This addon does the former deliberately. Don't copy data files in.
+This addon does the former deliberately. Don't copy data files in — `RXPImport.lua` ships a parser for RXPGuides' guide-text format, never any of RXPGuides' actual guide content; you paste in text from a copy of RXPGuides you already have installed, same arrangement as `GuideImport.lua` for Guidelime guides.
 
 ---
 

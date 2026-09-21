@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Forever / Retail.
 ## Author: sekitoxD
-## Version: 1.5.5
+## Version: 1.6.0
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom
@@ -23,6 +23,7 @@ Progress.lua
 Import.lua
 Zones.lua
 GuideImport.lua
+RXPImport.lua
 CompactGuide.lua
 SheetImport.lua
 Rogue.lua
@@ -35,6 +36,18 @@ Routes\Horde\Horde1-60.lua
 
 # -- Undead opening --------------------------------------------------------
 Routes\Horde\TirisfalStart.lua
+
+# -- Tauren 1-60 (converted from RXPGuides Classic guides - CC BY-NC-SA
+# -- 4.0, see the file's Credits & License section; not MIT like the rest
+# -- of this addon). Self-contained, not part of the Solo/ Leg() system. --
+Routes\Horde\Mulgore.lua
+
+# -- Alliance 1-60 (converted from RXPGuides Classic guides - CC BY-NC-SA
+# -- 4.0, see each file's Credits & License section; not MIT like the rest
+# -- of this addon) ---------------------------------------------------------
+Routes\Alliance\Human.lua
+Routes\Alliance\DwarfGnome.lua
+Routes\Alliance\NightElf.lua
 
 # -- solo Orc/Troll 1-60: Init first, zone files, Register last -------------
 Routes\Horde\Solo\Init.lua

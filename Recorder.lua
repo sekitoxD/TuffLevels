@@ -345,6 +345,7 @@ function Recorder:ShowExport(routeName)
             exportFrame.edit:SetFocus()
             exportFrame.edit:HighlightText()
         end)
+        ns.Theme:SkinChildren(exportFrame)
     end
 
     local text = self:BuildRouteText(routeName)

@@ -6,6 +6,14 @@
 --
 -- Generated from the source spreadsheet. Corrections applied during conversion
 -- are listed in plans/04-sheet-audit.md - edit them HERE, not in the sheet.
+--
+-- The Rogue class-quest chain (Gornek -> Rwag, quest 3083/3088, Backstab
+-- training) was hand-added afterward from RXPGuides' Classic-Horde
+-- guide (facts only - quest IDs/coords/NPC names, not their wording) to
+-- close a gap the source spreadsheet's class-agnostic "Class Trainer -
+-- check the whole area" placeholder left for Rogues specifically. Unlike
+-- Routes/Alliance/*.lua, this is a normal hand-authored addition, not a
+-- bulk conversion, so it carries this file's regular MIT license.
 
 local ADDON, ns = ...
 local Leg = ns.SoloLeg
@@ -64,12 +72,41 @@ Leg(1, "Durotar", {
       location = "The Den", atLevel = 3, logCount = 1, x = 42.1, y = 68.3,
     },
     {
+      -- Rogue class-quest chain (RXPGuides Classic-Horde-01-12_Durotar.lua):
+      -- Gornek hands out a race-specific tablet/parchment quest per class,
+      -- turned in at Rwag to unlock class trainer access - added
+      -- 2026-09-20, see plans/architecture-ideas notes for why.
+      type = "accept", name = "Accept Encrypted Tablet", npc = "Gornek", quest = 3083,
+      zone = "Durotar", x = 42.06, y = 68.32, atLevel = 3,
+      races = { "Troll" }, class = "ROGUE",
+    },
+    {
+      type = "accept", name = "Accept Encrypted Parchment", npc = "Gornek", quest = 3088,
+      zone = "Durotar", x = 42.06, y = 68.32, atLevel = 3,
+      races = { "Orc" }, class = "ROGUE",
+    },
+    {
       type = "note", name = "Note",
       note = "Skip Sting of the Scorpid and Sarkoth on a fresh crowded server.", atLevel = 3,
     },
     {
       type = "accept", questName = "Galgar's Cactus Apple Surprise", zone = "Durotar",
       location = "The Den", atLevel = 3, logCount = 2, x = 42.7, y = 67.2,
+    },
+    {
+      type = "turnin", name = "Turn in Encrypted Tablet", npc = "Rwag", quest = 3083,
+      zone = "Durotar", x = 41.27, y = 68.00, atLevel = 3,
+      races = { "Troll" }, class = "ROGUE",
+    },
+    {
+      type = "turnin", name = "Turn in Encrypted Parchment", npc = "Rwag", quest = 3088,
+      zone = "Durotar", x = 41.27, y = 68.00, atLevel = 3,
+      races = { "Orc" }, class = "ROGUE",
+    },
+    {
+      type = "trainer", name = "Train Backstab", npc = "Rwag", zone = "Durotar",
+      x = 41.27, y = 68.00, atLevel = 3, note = "Train Backstab from Rwag.",
+      class = "ROGUE",
     },
     {
       type = "trainer", name = "Class Trainer", zone = "Durotar", location = "The Den",
