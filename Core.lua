@@ -909,6 +909,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Core:Reconcile()
         Print("Reset to step 1.")
 
+    elseif cmd == "debugmarker" then
+        if ns.Marker then ns.Marker:DebugDump() end
+
     elseif cmd == "debugrestrict" then
         -- Test hook for the instance-safety guard (G1): flips a forced
         -- restricted state so it can be checked without actually being
@@ -925,7 +928,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Print("          verify | capture | client | errors | reset | help | code [<code>] | pace | write")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
-        Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc")
+        Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc | /tuff debugmarker")
         Print("(/tuff, /tufflevels and /sl all work the same)")
     end
 end)

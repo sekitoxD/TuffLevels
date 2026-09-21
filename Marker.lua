@@ -269,6 +269,46 @@ local function CheckUnit(unit)
     HideMarkerOn(plate)
 end
 
+-- Test hook: dumps exactly what the mob-marking pipeline sees right now,
+-- since the failure mode here ("marker never appears") gives no error and
+-- can't be diagnosed by reading code alone - /tuff debugmarker.
+function Marker:DebugDump()
+    ns.Print(("Marker: enabled=%s markMobs=%s restricted=%s"):format(
+        tostring(self.enabled), tostring(self.markMobs), tostring(IsRestricted())))
+
+    local step = ns.Core and ns.Core:CurrentStep()
+    if not step then
+        ns.Print("No current step.")
+    else
+        ns.Print(("Step: type=%s quest=%s npc=%s"):format(
+            tostring(step.type), tostring(step.quest), tostring(step.npc)))
+    end
+
+    local mobs = self:WantedMobs()
+    if mobs and next(mobs) then
+        local names = {}
+        for name in pairs(mobs) do table.insert(names, "'" .. name .. "'") end
+        ns.Print("Parsed wanted-mob names: " .. table.concat(names, ", "))
+    else
+        ns.Print("No wanted-mob names parsed from the quest log (WantedMobs returned nothing).")
+    end
+
+    if not (C_NamePlate and C_NamePlate.GetNamePlates) then
+        ns.Print("No nameplate API available on this client.")
+        return
+    end
+    local plates = Compat:Guard(C_NamePlate.GetNamePlates)
+    if not plates or #plates == 0 then
+        ns.Print("No nameplates currently visible - target/stand near the mob first.")
+        return
+    end
+    for _, plate in ipairs(plates) do
+        local unit = plate.namePlateUnitToken
+        local name = unit and Compat:Guard(UnitName, unit)
+        ns.Print("Nameplate seen: '" .. tostring(name) .. "'")
+    end
+end
+
 -- The wanted NPC changes whenever the step advances, so re-scan every
 -- visible nameplate rather than waiting for one to spawn.
 function Marker:RescanAll()
