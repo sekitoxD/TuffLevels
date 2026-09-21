@@ -240,14 +240,13 @@ worth scheduling; noted here only so it isn't rediscovered and treated as a new 
 3. ~~Update `Architecture/Ideas-for-architecture.md`~~ — **done**, pointed at this plan.
    `Architecture/last-update.md` still reads as a stale session marker ("i ran out of
    tokens...") — low-priority cleanup, not required for this plan to be closed.
-4. Separately, decide whether the "Recording" toggle should also move into the
-   "Content & Import" submenu (see item 4's "still open" note) — independent of the above,
-   a cosmetic layout choice, not a bug.
+4. ~~Decide whether the "Recording" toggle should also move into the "Content & Import"
+   submenu~~ — **done** (2026-09-20, v1.5.5): moved alongside "Save this as a route".
 
 ## Status
 
-**Complete.** All 7 items confirmed working as intended in-game (2026-09-20). Two small
-loose threads carried forward, neither blocking: (a) whether the "Recording" toggle should
-move into the "Content & Import" submenu (item 4, cosmetic, needs a user decision, not a
-bug), and (b) a follow-up note for `Compat.lua`'s header on which waypoint API Forever
-actually used for item 5's "waypoint set" result.
+**Complete.** All 7 items confirmed working as intended in-game (2026-09-20). Both loose
+threads are now resolved (2026-09-20): (a) the "Recording" toggle moved into the
+"Content & Import" submenu, alongside "Save this as a route" (v1.5.5); (b) `Compat.lua`'s
+header now documents that Forever's native `C_Map.SetUserWaypoint` fallback is a working
+API path, confirmed with no TomTom installed.

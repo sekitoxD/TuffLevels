@@ -145,12 +145,12 @@ precedent — a similar diamond-rendering issue was already found and fixed once
 **Resolved 2026-09-20: Forever.** The SavedVariables warning firing there is expected,
 not a new bug — matches `Compat:SavedVarsAreBroken()`'s documented Forever-only scope.
 
-**Loose thread, not blocking this plan:** `CLAUDE.md`'s client table states Forever has
-"no quest DB exists," yet this same Forever run had Questie load and the adapter validate
-a 2,781-step route without erroring. Those two facts are in tension. Worth a targeted
-re-check later (does the loaded data actually resolve real quest names on Forever, or did
-it just load without crashing) before touching the documented assumption either way — not
-urgent, not evidence of an addon bug, just flagged so it isn't lost.
+**Loose thread — resolved 2026-09-20.** User confirmed Questie is manually installed on
+Forever (screenshot: Questie's own DB-update sequence completing, then TuFFlevels
+reporting ready right after). `CLAUDE.md`'s client table has been corrected — Questie is
+a third-party addon, not a client feature, so it works on Forever the same way it does
+everywhere else despite the client shipping no built-in quest DB. `TuFFlevels_Mainline.toc`'s
+`OptionalDeps` now lists `QuestieDB, Questie` too, matching the other two `.toc` files.
 
 ## Done when
 
@@ -162,6 +162,7 @@ urgent, not evidence of an addon bug, just flagged so it isn't lost.
 - [x] V5 — confirmed 2026-09-20: recovered data matches the in-game export.
 - [x] V7 — confirmed 2026-09-20: ran on Forever, as expected.
 
-**Plan complete.** The separate marker-rendering bug (noted under V4) and the
-Questie-on-Forever loose thread (noted above) are both carried forward outside this
-plan's scope, not reopened here.
+**Plan complete.** The separate marker-rendering bug (noted under V4) is carried forward
+outside this plan's scope — audited 2026-09-20 against a fresh screenshot showing the
+objective-mob diamond marker rendering correctly; no persisting bug found, not reopened
+here. The Questie-on-Forever loose thread is resolved (see above).
