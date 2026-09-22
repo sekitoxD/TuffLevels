@@ -44,13 +44,16 @@ end
 -- map-fraction estimate (real-yards APIs unavailable), whether the target
 -- is the step's own final destination (false while still routing through
 -- an authored `path`), and that path point's `via` label if it has one.
-local function Bearing(step)
+--
+-- `mapID` (the player's current map) is computed once per tick by the
+-- caller and threaded through here instead of this function re-querying
+-- `C_Map.GetBestMapForUnit` itself.
+local function Bearing(step, mapID)
     if not step then return nil end
 
     local targetMap, tx, ty, isFinal, via = ns.Data:EffectiveTarget(step)
     if not (tx and ty) then return nil end
 
-    local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
     if not mapID then return nil end
 
     -- Only meaningful if the target is on the map we're standing in.
@@ -160,17 +163,31 @@ function Arrow:Build()
         ns.Print("|cffff5555Arrow disabled after repeated errors.|r /tuff errors for details.")
     end)
 
-    frame:SetScript("OnUpdate", function(self, elapsed)
-        self._t = (self._t or 0) + elapsed
-        if self._t < 0.05 then return end
-        self._t = 0
-        guardedUpdate()
-    end)
+    -- Driven by a standalone ticker instead of this frame's own OnUpdate:
+    -- WoW never calls OnUpdate on a hidden frame, and Update() hides this
+    -- frame on several ordinary paths (arrow disabled, deferring to
+    -- TomTom, no current step, no bearing angle) - any of those would
+    -- otherwise stop the loop until the arrow is toggled off and on
+    -- again. Created once
+    -- here since Build() early-returns above if already built, so this
+    -- never stacks across repeated Build()/Toggle() calls. Same 0.05s
+    -- (20 Hz) rate the old OnUpdate throttle used.
+    frame.ticker = C_Timer.NewTicker(0.05, guardedUpdate)
 end
 
 --------------------------------------------------------------------------
 -- Update
 --------------------------------------------------------------------------
+
+-- Skips SetText when the string is unchanged - this frame's text updates
+-- run at 20 Hz but the underlying values (compass label, rounded distance,
+-- title) usually don't change between ticks.
+local function SetTextCached(fs, text)
+    if fs._lastText ~= text then
+        fs:SetText(text)
+        fs._lastText = text
+    end
+end
 
 function Arrow:Update()
     if not frame then return end
@@ -201,7 +218,11 @@ function Arrow:Update()
         end
     end
 
-    local angle, dist, wrongMap, approx, isFinal, via = Bearing(step)
+    -- Computed once per tick and threaded through Bearing instead of it
+    -- re-querying the player's current map itself.
+    local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+
+    local angle, dist, wrongMap, approx, isFinal, via = Bearing(step, mapID)
 
     if wrongMap then
         frame:Show()
@@ -212,8 +233,8 @@ function Arrow:Update()
             tex:SetRotation(0)
             tex:SetVertexColor(unpack(Theme.color.faint))
         end
-        distText:SetText("--")
-        titleText:SetText(step.zone and ("Travel to " .. step.zone) or "Different zone")
+        SetTextCached(distText, "--")
+        SetTextCached(titleText, step.zone and ("Travel to " .. step.zone) or "Different zone")
         return
     end
 
@@ -232,7 +253,7 @@ function Arrow:Update()
     if self.textOnly then
         tex:Hide() ; frame.glow:Hide()
         distText:SetTextColor(unpack(onTarget and onColor or offColor))
-        distText:SetText(("%s%s  %d"):format(approx and "~" or "",
+        SetTextCached(distText, ("%s%s  %d"):format(approx and "~" or "",
             CompassLabel(angle), dist))
     else
         tex:Show() ; frame.glow:Show()
@@ -247,13 +268,13 @@ function Arrow:Update()
             frame.glow:SetVertexColor(offGlow[1], offGlow[2], offGlow[3], 0.35)
         end
         distText:SetTextColor(unpack(Theme.color.lilac))
-        distText:SetText(("%s%d"):format(approx and "~" or "", dist))
+        SetTextCached(distText, ("%s%d"):format(approx and "~" or "", dist))
     end
 
     local label = (not isFinal and via) or step.npc or step.name or ""
     if #label > 28 then label = label:sub(1, 26) .. "..." end
     local prefix = usingNext and "Next: " or (not isFinal and "Via: " or "")
-    titleText:SetText(prefix .. label)
+    SetTextCached(titleText, prefix .. label)
 end
 
 function Arrow:Toggle()
