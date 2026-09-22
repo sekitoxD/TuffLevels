@@ -69,14 +69,15 @@ local function CurrentStepFor(stepType, questID)
     if stepType == "accept" and step.questName then
         local title = Compat:GetOpenQuestTitle()
         if title and title:lower() == step.questName:lower() then
-            -- Same rule as Core.ResolveQuest: don't cache an ambiguous
-            -- (shared-name chain-link) step's ID, since a later link would
-            -- then wrongly resolve to this one's ID from the cache.
-            if not step.ambiguous then
-                step.quest = questID
-                Compat:CacheQuestName(step.questName, questID)
-                Compat:SaveNameCache()
-            end
+            -- Session-only: bind step.quest on this step's own table so
+            -- automation can act on the open dialog, but never persist via
+            -- Compat:CacheQuestName/SaveNameCache. Unlike Core.ResolveQuest's
+            -- live-log-only match, a dialog title has no uniqueness
+            -- guarantee - persisting it into TuFFlevelsDB.questNames could
+            -- permanently mis-stamp a shared-name chain-quest link (an
+            -- unflagged `ambiguous` step) for the rest of the character's
+            -- saved history, not just this session.
+            step.quest = questID
             return step
         end
     end
@@ -128,6 +129,17 @@ Compat:RegisterEvents(f, { "QUEST_DETAIL", "QUEST_COMPLETE", "QUEST_GREETING" })
 f:SetScript("OnEvent", Compat:Wrap("Automation", function(self, event)
     if not Automation.enabled then return end
     if Compat:Guard(IsShiftKeyDown) then return end
+
+    -- A multi-quest NPC's greeting panel can re-show (client-driven)
+    -- faster than ThrottledReconcile's 0.3s debounce, so Core.index can
+    -- still be stale here for quest 2+ at the same NPC. Force the quest-log
+    -- index to be rebuilt and the step engine to catch up synchronously
+    -- before matching, instead of matching against a stale current step.
+    -- Bounded (Core:Reconcile stops at the first not-done step) and
+    -- idempotent - ThrottledReconcile's later timer finds nothing left to
+    -- advance and only refreshes the UI.
+    Compat:InvalidateLogIndex()
+    if ns.Core then ns.Core:Reconcile() end
 
     if event == "QUEST_DETAIL" then
         local questID = Compat:Guard(GetQuestID)
