@@ -21,6 +21,20 @@ local win, rows, slider, EnsureRow
 local visibleRows = 16
 local offset = 0
 local filter = "all"      -- all | done | todo
+local renderingRows = false
+
+-- Single walk of route.steps replaces what used to be two independent full
+-- walks (RouteStats + BuildList), keyed on the route it was built for so a
+-- route switch is detected with a pointer compare instead of a rebuild.
+-- `list` mirrors BuildList's old output (applicable steps only, honoring
+-- the current filter); `done`/`total`/`questsDone`/`questsTotal` mirror
+-- RouteStats' old output (every step, unfiltered). Both keep their exact
+-- original counting semantics - see RebuildCache below.
+local cache = {
+    route = nil,
+    list = {},
+    done = 0, total = 0, questsDone = 0, questsTotal = 0,
+}
 
 -- Recomputes how many rows fit in the window's current height, growing the
 -- row-button pool as needed (rows are never destroyed, only hidden) and
@@ -51,26 +65,12 @@ function Progress:TotalCompletedQuests()
     return #list
 end
 
--- How much of the loaded route is finished.
+-- How much of the loaded route is finished. Reads whatever RebuildCache
+-- last computed - callers that need current numbers call RebuildCache (via
+-- Refresh) first, same as they always had to get a fresh RouteStats/
+-- BuildList pair before.
 function Progress:RouteStats()
-    local route = ns.Core and ns.Core.active
-    if not route then return 0, 0, 0, 0 end
-
-    local done, total, questsDone, questsTotal = 0, 0, 0, 0
-
-    for _, step in ipairs(route.steps) do
-        total = total + 1
-        if ns.Core.IsStepDone(step) then done = done + 1 end
-
-        if step.quest and step.type == "turnin" then
-            questsTotal = questsTotal + 1
-            if Compat:IsQuestComplete(step.quest) then
-                questsDone = questsDone + 1
-            end
-        end
-    end
-
-    return done, total, questsDone, questsTotal
+    return cache.done, cache.total, cache.questsDone, cache.questsTotal
 end
 
 -- Quests turned in during this recording session.
@@ -87,34 +87,62 @@ end
 -- Row data
 --------------------------------------------------------------------------
 
-local function BuildList()
+-- The one remaining full walk of route.steps. Computes both RouteStats'
+-- old totals (every step, via IsStepDone - `total`/`done` are NOT gated by
+-- StepApplies, matching the original) and BuildList's old row list
+-- (applicable steps only; a row's `done` is `i < index or IsStepDone`,
+-- also unchanged) in a single pass, reusing one IsStepDone call per step
+-- for both instead of computing it twice.
+--
+-- Resets `offset` to 0 whenever the route itself changed since the last
+-- rebuild, so switching routes doesn't leave the scroll position pointing
+-- into the middle of a different list.
+local function RebuildCache()
     local route = ns.Core and ns.Core.active
-    local list = {}
-    if not route then return list end
+    if route ~= cache.route then
+        offset = 0
+    end
 
+    cache.route = route
+    cache.list = {}
+    cache.done, cache.total, cache.questsDone, cache.questsTotal = 0, 0, 0, 0
+
+    if not route then return end
+
+    local index = ns.Core.index
     for i, step in ipairs(route.steps) do
+        cache.total = cache.total + 1
+        local stepDone = ns.Core.IsStepDone(step)
+        if stepDone then cache.done = cache.done + 1 end
+
+        if step.quest and step.type == "turnin" then
+            cache.questsTotal = cache.questsTotal + 1
+            if Compat:IsQuestComplete(step.quest) then
+                cache.questsDone = cache.questsDone + 1
+            end
+        end
+
         if ns.Core.StepApplies(step) then
-            local isDone = (i < ns.Core.index) or ns.Core.IsStepDone(step)
-            local isCurrent = (i == ns.Core.index)
+            local isDone = (i < index) or stepDone
+            local isCurrent = (i == index)
 
             local include = (filter == "all")
                 or (filter == "done" and isDone)
                 or (filter == "todo" and not isDone)
 
             if step.type == "section" then
-                table.insert(list, {
+                table.insert(cache.list, {
                     index = i, step = step, isSection = true,
-                    done = (i < ns.Core.index), current = isCurrent,
+                    done = (i < index), current = isCurrent,
                 })
             elseif include then
-                table.insert(list, {
+                table.insert(cache.list, {
                     index = i, step = step,
                     done = isDone, current = isCurrent,
                 })
             end
         end
     end
-    return list
 end
 
 local function RowLabel(entry)
@@ -145,8 +173,7 @@ end
 -- otherwise leave "Jump to current" with nothing to find and silently do
 -- nothing - fall back to "all" so the jump always succeeds.
 local function ScrollToCurrent()
-    local list = BuildList()
-    for i, e in ipairs(list) do
+    for i, e in ipairs(cache.list) do
         if e.current then
             slider:SetValue(math.max(0, i - 3))
             return
@@ -155,9 +182,8 @@ local function ScrollToCurrent()
 
     if filter ~= "all" then
         filter = "all"
-        Progress:Refresh()
-        list = BuildList()
-        for i, e in ipairs(list) do
+        Progress:Refresh() -- rebuilds cache.list under the new filter
+        for i, e in ipairs(cache.list) do
             if e.current then
                 slider:SetValue(math.max(0, i - 3))
                 return
@@ -341,8 +367,30 @@ function Progress:Build()
     end)
 end
 
+-- Indexes the cached list built by RebuildCache - O(visible rows), no walk
+-- of route.steps, so mouse-wheel/drag scrolling is cheap regardless of
+-- route length. Re-entry guarded because slider:SetMinMaxValues below can
+-- itself fire OnValueChanged, which calls back into RenderRows.
 function Progress:RenderRows()
-    local list = BuildList()
+    if renderingRows then return end
+
+    local list = cache.list
+
+    -- Clamp offset BEFORE rendering (not after, as before) so a route/
+    -- filter switch that shrinks the list doesn't render a page of blank
+    -- rows this pass and only fix itself on the next one.
+    local maxOffset = math.max(0, #list - visibleRows)
+    if offset > maxOffset then offset = maxOffset end
+    if offset < 0 then offset = 0 end
+
+    -- Only these two slider calls can re-enter (via OnValueChanged), so the
+    -- guard wraps just them - a throw from a bad row further down must not
+    -- leave the flag stuck and freeze the list for the session. SetValue
+    -- keeps the thumb in step with an offset reset by a route/filter change.
+    renderingRows = true
+    slider:SetMinMaxValues(0, maxOffset)
+    if slider:GetValue() ~= offset then slider:SetValue(offset) end
+    renderingRows = false
 
     for i = 1, visibleRows do
         local r = rows[i]
@@ -372,15 +420,11 @@ function Progress:RenderRows()
             r.stepIndex = nil
         end
     end
-
-    local maxOffset = math.max(0, #list - visibleRows)
-    slider:SetMinMaxValues(0, maxOffset)
-    if offset > maxOffset then offset = maxOffset end
 end
 
 -- The section/delta/XP-rate line, the only part of the summary that needs
 -- to move between step advances/quest events (the ticker below re-renders
--- just this, not the whole RouteStats/BuildList walk).
+-- just this, not the whole RebuildCache walk).
 function Progress:PaceSuffix()
     local text = ""
     if not ns.Pace then return text end
@@ -422,11 +466,12 @@ end
 local cachedBase = nil -- summary text without the live pace suffix; only Refresh() rebuilds it
 
 function Progress:Refresh()
-    -- RouteStats and BuildList both walk the whole route, which is thousands
-    -- of steps now. Reconcile calls this on every quest event, so a closed
-    -- window has to cost nothing - existing-but-hidden is not good enough.
+    -- RebuildCache walks the whole route, which is thousands of steps now.
+    -- Reconcile calls this on every quest event, so a closed window has to
+    -- cost nothing - existing-but-hidden is not good enough.
     if not win or not win:IsShown() then return end
 
+    RebuildCache()
     local done, total, qDone, qTotal = self:RouteStats()
     local lifetime = self:TotalCompletedQuests()
 
@@ -451,8 +496,8 @@ function Progress:Refresh()
 end
 
 -- Keeps the live step-pace delta moving between full Refresh() calls,
--- without repeating the thousands-of-steps RouteStats/BuildList walk every
--- 2 seconds - it only recomputes the cheap pace suffix and re-sets the text.
+-- without repeating the thousands-of-steps RebuildCache walk every 2
+-- seconds - it only recomputes the cheap pace suffix and re-sets the text.
 C_Timer.NewTicker(2, function()
     if not win or not win:IsShown() or not cachedBase then return end
     win.summary:SetText(cachedBase .. Progress:PaceSuffix())
