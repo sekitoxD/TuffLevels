@@ -113,9 +113,9 @@ conflicts with an item's original "Fix:", this section wins.**
 | 1 | Core + Compat + spec helpers: P1.1 | done (reviewed); [G] pending: city/mob pack on all 3 clients, hearth step still completes |
 | 2 | Core: P1.5 + P1.13 + Phase 3 `#steps+1` guard, with core_spec tests | not started |
 | 3 | Automation: P1.12, P1.9 | done (reviewed); [G] pending: QUEST_GREETING multi-quest NPC |
-| 4 | Progress: P1.3 | not started |
+| 4 | Progress: P1.3 | done (reviewed); [G] pending: long route open during turn-in burst, scroll full list, route switch |
 | 5 | Pace (+ Core hook): P1.6 | not started |
-| 6 | Arrow: P1.2 + Phase 3 arrow items | not started |
+| 6 | Arrow: P1.2 + Phase 3 arrow items (Arrow.lua half; Data.lua half of the double map/distance compute moves to batch 16) | done (reviewed); [G] pending: fresh login no route, zone transition, TomTom defer on→off |
 | 7 | Marker: P1.7 + Phase 3 unit-keyed `active` | not started |
 | 8 | Panel + Theme comment: P1.4 + sorted route picker | not started |
 | 9 | Import: P1.8 | not started |

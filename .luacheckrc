@@ -69,7 +69,7 @@ read_globals = {
     -- Namespaced API tables
     "C_Timer", "C_Map", "C_QuestLog", "C_GossipInfo", "C_SpellBook",
     "C_TaxiMap", "C_SuperTrack", "C_NamePlate", "C_Secrets",
-    "C_RestrictedActions",
+    "C_RestrictedActions", "C_Item", "C_CVar", "Settings",
 
     -- Client/project identification
     "GetBuildInfo", "WOW_PROJECT_ID", "WOW_PROJECT_MAINLINE",
@@ -84,11 +84,20 @@ read_globals = {
     "AcceptQuest", "GetQuestReward", "GetNumQuestChoices", "GetQuestID",
     "SelectActiveQuest", "SelectAvailableQuest", "GetNumActiveQuests",
     "GetActiveTitle", "GetNumAvailableQuests", "GetAvailableTitle",
-    "GetSpellBookItemName",
+    "GetSpellBookItemName", "GetQuestItemLink",
 
     -- Misc client state
     "InCombatLockdown", "IsShiftKeyDown", "GetCVar", "SetCVar",
     "CreateVector2D", "Enum", "GetZoneText", "time", "date", "CreateColor",
+    "GetLocale",
+}
+
+-- RXPImport's token dispatcher has deliberate no-op branches (a token that
+-- is recognised but needs no per-step action, each with a comment saying
+-- why). Spelling them as empty `elseif` arms keeps the recognised-token list
+-- in one readable chain, so empty-branch (542) is off for this file only.
+files["RXPImport.lua"] = {
+    ignore = { "542" },
 }
 
 -- busted (spec/*.lua) injects its own globals - describe/it/assert/
