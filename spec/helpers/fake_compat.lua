@@ -38,6 +38,19 @@ function FakeCompat:RegisterEvents(frame, events)
     return registered, {}
 end
 
+function FakeCompat:RegisterUnitEvents(frame, events, unit)
+    local registered = {}
+    for _, e in ipairs(events) do
+        if frame and frame.RegisterUnitEvent then
+            frame:RegisterUnitEvent(e, unit)
+        elseif frame and frame.RegisterEvent then
+            frame:RegisterEvent(e)
+        end
+        table.insert(registered, e)
+    end
+    return registered, {}
+end
+
 function FakeCompat:Guard(fn, ...)
     if not fn then return nil end
     local ok, a, b, c = pcall(fn, ...)

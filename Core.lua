@@ -554,15 +554,26 @@ local _, missingEvents = Compat:RegisterEvents(f, {
     "QUEST_ACCEPTED",
     "QUEST_TURNED_IN",
     "QUEST_LOG_UPDATE",
-    "UNIT_QUEST_LOG_CHANGED",
     "PLAYER_LEVEL_UP",
     "TRAINER_CLOSED",
     "PLAYER_DEAD",
     "PLAYER_ALIVE",
     "PLAYER_UNGHOST",
-    "UNIT_SPELLCAST_SUCCEEDED",
     "ZONE_CHANGED_NEW_AREA",
 })
+
+-- Player-only via RegisterUnitEvent: unfiltered, these fire for every
+-- nameplate/party/pet unit's spellcast or quest-log change, which in any
+-- populated area drove a permanent ~3.3 Hz reconcile storm for no reason
+-- 99% of the time (falls back to plain RegisterEvent if unavailable).
+local _, missingUnitEvents = Compat:RegisterUnitEvents(f, {
+    "UNIT_SPELLCAST_SUCCEEDED",
+    "UNIT_QUEST_LOG_CHANGED",
+}, "player")
+for _, event in ipairs(missingUnitEvents) do
+    table.insert(missingEvents, event)
+end
+
 Core.missingEvents = missingEvents
 
 -- Auto-detection for the manual-only step types that don't have a live
@@ -695,10 +706,25 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     else
         HandleStepDetectionEvent(event, ...)
 
-        -- Anything that isn't login is a quest event, so the cached view of
-        -- the quest log is stale from here on.
-        Compat:InvalidateLogIndex()
-        ThrottledReconcile()
+        -- PLAYER_DEAD and a non-hearth UNIT_SPELLCAST_SUCCEEDED never
+        -- change quest state, so reconciling on them is wasted work - the
+        -- latter especially, since it's still frequent even filtered to
+        -- the player alone. Everything else here is a quest-affecting
+        -- event, so the cached view of the quest log is stale from here on.
+        local skipReconcile = false
+        if event == "PLAYER_DEAD" then
+            skipReconcile = true
+        elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+            local unit, _, spellID = ...
+            if not (unit == "player" and spellID == HEARTHSTONE_SPELL_ID) then
+                skipReconcile = true
+            end
+        end
+
+        if not skipReconcile then
+            Compat:InvalidateLogIndex()
+            ThrottledReconcile()
+        end
     end
 end))
 

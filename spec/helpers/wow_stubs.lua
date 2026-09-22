@@ -17,6 +17,7 @@ local function MakeFrame()
 
     function frame:RegisterEvent(event) self.events[event] = true end
     function frame:UnregisterEvent(event) self.events[event] = nil end
+    function frame:RegisterUnitEvent(event, unit) self.events[event] = unit or true end
     function frame:SetScript(handle, fn) self.scripts[handle] = fn end
     function frame:GetScript(handle) return self.scripts[handle] end
     function frame:Show() self.shown = true end

@@ -150,6 +150,32 @@ function Compat:RegisterEvents(frame, events)
     return registered, missing
 end
 
+-- Same Forever-safety shape as RegisterEvents, but unit-filtered
+-- (RegisterUnitEvent) so events like UNIT_SPELLCAST_SUCCEEDED don't fire
+-- for every nameplate/party/pet unit - just the one passed in. Falls back
+-- to a plain, unfiltered RegisterEvent if RegisterUnitEvent itself is
+-- missing or throws on this client; only reported as rejected (same
+-- reporting as RegisterEvents, so /tuff client shows it) if BOTH attempts
+-- fail.
+function Compat:RegisterUnitEvents(frame, events, unit)
+    local registered, missing = {}, {}
+    for _, event in ipairs(events) do
+        local ok = false
+        if frame.RegisterUnitEvent then
+            ok = pcall(frame.RegisterUnitEvent, frame, event, unit)
+        end
+        if not ok then
+            ok = pcall(frame.RegisterEvent, frame, event)
+        end
+        if ok then
+            table.insert(registered, event)
+        else
+            table.insert(missing, event)
+        end
+    end
+    return registered, missing
+end
+
 --------------------------------------------------------------------------
 -- SavedVariables bridge
 --------------------------------------------------------------------------

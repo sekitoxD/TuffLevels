@@ -79,6 +79,61 @@ describe("Compat:Wrap", function()
     end)
 end)
 
+describe("Compat:RegisterUnitEvents", function()
+    -- P1.1: UNIT_SPELLCAST_SUCCEEDED/UNIT_QUEST_LOG_CHANGED must be
+    -- registered player-only via RegisterUnitEvent, but fall back to a
+    -- plain RegisterEvent if RegisterUnitEvent is missing or throws on
+    -- this client - only reported as rejected if BOTH attempts fail.
+    it("uses RegisterUnitEvent when available", function()
+        local Compat = NewCompat()
+        local frame = stubs.MakeFrame()
+        local seen
+        function frame:RegisterUnitEvent(event, unit) seen = { event, unit } end
+
+        local registered, missing = Compat:RegisterUnitEvents(frame, { "UNIT_SPELLCAST_SUCCEEDED" }, "player")
+
+        assert.same({ "UNIT_SPELLCAST_SUCCEEDED" }, registered)
+        assert.same({}, missing)
+        assert.same({ "UNIT_SPELLCAST_SUCCEEDED", "player" }, seen)
+    end)
+
+    it("falls back to plain RegisterEvent when RegisterUnitEvent throws", function()
+        local Compat = NewCompat()
+        local frame = stubs.MakeFrame()
+        function frame:RegisterUnitEvent() error("unknown method") end
+
+        local registered, missing = Compat:RegisterUnitEvents(frame, { "UNIT_SPELLCAST_SUCCEEDED" }, "player")
+
+        assert.same({ "UNIT_SPELLCAST_SUCCEEDED" }, registered)
+        assert.same({}, missing)
+        assert.is_true(frame.events["UNIT_SPELLCAST_SUCCEEDED"])
+    end)
+
+    it("falls back to plain RegisterEvent when RegisterUnitEvent is absent", function()
+        local Compat = NewCompat()
+        local frame = stubs.MakeFrame()
+        frame.RegisterUnitEvent = nil
+
+        local registered, missing = Compat:RegisterUnitEvents(frame, { "UNIT_QUEST_LOG_CHANGED" }, "player")
+
+        assert.same({ "UNIT_QUEST_LOG_CHANGED" }, registered)
+        assert.same({}, missing)
+        assert.is_true(frame.events["UNIT_QUEST_LOG_CHANGED"])
+    end)
+
+    it("only reports an event missing when both attempts fail", function()
+        local Compat = NewCompat()
+        local frame = stubs.MakeFrame()
+        function frame:RegisterUnitEvent() error("nope") end
+        function frame:RegisterEvent() error("nope either") end
+
+        local registered, missing = Compat:RegisterUnitEvents(frame, { "SOME_UNKNOWN_EVENT" }, "player")
+
+        assert.same({}, registered)
+        assert.same({ "SOME_UNKNOWN_EVENT" }, missing)
+    end)
+end)
+
 describe("Compat:SetCVarSafe / GetCVarSafe", function()
     -- plans/01-bug-fixes.md V4: prefer C_CVar.* when present, fall back to
     -- the legacy globals otherwise; success/failure must not depend on the

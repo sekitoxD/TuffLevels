@@ -110,7 +110,7 @@ conflicts with an item's original "Fix:", this section wins.**
 
 | # | Batch | Status |
 |---|---|---|
-| 1 | Core + Compat + spec helpers: P1.1 | not started |
+| 1 | Core + Compat + spec helpers: P1.1 | done (reviewed); [G] pending: city/mob pack on all 3 clients, hearth step still completes |
 | 2 | Core: P1.5 + P1.13 + Phase 3 `#steps+1` guard, with core_spec tests | not started |
 | 3 | Automation: P1.12, P1.9 | done (reviewed); [G] pending: QUEST_GREETING multi-quest NPC |
 | 4 | Progress: P1.3 | not started |
