@@ -28,6 +28,22 @@ Core.pinned = false       -- true after manual navigation; blocks auto-advance
 function ns.RegisterRoute(name, route)
     route.name = name
     route.steps = route.steps or {}
+
+    -- Steps marked `forever = true` are WoW Forever-only content (its new
+    -- dungeons). Drop them here, once, on every other client, so they
+    -- never exist there at all rather than being filtered on every
+    -- Reconcile. Doing it at registration keeps route files plain literal
+    -- tables (tools/validate_route.py can still parse them). A route that
+    -- mixes these with `requires` indices would shift on non-Forever
+    -- clients - no route does today.
+    if not Compat.isForever then
+        local kept = {}
+        for _, step in ipairs(route.steps) do
+            if not step.forever then kept[#kept + 1] = step end
+        end
+        route.steps = kept
+    end
+
     Core.routes[name] = route
 end
 

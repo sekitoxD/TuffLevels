@@ -40,6 +40,10 @@
 --   optional   true: shown dimmed in the Progress list, never blocks
 --              auto-advance whether it's done or not - a take-it-or-leave
 --              -it extra, not a gate.
+--   forever    true: WoW Forever-only content (its new dungeons). Dropped
+--              from the route at registration on every other client, so
+--              Classic Era never sees it. Don't combine with `requires` -
+--              dropping steps shifts the numbers `requires` points at.
 --   skipIfLevel  hides and auto-skips this step once the player reaches
 --              this level (opposite of minLevel, which hides it below one).
 --   requires   list of OTHER step numbers (this route's array position,

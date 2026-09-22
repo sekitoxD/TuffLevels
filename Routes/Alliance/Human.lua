@@ -46,6 +46,12 @@
 -- Some steps use a numeric `map` (uiMapID) instead of a `zone` name where
 -- the source guide gave a raw map ID directly rather than a zone name.
 
+-- Two blocks carry `forever = true` steps for WoW Forever's new dungeons:
+-- Hall of Thanes (13-18, in the 11-13 Loch Modan section's Ironforge pass)
+-- and Ruins of Lordaeron (27-29, Horde territory, in the 27-29
+-- Wetlands/Hillsbrad section) - both are original TuFFlevels additions, not
+-- from RXPGuides; see the comments above each block for sourcing.
+
 local ADDON, ns = ...
 
 ns.RegisterRoute("TuFFlvls Alliance Human (1-60)", {
@@ -674,6 +680,28 @@ ns.RegisterRoute("TuFFlvls Alliance Human (1-60)", {
         { type = "travel", name = "Talk to Jubahl Corpseseeker", note = "Vendor: Buy [Grimoire of Consume Shadows (Rank 1)] and [Grimoire of Sacrifice (Rank 1)] if you can afford it", zone = "Ironforge", x = 52.701, y = 6.07, npc = "Jubahl Corpseseeker", class = "WARLOCK", path = { { zone = "Ironforge", x = 53.2, y = 7.8 } } },
         { type = "trainer", name = "Talk to Toldren Deepiron", zone = "Ironforge", x = 25.207, y = 10.756, npc = "Toldren Deepiron", class = "PRIEST" },
         { type = "trainer", name = "Talk to Brandur Ironhammer inside", zone = "Ironforge", x = 23.131, y = 6.143, npc = "Brandur Ironhammer", class = "PALADIN" },
+
+        -- Hall of Thanes (WoW Forever only) -- original TuFFlevels addition,
+        -- not from RXPGuides. `forever = true` steps are dropped on every
+        -- other client by ns.RegisterRoute (Core.lua). Quest data is from
+        -- foreverchanges.pro's beta pages (2026-09-19), provisional until
+        -- launch, and has no coordinates.
+        { type = "section", name = "Hall of Thanes (Forever dungeon)", levels = { 13, 18 }, forever = true },
+        { type = "note", name = "Mandatory: group up for Hall of Thanes", forever = true, note = "Don't skip this. It's a 5-man dungeon for levels 13-18, and its quests plus the first-clear bonus are worth the time - start looking for a group now." },
+        { type = "level", name = "Reach level 13", targetLevel = 13, zone = "Ironforge", forever = true, note = "Hall of Thanes is a 13-18 dungeon. If you're still 12, finish the level before going in - or go in with a full group that doesn't mind carrying you." },
+        { type = "note", name = "Old Ironforge Incursion (optional, off the beaten path)", forever = true, note = "Earthseer Farsen in Dun Morogh gives Old Ironforge Incursion (level 16, min 9: obtain Durgen Dirgehammer's Head, the final boss). The source doesn't say where he is and this route doesn't pass through Dun Morogh here - pick it up if you run across him, otherwise just kill Durgen Dirgehammer for the other three quests." },
+        { type = "accept", questName = "Important Heirlooms", npc = "Thom Filch", zone = "Ironforge", forever = true, note = "Level 15, min 10. Collect 8 Dwarven Heirlooms." },
+        { type = "accept", questName = "The Restless Dead", npc = "Afadra Dunwall", zone = "Ironforge", forever = true, note = "Level 15, min 10. Kill 15 Enraged Apparitions and 10 Tormented Souls." },
+        { type = "note", name = "Enter Hall of Thanes", zone = "Ironforge", forever = true, note = "Inside Ironforge: the way in is from the High Seat. Bosses: Faldrim Anvilmar, Magmatus, Plunder, Durgen Dirgehammer." },
+        { type = "accept", questName = "An Ancient Grudge", npc = "Ghostly Attendant", zone = "Ironforge", forever = true, note = "Level 15, min 10. Starts from an NPC inside the dungeon." },
+        { type = "complete", questName = "Important Heirlooms", zone = "Ironforge", forever = true, note = "8 Dwarven Heirlooms." },
+        { type = "complete", questName = "The Restless Dead", zone = "Ironforge", forever = true, note = "15 Enraged Apparitions, 10 Tormented Souls." },
+        { type = "complete", questName = "An Ancient Grudge", zone = "Ironforge", forever = true, note = "Slay Faldrim Anvilmar." },
+        { type = "turnin", questName = "Important Heirlooms", npc = "Thom Filch", zone = "Ironforge", forever = true, note = "Turn-in NPC isn't given by the source - assuming the giver." },
+        { type = "turnin", questName = "The Restless Dead", npc = "Afadra Dunwall", zone = "Ironforge", forever = true, note = "Turn-in NPC isn't given by the source - assuming the giver." },
+        { type = "turnin", questName = "An Ancient Grudge", npc = "Ghostly Attendant", zone = "Ironforge", forever = true, note = "Turn-in NPC isn't given by the source - assuming the giver." },
+        { type = "section", name = "11-13 Loch Modan (cont.)", forever = true },
+
         { type = "travel", name = "Talk to Gryth Thurden", note = "Fly to Wetlands", zone = "Ironforge", x = 55.501, y = 47.742, npc = "Gryth Thurden" },
         { type = "travel", name = "Exit Ironforge", note = "Exit Ironforge", map = 1426, x = 53.042, y = 35.383 },
         { type = "travel", name = "Travel to the Dun Morogh -> Wetlands skip spot", zone = "Dun Morogh", x = 59.43, y = 42.85, optional = true },
@@ -2255,6 +2283,18 @@ ns.RegisterRoute("TuFFlvls Alliance Human (1-60)", {
         { type = "travel", name = "Travel to the Stormwind Keep", zone = "Stormwind City", x = 72.005, y = 21.542, optional = true, path = { { zone = "Stormwind City", x = 70.347, y = 27.208 } } },
         { type = "turnin", name = "Talk to Milton Sheaf", note = "If you found [|cRXP_LOOT_An Old History Book] you may turn it in - .use 2794 - .itemcount 2794,1", zone = "Stormwind City", x = 74.182, y = 7.465, npc = "Milton Sheaf", quest = 337 },
         { type = "trainer", name = "Talk to Einris Brightspear", zone = "Stormwind City", x = 61.609, y = 15.269, npc = "Einris Brightspear", class = "HUNTER" },
+
+        -- Ruins of Lordaeron (WoW Forever only) -- original TuFFlevels
+        -- addition, not from RXPGuides. `forever = true` steps are dropped
+        -- on every other client by ns.RegisterRoute (Core.lua). Quest data
+        -- is from foreverchanges.pro's beta pages (2026-09-19), provisional
+        -- until launch, and has no coordinates. Accepted here, run from the
+        -- Southshore/Hillsbrad part of the 27-29 section below, turned in
+        -- on the next Stormwind visit (29-32 Duskwood section).
+        { type = "accept", questName = "Bloodied Insignia", npc = "General Marcus Jonathan", zone = "Stormwind City", x = 63.982, y = 75.338, forever = true, note = "Level 22, min 16. Collect 10 Bloodied Insignias, for Ruins of Lordaeron." },
+        { type = "accept", questName = "Remember That I Love You", npc = "Orphan Matron Nightingale", zone = "Stormwind City", forever = true, note = "Level 22, min 15. Deliver a Blood-Stained Letter found in Ruins of Lordaeron." },
+        { type = "accept", questName = "Crest of Lordaeron", ambiguous = true, npc = "Lady Dena Kennedy", zone = "Stormwind City", forever = true, note = "Level 22, min 16. Return the Crest of Lordaeron from Ruins of Lordaeron." },
+
         { type = "note", name = "Teleport to Ironforge - .itemcount 17031,1", note = "Teleport to Ironforge - .itemcount 17031,1", class = "MAGE", optional = true },
         { type = "travel", name = "Enter the Deeprun Tram. Take the Tram to Ironforge", note = "Enter the Deeprun Tram. Take the Tram to Ironforge", zone = "Stormwind City", x = 64, y = 8.1, optional = true, path = { { zone = "Stormwind City", x = 61.149, y = 11.568 } } },
         { type = "turnin", name = "Talk to Tinkmaster Overspark", zone = "Ironforge", x = 69.54, y = 50.325, npc = "Tinkmaster Overspark", quest = 2923 },
@@ -2346,6 +2386,24 @@ ns.RegisterRoute("TuFFlvls Alliance Human (1-60)", {
         { type = "travel", name = "Talk to Darla Harris", note = "Get the Southshore Flight Path", zone = "Hillsbrad Foothills", x = 49.338, y = 52.272, npc = "Darla Harris" },
         { type = "travel", name = "Cast [Tame Beast] on a |cRXP_ENEMY_Elder Moss Creeper to tame it", note = "Attack mobs with it to learn [Bite (Rank 4)] - Click here for more info about pet training (https://www.wow-petopia.com/classic/training.php) - .unitscan Elder Moss Creeper", zone = "Hillsbrad Foothills", x = 56.6, y = 53.8, class = "HUNTER" },
         { type = "travel", name = "Talk to Wesley", note = "Withdraw your pet from the stable. Remember to use [Beast Training] to teach it [Bite (Rank 4)]", zone = "Hillsbrad Foothills", x = 50.415, y = 58.803, npc = "Wesley", class = "HUNTER" },
+
+        -- Ruins of Lordaeron (WoW Forever only) -- original TuFFlevels
+        -- addition, not from RXPGuides, continued from the Bloodied
+        -- Insignia/Remember That I Love You/Crest of Lordaeron accepts in
+        -- the last Stormwind City visit above. `forever = true` steps are
+        -- dropped on every other client by ns.RegisterRoute (Core.lua).
+        -- Quest data is from foreverchanges.pro's beta pages (2026-09-19),
+        -- provisional until launch, and has no coordinates.
+        { type = "section", name = "Ruins of Lordaeron (Forever dungeon, Horde territory)", levels = { 27, 28 }, forever = true, note = "Horde-first dungeon - the entrance is above the Undercity, Horde home turf. Go as a full group." },
+        { type = "note", name = "Warning: Horde territory (Horde-first dungeon)", forever = true, note = "Ruins of Lordaeron is Horde home turf - the entrance is above the Undercity, between Brill and the Sepulcher, with Horde guards and players around. Go as a full group. TuFFlevels routes this dungeon Horde-first; these Alliance steps are included but less tested. Its quests are level 21-22, so above level 27 they're worth less XP - do it as early as the route allows." },
+        { type = "accept", questName = "Abominable Creatures", npc = "Captain Truman", forever = true, note = "Level 21, min 16. Collect the Head of the Baron. Source doesn't give a location - possibly Southshore or near/inside the dungeon." },
+        { type = "note", name = "Southshore to Ruins of Lordaeron", zone = "Hillsbrad Foothills", forever = true, note = "North through Silverpine Forest/Alterac toward Tirisfal Glades - the ruins sit above the Undercity, between Brill and the Sepulcher." },
+        { type = "complete", questName = "Bloodied Insignia", zone = "Ruins of Lordaeron", forever = true, note = "10 Bloodied Insignias." },
+        { type = "complete", questName = "Remember That I Love You", zone = "Ruins of Lordaeron", forever = true, note = "Deliver the Blood-Stained Letter, found in the dungeon." },
+        { type = "complete", questName = "Crest of Lordaeron", ambiguous = true, zone = "Ruins of Lordaeron", forever = true },
+        { type = "complete", questName = "Abominable Creatures", zone = "Ruins of Lordaeron", forever = true, note = "Head of the Baron." },
+        { type = "section", name = "27-29 Wetlands/Hillsbrad (cont.)", forever = true },
+
         { type = "hearth", name = "Hearth", note = ".mob Snapjaw - Loot them for Turtle Meat. You will need 10 for a quest later. Don't go out of your way to farm it now - .disablecheckbox", zone = "Hillsbrad Foothills", x = 65.43, y = 39.35, class = "HUNTER", path = { { zone = "Hillsbrad Foothills", x = 55.72, y = 57.03 }, { zone = "Hillsbrad Foothills", x = 59.83, y = 45.23 } } },
         { type = "hearth", name = "Hearth", note = "Buy food if needed", optional = true },
         { type = "accept", name = "Talk to Glorin Steelbrow", zone = "Wetlands", x = 10.58, y = 60.59, npc = "Glorin Steelbrow", quest = 321 },
@@ -2478,6 +2536,14 @@ ns.RegisterRoute("TuFFlvls Alliance Human (1-60)", {
         { type = "trainer", name = "Talk to Karrina Mekenda", note = "Make sure you have your [Nature] and [Frost] reistances maxed on your pet. Talk to Karrina Mekenda to respec it if you don't have enough pet training points", zone = "Stormwind City", x = 61.576, y = 15.996, npc = "Karrina Mekenda", class = "HUNTER" },
         { type = "accept", name = "Talk to Bishop DeLavey", zone = "Stormwind City", x = 78.3, y = 25.45, npc = "Bishop DeLavey", quest = 1241 },
         { type = "turnin", name = "Talk to Milton Sheaf", note = "If you found [|cRXP_LOOT_An Old History Book] you may turn it in - .use 2794 - .itemcount 2794,1", zone = "Stormwind City", x = 74.182, y = 7.465, npc = "Milton Sheaf", quest = 337 },
+
+        -- Ruins of Lordaeron (WoW Forever only) turn-ins, for the accepts
+        -- and dungeon run in the 27-29 Wetlands/Hillsbrad section above.
+        { type = "turnin", questName = "Bloodied Insignia", npc = "General Marcus Jonathan", zone = "Stormwind City", x = 63.982, y = 75.338, forever = true },
+        { type = "turnin", questName = "Remember That I Love You", npc = "Orphan Matron Nightingale", zone = "Stormwind City", forever = true },
+        { type = "turnin", questName = "Crest of Lordaeron", ambiguous = true, npc = "Lady Dena Kennedy", zone = "Stormwind City", forever = true },
+        { type = "turnin", questName = "Abominable Creatures", npc = "Captain Truman", forever = true, note = "Turn-in NPC isn't confirmed by the source - assuming the giver." },
+
         { type = "trainer", name = "If you hit level 30 turning in the next few quests in Stormwind, remember to train class/pet skills if you haven't already", zone = "Stormwind City", x = 61.609, y = 15.269, npc = "Einris Brightspear", class = "HUNTER" },
         { type = "accept", name = "Talk to Jorgen", zone = "Stormwind City", x = 73.17, y = 78.42, npc = "Jorgen", quest = 1242 },
         { type = "accept", name = "Talk to Elling Trias", zone = "Stormwind City", x = 59.9, y = 64.17, npc = "Elling Trias", quest = 1243 },

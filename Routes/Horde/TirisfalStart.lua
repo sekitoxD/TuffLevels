@@ -758,6 +758,126 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           type = "accept", questName = "Raleigh and the Undercity", zone = "Tirisfal Glades",
           location = "Brill",
         },
+
+        -- Ruins of Lordaeron (WoW Forever only) ----------------------------
+        -- Forever's new 15-20 dungeon sits on Forsaken home turf, right
+        -- where this route ends, so Undead run it here at its intended
+        -- level instead of at 23 like the Orc/Troll Solo route (whose copy,
+        -- Chapter 17b in Routes/Horde/Solo/SilverpineForest.lua, is filtered
+        -- to Orc/Troll for exactly that reason). `forever = true` steps are
+        -- dropped on every other client by ns.RegisterRoute (Core.lua).
+        -- Quest data is from foreverchanges.pro's beta pages (2026-09-19),
+        -- provisional until launch, and has no coordinates; see
+        -- plans/10-forever-dungeons-implementation.md.
+        {
+          type = "section", name = "Ruins of Lordaeron (Forever dungeon)", levels = { 14, 18 },
+          forever = true,
+        },
+        {
+          type = "note", name = "Mandatory: group up for Ruins of Lordaeron", forever = true,
+          note = "Don't skip this. It's a 5-man dungeon for levels 15-20, and its six quests plus the first-clear bonus are worth several levels. Start looking for a group now (LFG, Brill, Undercity) while you finish the last level or two.",
+        },
+        {
+          type = "level", name = "Reach level 16", targetLevel = 16, zone = "Tirisfal Glades",
+          forever = true,
+          note = "Three of the quests need level 16 (Crest of Lordaeron, The New Plague, and Unending Torment from its dropped item). Grind the gap around Brill if you arrive at 14-15.",
+        },
+        {
+          type = "accept", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades",
+          location = "Brill", npc = "Deathguard Kristof", x = 59.4, y = 52.4, approx = true,
+          forever = true,
+          note = "The source only says Tirisfal Glades - Brill, north of the Undercity entrance, is the likely spot.",
+        },
+        {
+          type = "accept", questName = "Light's Justice", zone = "Undercity",
+          npc = "Morbin Lightbane", forever = true,
+        },
+        {
+          type = "accept", questName = "The New Plague", zone = "Undercity",
+          npc = "Theodore Griffs", forever = true,
+          note = "Not the same quest as A New Plague in Brill.",
+        },
+        {
+          type = "accept", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+          npc = "Oran Snakewrithe", forever = true,
+        },
+        {
+          type = "travel", name = "Undercity to The Sepulcher", zone = "Undercity",
+          location = "Trade Quarter", x = 63.2, y = 48.6, forever = true,
+          note = "Take the flight path, for A Frightened Request (level 15, about 7,000 XP). It wasn't available when you passed through Silverpine below level 15.",
+        },
+        {
+          type = "accept", questName = "A Frightened Request", zone = "Silverpine Forest",
+          npc = "Tabitha Heartweaver", forever = true,
+          note = "The source only says Silverpine Forest, not where in it - check the Sepulcher first.",
+        },
+        {
+          type = "travel", name = "The Sepulcher to Undercity", zone = "Silverpine Forest",
+          location = "The Sepulcher", x = 45.6, y = 42.6, forever = true,
+          note = "Take the flight path back.",
+        },
+        {
+          type = "note", name = "Enter Ruins of Lordaeron", zone = "Tirisfal Glades",
+          location = "Ruins of Lordaeron", forever = true,
+          note = "Among the ruins of Lordaeron's capital, above the Undercity. Bosses: The Baron, Witherfang, The Abandoned, Bjork, Rath'mael, Viktor the Vile.",
+        },
+        {
+          type = "complete", questName = "Light's Justice", zone = "Ruins of Lordaeron",
+          forever = true, note = "25 Intact Limbs.",
+        },
+        {
+          type = "complete", questName = "The New Plague", zone = "Ruins of Lordaeron",
+          forever = true, note = "Highly Toxic Strain, from Witherfang.",
+        },
+        {
+          type = "complete", questName = "Crest of Lordaeron", ambiguous = true, zone = "Ruins of Lordaeron",
+          forever = true,
+        },
+        {
+          type = "complete", questName = "The Wrath of Rath'mael", zone = "Ruins of Lordaeron",
+          forever = true, note = "Kill Rath'mael.",
+        },
+        {
+          type = "complete", questName = "A Frightened Request", zone = "Ruins of Lordaeron",
+          forever = true, note = "Find out what happened to Edward Heartweaver.",
+        },
+        {
+          type = "accept", questName = "Unending Torment", zone = "Ruins of Lordaeron",
+          forever = true,
+          note = "Starts from an item you loot in the dungeon (Abominable Head), not from an NPC. The source doesn't say which boss drops it - its rewards match the Alliance quest for the Head of the Baron, so most likely The Baron.",
+        },
+        {
+          type = "turnin", questName = "Unending Torment", zone = "Undercity",
+          location = "The Apothecarium", npc = "Master Apothecary Faranell",
+          x = 50.1, y = 68.0, forever = true,
+          note = "The source calls this a multi-step chain inside the Undercity. Follow any follow-up quests it gives you before leaving.",
+        },
+        {
+          type = "turnin", questName = "Light's Justice", zone = "Undercity",
+          npc = "Morbin Lightbane", forever = true,
+        },
+        {
+          type = "turnin", questName = "The New Plague", zone = "Undercity",
+          npc = "Theodore Griffs", forever = true,
+        },
+        {
+          type = "turnin", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+          npc = "Oran Snakewrithe", forever = true,
+        },
+        {
+          type = "turnin", questName = "A Frightened Request", forever = true,
+          note = "The source doesn't name the turn-in NPC. If it's Tabitha Heartweaver, fly to the Sepulcher and back before leaving - it's worth about 7,000 XP.",
+        },
+        {
+          type = "turnin", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades",
+          location = "Brill", npc = "Deathguard Kristof", x = 59.4, y = 52.4, approx = true,
+          forever = true,
+        },
+        {
+          type = "trainer", name = "Class Trainer", zone = "Tirisfal Glades", location = "Brill",
+          forever = true, note = "You've gained several levels in the dungeon - train before the zeppelin.",
+        },
+        { type = "section", name = "Tirisfal Glades - To Kalimdor", forever = true },
         {
           type = "travel", name = "Brill to Durotar", zone = "Tirisfal Glades",
           location = "Brill", note = "Zeppelin.",
@@ -767,6 +887,10 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           note = "Talk to the flight master and learn this flight point.",
         },
 
+        {
+          type = "note", name = "Ahead of the regular route", forever = true,
+          note = "After Ruins of Lordaeron you're a few levels ahead of where the regular route expects. Its early Barrens chapters will be easy - move through them quickly. The regular route's own Ruins of Lordaeron chapter (17b) is Orc/Troll only, so you won't be sent back.",
+        },
         { type = "section", name = "From here, continue with the regular route everyone else uses. Skip the part in the route where it has you go to Silverpine for the first time as you've done all those quests." },
     },
 })

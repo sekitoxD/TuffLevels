@@ -21,18 +21,3 @@ ns.SoloLegs = legs
 function ns.SoloLeg(order, zone, steps)
     legs[#legs + 1] = { order = order, zone = zone, steps = steps }
 end
-
--- Wrap a leg's step list in this to drop any step marked `forever = true`
--- on every client except WoW Forever. For content that only exists there
--- (its new dungeons, e.g. Ruins of Lordaeron): the same Solo files load on
--- Classic Era too, where those quests and NPCs don't exist. Filtered once at
--- load time, so it costs nothing at runtime, and Core never sees the field.
--- Compat.lua loads before any route file, so Compat.isForever is set by now.
-function ns.SoloForeverOnly(steps)
-    if ns.Compat and ns.Compat.isForever then return steps end
-    local out = {}
-    for _, step in ipairs(steps) do
-        if not step.forever then out[#out + 1] = step end
-    end
-    return out
-end

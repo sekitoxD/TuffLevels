@@ -9,7 +9,6 @@
 
 local ADDON, ns = ...
 local Leg = ns.SoloLeg
-local ForeverOnly = ns.SoloForeverOnly
 
 -- Chapter 7: Silverpine Forest North Lap #1 | Chapter 8: Silverpine Forest North Lap #2 | Chapter 9: Silverpine Forest Mid Lap
 Leg(3, "Silverpine Forest", {
@@ -389,7 +388,10 @@ Leg(3, "Silverpine Forest", {
 -- On WoW Forever only, this leg also runs Ruins of Lordaeron, one of
 -- Forever's new dungeons (see plans/09-forever-dungeons-routing-research.md).
 -- Steps marked `forever = true` are dropped on every other client by
--- ForeverOnly (Routes/Horde/Solo/Init.lua). The dungeon is 15-20 and its
+-- ns.RegisterRoute (Core.lua). They also carry races = { "Orc", "Troll" }:
+-- Undead run this dungeon at the end of Routes/Horde/TirisfalStart.lua
+-- instead, and quest-name steps can't tell it's already done there (the
+-- name cache doesn't survive a session on Forever). The dungeon is 15-20 and its
 -- quests are level 21-22, so the natural place for it is here: the leg
 -- already comes back to the Sepulcher and Undercity at level 23, where
 -- all but one quest giver stands (Brill is a short extra detour).
@@ -404,7 +406,7 @@ Leg(3, "Silverpine Forest", {
 -- carry x/y. The logCount values on the unmarked steps after the Sepulcher
 -- accept are one lower than the real count on Forever, because they're
 -- shared with Classic Era.
-Leg(7, "Silverpine Forest", ForeverOnly({
+Leg(7, "Silverpine Forest", {
 
     {
       type = "section", name = "Chapter 17: Silverpine #2 & Durnholde Keep",
@@ -626,7 +628,7 @@ Leg(7, "Silverpine Forest", ForeverOnly({
     },
     {
       type = "accept", questName = "A Frightened Request", zone = "Silverpine Forest",
-      npc = "Tabitha Heartweaver", atLevel = 23, logCount = 17, forever = true,
+      npc = "Tabitha Heartweaver", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
       note = "Ruins of Lordaeron quest (min level 15). The source only says Silverpine Forest, not where in it - check the Sepulcher first.",
     },
     {
@@ -664,93 +666,93 @@ Leg(7, "Silverpine Forest", ForeverOnly({
     -- Ruins of Lordaeron (Forever only) ------------------------------------
     {
       type = "section", name = "Chapter 17b: Ruins of Lordaeron (Forever dungeon)",
-      levels = { 23, 24 }, zone = "Tirisfal Glades", forever = true,
+      levels = { 23, 24 }, zone = "Tirisfal Glades", forever = true, races = { "Orc", "Troll" },
     },
     {
-      type = "note", name = "Group dungeon - skip if you can't get one", atLevel = 23,
-      forever = true,
-      note = "A 5-man dungeon for levels 15-20. At 23 it goes quickly, and a duo may be enough. With no group, click Next through this chapter: nothing is picked up until the next step, so the only quest left behind is A Frightened Request (abandon it).",
+      type = "note", name = "Mandatory: group up for Ruins of Lordaeron", atLevel = 23,
+      forever = true, races = { "Orc", "Troll" },
+      note = "Don't skip this. A 5-man dungeon for levels 15-20 - at 23 it goes quickly, and a duo may be enough. Its six quests plus the first-clear bonus are XP the rest of the route is meant to count on, so find a group (LFG, Undercity or Brill) before going on.",
     },
     {
       type = "accept", questName = "Light's Justice", zone = "Undercity",
-      npc = "Morbin Lightbane", atLevel = 23, logCount = 15, forever = true,
+      npc = "Morbin Lightbane", atLevel = 23, logCount = 15, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "accept", questName = "The New Plague", zone = "Undercity",
-      npc = "Theodore Griffs", atLevel = 23, logCount = 16, forever = true,
+      npc = "Theodore Griffs", atLevel = 23, logCount = 16, forever = true, races = { "Orc", "Troll" },
       note = "Not the same quest as A New Plague in Brill.",
     },
     {
-      type = "accept", questName = "Crest of Lordaeron", zone = "Undercity",
-      npc = "Oran Snakewrithe", atLevel = 23, logCount = 17, forever = true,
+      type = "accept", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+      npc = "Oran Snakewrithe", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "accept", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades",
       location = "Brill", npc = "Deathguard Kristof", atLevel = 23, logCount = 18,
-      x = 59.4, y = 52.4, approx = true, forever = true,
+      x = 59.4, y = 52.4, approx = true, forever = true, races = { "Orc", "Troll" },
       note = "The source only says Tirisfal Glades - Brill, north of the Undercity entrance, is the likely spot.",
     },
     {
       type = "note", name = "Enter Ruins of Lordaeron", zone = "Tirisfal Glades",
-      location = "Ruins of Lordaeron", atLevel = 23, forever = true,
+      location = "Ruins of Lordaeron", atLevel = 23, forever = true, races = { "Orc", "Troll" },
       note = "Among the ruins of Lordaeron's capital, above the Undercity. Bosses: The Baron, Witherfang, The Abandoned, Bjork, Rath'mael, Viktor the Vile.",
     },
     {
       type = "complete", questName = "Light's Justice", zone = "Ruins of Lordaeron",
-      atLevel = 23, forever = true, note = "25 Intact Limbs.",
+      atLevel = 23, forever = true, races = { "Orc", "Troll" }, note = "25 Intact Limbs.",
     },
     {
       type = "complete", questName = "The New Plague", zone = "Ruins of Lordaeron",
-      atLevel = 23, forever = true, note = "Highly Toxic Strain, from Witherfang.",
+      atLevel = 23, forever = true, races = { "Orc", "Troll" }, note = "Highly Toxic Strain, from Witherfang.",
     },
     {
-      type = "complete", questName = "Crest of Lordaeron", zone = "Ruins of Lordaeron",
-      atLevel = 23, forever = true,
+      type = "complete", questName = "Crest of Lordaeron", ambiguous = true, zone = "Ruins of Lordaeron",
+      atLevel = 23, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "complete", questName = "The Wrath of Rath'mael", zone = "Ruins of Lordaeron",
-      atLevel = 23, forever = true, note = "Kill Rath'mael.",
+      atLevel = 23, forever = true, races = { "Orc", "Troll" }, note = "Kill Rath'mael.",
     },
     {
       type = "complete", questName = "A Frightened Request", zone = "Ruins of Lordaeron",
-      atLevel = 23, forever = true, note = "Find out what happened to Edward Heartweaver.",
+      atLevel = 23, forever = true, races = { "Orc", "Troll" }, note = "Find out what happened to Edward Heartweaver.",
     },
     {
       type = "accept", questName = "Unending Torment", zone = "Ruins of Lordaeron",
-      atLevel = 23, logCount = 19, forever = true,
-      note = "Starts from an item you loot in the dungeon (Abominable Head), not from an NPC. The source doesn't say which boss drops it.",
+      atLevel = 23, logCount = 19, forever = true, races = { "Orc", "Troll" },
+      note = "Starts from an item you loot in the dungeon (Abominable Head), not from an NPC. The source doesn't say which boss drops it - its rewards match the Alliance quest for the Head of the Baron, so most likely The Baron.",
     },
     {
       type = "turnin", questName = "Unending Torment", zone = "Undercity",
       location = "The Apothecarium", npc = "Master Apothecary Faranell", atLevel = 23,
-      logCount = 18, x = 50.1, y = 68.0, forever = true,
+      logCount = 18, x = 50.1, y = 68.0, forever = true, races = { "Orc", "Troll" },
       note = "The source calls this a multi-step chain inside the Undercity. Follow any follow-up quests it gives you before leaving.",
     },
     {
       type = "turnin", questName = "Light's Justice", zone = "Undercity",
-      npc = "Morbin Lightbane", atLevel = 23, logCount = 17, forever = true,
+      npc = "Morbin Lightbane", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "turnin", questName = "The New Plague", zone = "Undercity",
-      npc = "Theodore Griffs", atLevel = 23, logCount = 16, forever = true,
+      npc = "Theodore Griffs", atLevel = 23, logCount = 16, forever = true, races = { "Orc", "Troll" },
     },
     {
-      type = "turnin", questName = "Crest of Lordaeron", zone = "Undercity",
-      npc = "Oran Snakewrithe", atLevel = 23, logCount = 15, forever = true,
+      type = "turnin", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+      npc = "Oran Snakewrithe", atLevel = 23, logCount = 15, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "turnin", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades",
       location = "Brill", npc = "Deathguard Kristof", atLevel = 23, logCount = 14,
-      x = 59.4, y = 52.4, approx = true, forever = true,
+      x = 59.4, y = 52.4, approx = true, forever = true, races = { "Orc", "Troll" },
     },
     {
       type = "turnin", questName = "A Frightened Request", atLevel = 23, logCount = 13,
-      forever = true,
+      forever = true, races = { "Orc", "Troll" },
       note = "The source doesn't name the turn-in NPC. If it's Tabitha Heartweaver in Silverpine, fly there from the Undercity before you hearth. It's worth about 7,000 XP.",
     },
     {
       type = "hearth", name = "Hearth to Camp Taurajo", zone = "Undercity",
       location = "Magic Quarter", atLevel = 23, logCount = 13, note = "Use your hearthstone.",
     },
-}))
+})
 

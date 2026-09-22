@@ -209,10 +209,10 @@ That is the same approach `Routes/Horde/TirisfalStart.lua` already uses, and
   20 (full) at Tarren Mill, so nothing extra fits earlier.
 - **Forever-only.** The Solo files also load on Classic Era, where this
   dungeon doesn't exist. Steps carry `forever = true`, and the new
-  `ns.SoloForeverOnly` (in `Routes/Horde/Solo/Init.lua`) drops them at load
-  time on any client that isn't Forever. There's no engine change and no
-  runtime cost.
-- **Alliance side is not done.** The 4 Alliance quests (Stormwind givers) are
+  `ns.SoloForeverOnly` (in `Routes/Horde/Solo/Init.lua`) dropped them at load
+  time on any client that isn't Forever. *(Superseded in plan 10: the filter
+  now lives in `ns.RegisterRoute` for every route, and the helper is gone.)*
+- **Alliance side was not done in this pass** (it is in plan 10). The 4 Alliance quests (Stormwind givers) were
   left for a later pass, by decision.
 
 Known gaps, all flagged in the step notes: no coordinates for the new NPCs.
@@ -227,6 +227,8 @@ verified data.
 
 | Change | Impact | Performance | Dev time |
 |---|---|---|---|
-| `SoloForeverOnly` helper | `Solo/Init.lua` only. It's opt-in per leg, and only Leg 7 uses it. | One filter pass per wrapped leg at load time. Zero per tick or per event. | ~15 min |
+| `SoloForeverOnly` helper (removed in plan 10) | `Solo/Init.lua` only. It's opt-in per leg, and only Leg 7 uses it. | One filter pass per wrapped leg at load time. Zero per tick or per event. | ~15 min |
 | Ruins of Lordaeron steps (20: 1 at the Sepulcher, 19 in Chapter 17b) | Leg 7 only. It adds a section to the Solo route on Forever, so Chapter 17's personal-best split gets shorter there (earlier PBs aren't comparable), and later step numbers shift, which matters to nothing because no Solo step uses `requires`. | Authored data only | ~1 h |
 | In-game verification (R3) | None until done | n/a | ~30-45 min at level 23 with a group |
+
+Continued in `plans/10-forever-dungeons-implementation.md`: the dungeon is now mandatory, the Undead entry point and the Alliance and Hall of Thanes blocks are added, and there is an audited plan for trimming later grind.
