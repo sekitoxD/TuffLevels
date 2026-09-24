@@ -35,7 +35,11 @@ local TINT = {
     mob = { 0.66, 0.42, 0.95 },
 }
 
-local active = {}     -- [nameplateFrame] = markerTexture
+-- Keyed by unit token rather than the nameplate frame so
+-- NAME_PLATE_UNIT_REMOVED can always find and clear its entry even when
+-- C_NamePlate.GetNamePlateForUnit already returns nil for a unit that just
+-- despawned (Phase 3).
+local active = {}     -- [unitToken] = markerTexture
 
 --------------------------------------------------------------------------
 -- Objective mobs
@@ -64,9 +68,22 @@ local LOCALE_SUFFIXES = {
     itIT = { "ucciso", "uccisa", "uccisi", "uccise", "distrutto", "distrutta", "distrutti", "distrutte" },
 }
 
-local function SuffixesForLocale()
+-- Build the actual gsub patterns once at load time instead of concatenating
+-- "%s+" .. suffix .. "$" per suffix, per objective, on every WantedMobs call
+-- (this ran per nameplate spawn before P1.7's caching, and even now still
+-- runs on every cache rebuild).
+local LOCALE_PATTERNS = {}
+for locale, suffixes in pairs(LOCALE_SUFFIXES) do
+    local patterns = {}
+    for i, suffix in ipairs(suffixes) do
+        patterns[i] = "%s+" .. suffix .. "$"
+    end
+    LOCALE_PATTERNS[locale] = patterns
+end
+
+local function PatternsForLocale()
     local locale = GetLocale and GetLocale() or "enUS"
-    return LOCALE_SUFFIXES[locale] or LOCALE_SUFFIXES.enUS
+    return LOCALE_PATTERNS[locale] or LOCALE_PATTERNS.enUS
 end
 
 local function ObjectiveNames(questID)
@@ -76,15 +93,15 @@ local function ObjectiveNames(questID)
     local objectives = Compat:Guard(C_QuestLog.GetQuestObjectives, questID)
     if type(objectives) ~= "table" then return names end
 
-    local suffixes = SuffixesForLocale()
+    local patterns = PatternsForLocale()
 
     for _, obj in ipairs(objectives) do
         local text = obj.text
         if type(text) == "string" and obj.finished ~= true then
             -- strip the trailing counter and any verb the locale appends
             local name = text:match("^(.-):%s*%d+%s*/%s*%d+%s*$") or text
-            for _, suffix in ipairs(suffixes) do
-                name = name:gsub("%s+" .. suffix .. "$", "")
+            for _, pattern in ipairs(patterns) do
+                name = name:gsub(pattern, "")
             end
             name = name:match("^%s*(.-)%s*$")
             if name and #name > 2 then
@@ -95,6 +112,22 @@ local function ObjectiveNames(questID)
     return names
 end
 
+-- P1.7: the wanted-mob set used to be rebuilt from scratch on every call -
+-- once per unit from NAME_PLATE_UNIT_ADDED, and once per visible plate from
+-- RescanAll - which meant hundreds of quest-log walks per second in a
+-- populated zone. Cache it on the module and only rebuild when something
+-- that could change it actually happened: a step change (RescanAll
+-- invalidates at its top) or a quest-log change (QUEST_LOG_UPDATE /
+-- QUEST_ACCEPTED / QUEST_REMOVED below, via a dirty flag). Also keyed on
+-- the step the cache was built for: LoadRoute (switching routes) sets
+-- Core.index = 1 and reconciles, but never calls RescanAll itself unless
+-- Reconcile actually moves the index - loading a route whose step 1
+-- doesn't immediately complete would otherwise leave the OLD route's cached
+-- mob set in place with no dirty flag ever set for it.
+local mobCache = nil
+local mobCacheDirty = true
+local mobCacheStep = nil
+
 -- Every mob the current step wants dead, across quests in your log.
 function Marker:WantedMobs()
     if not self.enabled or not self.markMobs then return nil end
@@ -102,22 +135,31 @@ function Marker:WantedMobs()
     local step = ns.Core and ns.Core:CurrentStep()
     if not step then return nil end
 
+    if not mobCacheDirty and mobCache and step == mobCacheStep then
+        return mobCache
+    end
+
+    local result
     -- A "complete" step points at one quest. Otherwise mark objectives for
     -- everything in the log, which is what you actually want while grinding.
     if step.quest and step.type == "complete" then
-        return ObjectiveNames(step.quest)
-    end
-
-    local all = {}
-    for i = 1, Compat:NumQuestLogEntries() do
-        local info = Compat:GetQuestLogInfo(i)
-        if info and not info.isHeader and info.questID then
-            for name in pairs(ObjectiveNames(info.questID)) do
-                all[name] = true
+        result = ObjectiveNames(step.quest)
+    else
+        result = {}
+        for i = 1, Compat:NumQuestLogEntries() do
+            local info = Compat:GetQuestLogInfo(i)
+            if info and not info.isHeader and info.questID then
+                for name in pairs(ObjectiveNames(info.questID)) do
+                    result[name] = true
+                end
             end
         end
     end
-    return all
+
+    mobCache = result
+    mobCacheDirty = false
+    mobCacheStep = step
+    return result
 end
 
 --------------------------------------------------------------------------
@@ -184,11 +226,22 @@ local function CreateMarker(plate)
     return holder
 end
 
-local function ShowMarkerOn(plate, stepType)
-    local marker = active[plate]
+local function ShowMarkerOn(unit, plate, stepType)
+    local marker = active[unit]
     if not marker then
         marker = CreateMarker(plate)
-        active[plate] = marker
+        active[unit] = marker
+    elseif marker:GetParent() ~= plate then
+        -- Nameplate frames are pooled and a unit token can get rebound to a
+        -- different frame between one sighting and the next. A missed
+        -- NAME_PLATE_UNIT_REMOVED (e.g. while Marker is tripped by
+        -- Compat:Wrap's error budget) would otherwise leave this holder
+        -- parented to whatever plate the token used to own, showing the
+        -- icon over the wrong mob.
+        marker:SetParent(plate)
+        marker:ClearAllPoints()
+        local anchor = plate.UnitFrame or plate
+        marker:SetPoint("BOTTOM", anchor, "TOP", 0, 6)
     end
 
     marker.icon:SetTexture(ICON[stepType] or ICON.default)
@@ -210,8 +263,8 @@ local function ShowMarkerOn(plate, stepType)
     end
 end
 
-local function HideMarkerOn(plate)
-    local marker = active[plate]
+local function HideMarkerOn(unit)
+    local marker = active[unit]
     if marker then
         if marker.anim then marker.anim:Stop() end
         marker:Hide()
@@ -258,7 +311,7 @@ local function CheckUnit(unit)
     if wanted then
         local lname, lwant = name:lower(), wanted:lower()
         if lname == lwant or lname:find(lwant, 1, true) then
-            ShowMarkerOn(plate, stepType)
+            ShowMarkerOn(unit, plate, stepType)
             return
         end
     end
@@ -273,18 +326,18 @@ local function CheckUnit(unit)
     if mobs then
         local lname = name:lower()
         if mobs[lname] then
-            ShowMarkerOn(plate, "mob")
+            ShowMarkerOn(unit, plate, "mob")
             return
         end
         for wantedMob in pairs(mobs) do
             if lname:find(wantedMob, 1, true) or wantedMob:find(lname, 1, true) then
-                ShowMarkerOn(plate, "mob")
+                ShowMarkerOn(unit, plate, "mob")
                 return
             end
         end
     end
 
-    HideMarkerOn(plate)
+    HideMarkerOn(unit)
 end
 
 -- Test hook: dumps exactly what the mob-marking pipeline sees right now,
@@ -331,10 +384,11 @@ end
 -- The wanted NPC changes whenever the step advances, so re-scan every
 -- visible nameplate rather than waiting for one to spawn.
 function Marker:RescanAll()
+    mobCacheDirty = true
     self:AnnounceWantedNPC()
 
-    for plate in pairs(active) do
-        HideMarkerOn(plate)
+    for unit in pairs(active) do
+        HideMarkerOn(unit)
     end
 
     -- Pause entirely rather than just refusing new matches: in an
@@ -424,7 +478,7 @@ end
 function Marker:Toggle()
     self.enabled = not self.enabled
     if not self.enabled then
-        for plate in pairs(active) do HideMarkerOn(plate) end
+        for unit in pairs(active) do HideMarkerOn(unit) end
     else
         self:RescanAll()
     end
@@ -442,9 +496,30 @@ local _, missingEvents = Compat:RegisterEvents(mf, {
     "NAME_PLATE_UNIT_REMOVED",
     "PLAYER_TARGET_CHANGED",
     "PLAYER_ENTERING_WORLD",
+    "QUEST_LOG_UPDATE",
+    "QUEST_ACCEPTED",
+    "QUEST_REMOVED",
 })
 if ns.Core and ns.Core.missingEvents then
     for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
+end
+
+-- QUEST_LOG_UPDATE fires very frequently (same reason Core.lua throttles its
+-- own reconcile off it) - debounce the rescan it triggers rather than
+-- running one per event. Wrapped in Compat:Wrap like every other entry
+-- point into Marker's nameplate logic: this timer callback runs outside
+-- the OnEvent handler below, so without its own Guard/Wrap an error here
+-- would bypass the addon's per-module error budget and burn straight into
+-- the client's 100-error-per-session cap (CLAUDE.md).
+local rescanPending = false
+local function ThrottledRescan()
+    if rescanPending then return end
+    rescanPending = true
+    C_Timer.After(0.5, Compat:Wrap("Marker", function()
+        rescanPending = false
+        if not Marker.enabled then return end
+        Marker:RescanAll()
+    end))
 end
 
 mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
@@ -452,10 +527,12 @@ mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
         CheckUnit(unit)
 
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
-        local plate = unit and Compat:Guard(C_NamePlate.GetNamePlateForUnit, unit)
-        if plate then
-            HideMarkerOn(plate)
-            active[plate] = nil
+        -- Key active[] by unit token (not the nameplate frame) so this can
+        -- always clear its entry, even when GetNamePlateForUnit already
+        -- returns nil for a unit that's already despawned (Phase 3).
+        if unit then
+            HideMarkerOn(unit)
+            active[unit] = nil
         end
 
     elseif event == "PLAYER_TARGET_CHANGED" then
@@ -468,8 +545,17 @@ mf:SetScript("OnEvent", Compat:Wrap("Marker", function(self, event, unit)
         -- step-change-driven RescanAll to notice. `self` here is the
         -- event frame (mf), not the Marker module - call it by name.
         Marker:RescanAll()
+
+    elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_ACCEPTED" or event == "QUEST_REMOVED" then
+        -- The wanted-mob cache is only valid until the quest log itself
+        -- changes (objective progress/finished state, accepted/turned-in
+        -- quests) - invalidate it and re-check visible plates so a
+        -- completed objective's marker clears without waiting on a step
+        -- change to trigger the next RescanAll.
+        mobCacheDirty = true
+        ThrottledRescan()
     end
 end, function()
     Marker.enabled = false
-    for plate in pairs(active) do HideMarkerOn(plate) end
+    for unit in pairs(active) do HideMarkerOn(unit) end
 end))
