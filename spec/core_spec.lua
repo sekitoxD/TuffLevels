@@ -354,6 +354,126 @@ describe("Reconcile", function()
     end)
 end)
 
+describe("Core:CurrentSection (P2.7 cache)", function()
+    it("finds the nearest section header at or before the current index", function()
+        local _, Core = NewCore()
+        Core.active = {
+            name = "Sectioned",
+            steps = {
+                { type = "section", name = "Alpha" },
+                { type = "accept", quest = 1 },
+                { type = "section", name = "Beta" },
+                { type = "accept", quest = 2 },
+            },
+        }
+        Core.index = 2
+        local section, index = Core:CurrentSection()
+        assert.equals("Alpha", section.name)
+        assert.equals(1, index)
+
+        Core.index = 4
+        section, index = Core:CurrentSection()
+        assert.equals("Beta", section.name)
+        assert.equals(3, index)
+    end)
+
+    it("returns nil for a route with no sections at all", function()
+        local _, Core = NewCore()
+        Core.active = { name = "Flat", steps = { { type = "accept", quest = 1 } } }
+        Core.index = 1
+        -- Captured into a local (not passed directly as the assertion's
+        -- argument): CurrentSection's "no section" case returns two nils
+        -- (step, index), and a function call used directly as an
+        -- argument expands ALL of its return values - `local x = f()`
+        -- truncates cleanly to one, which is what every real caller does.
+        local section = Core:CurrentSection()
+        assert.is_nil(section)
+        -- Repeat call with nothing changed: a cached "no section" result
+        -- must answer this too, not just the first (uncached) call.
+        section = Core:CurrentSection()
+        assert.is_nil(section)
+    end)
+
+    -- Proves the cache is actually SERVED on a repeat call (not just that
+    -- the answer happens to be correct either way): mutate the route's
+    -- steps in place after the first call, with self.active/self.index
+    -- both left unchanged - a genuinely cached call can't see that
+    -- mutation, so it must still return the FIRST answer. Route steps are
+    -- treated as immutable once a route is active (see CurrentSection's
+    -- comment); this only exists to prove the cache is actually hit, not
+    -- to bless in-place mutation of a live route.
+    it("serves the cached answer on a repeat call, not a fresh walk", function()
+        local _, Core = NewCore()
+        local steps = {
+            { type = "section", name = "Alpha" },
+            { type = "accept", quest = 1 },
+        }
+        Core.active = { name = "Sectioned", steps = steps }
+        Core.index = 2
+
+        local section = Core:CurrentSection()
+        assert.equals("Alpha", section.name)
+
+        -- Same active route, same index - but the section header steps
+        -- has been mutated in place. A real recompute would now find
+        -- nothing (no more "section" step); the cache should still return
+        -- the original "Alpha" answer.
+        steps[1].type = "accept"
+        section = Core:CurrentSection()
+        assert.equals("Alpha", section.name)
+    end)
+
+    it("serves a cached nil on a repeat call, not a fresh walk", function()
+        local _, Core = NewCore()
+        local steps = { { type = "accept", quest = 1 } }
+        Core.active = { name = "Flat", steps = steps }
+        Core.index = 1
+        local section = Core:CurrentSection()
+        assert.is_nil(section)
+
+        -- Same active route, same index - a section header is added in
+        -- place after the first call. A real recompute would now find it;
+        -- the cache should still return the original nil answer.
+        steps[1] = { type = "section", name = "Snuck In" }
+        section = Core:CurrentSection()
+        assert.is_nil(section)
+    end)
+
+    -- P2.7's audit correction: the cache must key on (Core.active,
+    -- Core.index) together, not index alone - a route switch can
+    -- coincidentally leave Core.index at the same number the OLD route
+    -- had, which must not serve a stale section from a route that isn't
+    -- even loaded anymore.
+    it("does not serve a stale section across a route switch at the same index", function()
+        local _, Core = NewCore()
+        local routeA = {
+            name = "A",
+            steps = {
+                { type = "section", name = "A-Section" },
+                { type = "accept", quest = 1 },
+            },
+        }
+        local routeB = {
+            name = "B",
+            steps = {
+                { type = "section", name = "B-Section" },
+                { type = "accept", quest = 2 },
+            },
+        }
+
+        Core.active = routeA
+        Core.index = 2
+        local section = Core:CurrentSection()
+        assert.equals("A-Section", section.name)
+
+        -- Switch routes WITHOUT changing self.index - the exact case a
+        -- cache keyed on index alone would get wrong.
+        Core.active = routeB
+        section = Core:CurrentSection()
+        assert.equals("B-Section", section.name)
+    end)
+end)
+
 describe("AutoSelectRoute", function()
     it("is deterministic: prefers a non-demo route, then lower starting level, then name", function()
         local _, Core, Data = NewCore()

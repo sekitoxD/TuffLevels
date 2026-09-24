@@ -219,13 +219,42 @@ Core.StepApplies = StepApplies
 
 -- Walks backwards from the current step to find which section you're in.
 -- Section steps are markers, not work - they auto-advance past.
+--
+-- P2.7: this used to walk from self.index all the way back to 1 on EVERY
+-- call - an O(index) cost paid on every UI refresh, worst on a long,
+-- section-less imported route (nothing to stop at, so it walks the whole
+-- way just to conclude there's no section). Cached and keyed on BOTH
+-- self.active and self.index, not index alone - a route switch (LoadRoute,
+-- ApplyProgressCode) can coincidentally leave self.index at the same
+-- number it was under the OLD route, which would otherwise serve a stale
+-- section from a route that isn't even loaded anymore. Assumes a route's
+-- own steps table is never mutated in place once it's active (true of
+-- every route source today - see the importers, which only ever build a
+-- new table before RegisterRoute) - editing a live, already-active route's
+-- steps would need this cache reset too.
+local sectionCache = { forActive = nil, forIndex = nil, step = nil, index = nil }
+
 function Core:CurrentSection()
     if not self.active then return nil end
-    for i = math.min(self.index, #self.active.steps), 1, -1 do
-        local step = self.active.steps[i]
-        if step and step.type == "section" then return step, i end
+
+    if sectionCache.forActive == self.active and sectionCache.forIndex == self.index then
+        return sectionCache.step, sectionCache.index
     end
-    return nil
+
+    local step, index
+    for i = math.min(self.index, #self.active.steps), 1, -1 do
+        local s = self.active.steps[i]
+        if s and s.type == "section" then
+            step, index = s, i
+            break
+        end
+    end
+
+    sectionCache.forActive = self.active
+    sectionCache.forIndex = self.index
+    sectionCache.step = step
+    sectionCache.index = index
+    return step, index
 end
 
 -- Every section in the route, with how far through each you are.
