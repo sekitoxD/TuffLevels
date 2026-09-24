@@ -661,18 +661,30 @@ end
 local errorCount = 0
 local ERROR_BUDGET = 20
 
-function Compat:Guard(fn, ...)
-    if errorCount >= ERROR_BUDGET then return end
-    local results = { pcall(fn, ...) }
-    if not results[1] then
+-- P2.1: tail-call helper for Guard (Wrap gets its own below, finishWrap,
+-- since its failure path needs different per-module accounting) so neither
+-- ever packs pcall's results into a `{pcall(...)}` table - that allocation
+-- was the single largest source of GC churn found across the whole audit,
+-- since both of these sit on some of the hottest paths in the addon. A
+-- Lua vararg tail call (`return finish(pcall(fn, ...))`) forwards EVERY
+-- value fn returned, not just a fixed number of them - GetItemSellPrice's
+-- `result[11]` read (above) depends on Guard still doing that, which is
+-- why no separate fixed-arity fast path or GuardPack variant is needed.
+local function finish(ok, ...)
+    if not ok then
         errorCount = errorCount + 1
         if errorCount == ERROR_BUDGET then
             print("|cffff5555TuFFlevels|r: error budget reached, suppressing further errors. /tuff errors")
         end
-        Compat.lastError = results[2]
+        Compat.lastError = ...
         return nil
     end
-    return unpack(results, 2)
+    return ...
+end
+
+function Compat:Guard(fn, ...)
+    if errorCount >= ERROR_BUDGET then return end
+    return finish(pcall(fn, ...))
 end
 
 function Compat:ErrorCount()
@@ -710,6 +722,37 @@ local totalWrapped  = 0
 local MODULE_BUDGET = 5
 local TOTAL_WRAP_BUDGET = 30   -- well under the client's 100-error cap
 
+-- P2.1: same tail-call shape as Guard's `finish` above, but with Wrap's
+-- own per-module accounting (message dedup, per-module + total budgets,
+-- onTrip) - kept separate from `finish` rather than parameterized into it,
+-- since the two failure paths share nothing but "don't let pcall's table
+-- allocation happen".
+local function finishWrap(name, onTrip, ok, ...)
+    if ok then return ... end
+
+    local msg = tostring(...)
+    seenMessages[name] = seenMessages[name] or {}
+    local isNewMessage = not seenMessages[name][msg]
+    seenMessages[name][msg] = true
+
+    moduleCounts[name] = (moduleCounts[name] or 0) + 1
+    totalWrapped = totalWrapped + 1
+    Compat.lastError = msg
+
+    if isNewMessage then
+        print(("|cffff5555TuFFlevels|r [%s]: %s"):format(name, msg))
+    end
+
+    if not moduleTripped[name]
+       and (moduleCounts[name] >= MODULE_BUDGET or totalWrapped >= TOTAL_WRAP_BUDGET) then
+        moduleTripped[name] = true
+        print(("|cffff5555TuFFlevels|r: %s hit its error limit and is now suppressed. /tuff errors"):format(name))
+        if onTrip then pcall(onTrip) end
+    end
+
+    return nil
+end
+
 -- Wraps fn so it never throws past this call. name groups it for
 -- accounting and for /tuff errors. onTrip, if given, runs once the first
 -- time this module's budget is spent (e.g. hide a frame, disable a
@@ -717,33 +760,7 @@ local TOTAL_WRAP_BUDGET = 30   -- well under the client's 100-error cap
 function Compat:Wrap(name, fn, onTrip)
     return function(...)
         if moduleTripped[name] then return end
-
-        local results = { pcall(fn, ...) }
-        if results[1] then
-            return unpack(results, 2)
-        end
-
-        local msg = tostring(results[2])
-        seenMessages[name] = seenMessages[name] or {}
-        local isNewMessage = not seenMessages[name][msg]
-        seenMessages[name][msg] = true
-
-        moduleCounts[name] = (moduleCounts[name] or 0) + 1
-        totalWrapped = totalWrapped + 1
-        Compat.lastError = msg
-
-        if isNewMessage then
-            print(("|cffff5555TuFFlevels|r [%s]: %s"):format(name, msg))
-        end
-
-        if not moduleTripped[name]
-           and (moduleCounts[name] >= MODULE_BUDGET or totalWrapped >= TOTAL_WRAP_BUDGET) then
-            moduleTripped[name] = true
-            print(("|cffff5555TuFFlevels|r: %s hit its error limit and is now suppressed. /tuff errors"):format(name))
-            if onTrip then pcall(onTrip) end
-        end
-
-        return nil
+        return finishWrap(name, onTrip, pcall(fn, ...))
     end
 end
 

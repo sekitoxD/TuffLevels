@@ -127,7 +127,7 @@ conflicts with an item's original "Fix:", this section wins.**
 | 9 | Import: P1.8 | done (reviewed, no fixes needed); [G] pending: open the import window, click it again mid-scan, close it mid-scan |
 | 10 | RXPImport: P1.10 | done (reviewed, no fixes needed); [G] pending: import a real RXP guide excerpt with vendor/hint lines |
 | 11 | Rogue: P1.11 + P2.11 + drop `CHAT_MSG_SYSTEM` | done (reviewed, one round of fixes applied: `TakeBaseline` no longer latches `rogueSeeded` off an empty/not-yet-populated spellbook read, and now skips not-yet-learnable "future" spellbook entries via a new `Compat:IsSpellBookItemFuture` wrapper so they don't get permanently baselined as already-known; comment fixes). Known remaining gap, not fixed (low severity per review): old account-wide `TuFFlevelsDB.rogueLearned` data from before this batch is orphaned, not migrated or cleared. [G] pending: Forever and/or Retail rogue, train a new ability, confirm it appears; confirm a pre-existing (not-yet-trained) ability doesn't show a level until actually trained |
-| 12 | Compat: P2.1 + compat_spec | not started |
+| 12 | Compat: P2.1 + compat_spec | done (reviewed, no fixes needed); [G] pending: confirm CI busted run is green (this batch's own specs have never actually been executed, only reasoned through) |
 | 13 | Compat + stubs + .luacheckrc: P2.2 | not started |
 | 14 | Compat: P2.3 + P2.5 | not started |
 | 15 | Core: P2.7 | not started |

@@ -44,6 +44,34 @@ describe("Compat:Guard", function()
         assert.equals(20, calls)
         assert.equals(20, Compat:ErrorCount())
     end)
+
+    -- P2.1: Guard was rewritten to forward pcall's results through a
+    -- vararg tail call instead of packing them into a `{pcall(...)}`
+    -- table, to cut the GC churn that pattern caused on a hot path. This
+    -- must keep preserving every return value, not just the first few -
+    -- Compat:GetItemSellPrice depends on a call far past the 3rd still
+    -- coming through (it reads result[11]).
+    it("preserves every return value, not just the first few", function()
+        local Compat = NewCompat()
+        local a, b, c, d, e = Compat:Guard(function()
+            return 1, 2, 3, 4, 5
+        end)
+        assert.equals(1, a)
+        assert.equals(2, b)
+        assert.equals(3, c)
+        assert.equals(4, d)
+        assert.equals(5, e)
+    end)
+
+    it("preserves a return value far past the 3rd (GetItemSellPrice's shape)", function()
+        local Compat = NewCompat()
+        local result = { Compat:Guard(function()
+            local out = {}
+            for i = 1, 11 do out[i] = i * 10 end
+            return unpack(out, 1, 11)
+        end) }
+        assert.equals(110, result[11])
+    end)
 end)
 
 describe("Compat:Wrap", function()
@@ -51,6 +79,19 @@ describe("Compat:Wrap", function()
         local Compat = NewCompat()
         local wrapped = Compat:Wrap("Test", function(a, b) return a + b end)
         assert.equals(7, wrapped(3, 4))
+    end)
+
+    -- P2.1: same tail-call rewrite as Guard, with its own finishWrap
+    -- helper - must keep forwarding every return value.
+    it("preserves every return value, not just the first few", function()
+        local Compat = NewCompat()
+        local wrapped = Compat:Wrap("Test", function() return 1, 2, 3, 4, 5 end)
+        local a, b, c, d, e = wrapped()
+        assert.equals(1, a)
+        assert.equals(2, b)
+        assert.equals(3, c)
+        assert.equals(4, d)
+        assert.equals(5, e)
     end)
 
     it("swallows an error instead of letting it propagate", function()
