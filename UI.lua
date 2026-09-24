@@ -273,7 +273,12 @@ function UI:Build()
     Btn("Menu", 56, "BOTTOM", 0, function() ns.Panel:Toggle() end)
     frame.mapBtn = Btn("Map", 56, "BOTTOM", 60, function()
         local step = ns.Core:CurrentStep()
-        if step and ns.Data:SetWaypoint(step) then
+        -- force=true: P2.8's dedup (Data:SetWaypoint skips a repeat call
+        -- for the same target) must not apply here - an explicit "take me
+        -- there" click should always (re)set the pin, even if the player
+        -- closed their map or cleared it since it was last set for this
+        -- same step.
+        if step and ns.Data:SetWaypoint(step, true) then
             ns.Print("Waypoint set.")
         else
             ns.Print("Couldn't set a waypoint - no TomTom and no native map pin support on this client.")

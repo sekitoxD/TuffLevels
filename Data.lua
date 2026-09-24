@@ -63,10 +63,38 @@ end
 --
 -- A "flightpath" step is identified by step.mapID (the uiMapID the node
 -- lives on) plus either step.node (a numeric nodeID) or step.name.
+
+-- P2.4: GetAllTaxiNodes allocates a fresh table of every node on the map on
+-- every call, and a full-route walk (Progress, /tuff verify) can call this
+-- for every flightpath step in one pass. A short TTL (not an invalidation
+-- event - nothing tells us when a flight point gets learned) keeps a rapid
+-- walk from re-allocating the same map's node list over and over, while
+-- staying fresh enough that learning a flight point mid-session shows up
+-- within a second or two rather than needing a route reload. Objective
+-- completion (IsQuestObjectiveDone below) is deliberately NOT memoized the
+-- same way - that state changes far more often (every kill/loot) and a
+-- stale read there would misreport step completion, not just redraw late.
+local taxiNodeCache = {}   -- [mapID] = { nodes = {...}, at = GetTime() }
+local TAXI_NODE_CACHE_TTL = 1.5
+
+local function TaxiNodesFor(mapID)
+    local entry = taxiNodeCache[mapID]
+    local now = GetTime()
+    if entry and (now - entry.at) < TAXI_NODE_CACHE_TTL then
+        return entry.nodes
+    end
+
+    local nodes = Compat:Guard(C_TaxiMap.GetAllTaxiNodes, mapID)
+    if nodes then
+        taxiNodeCache[mapID] = { nodes = nodes, at = now }
+    end
+    return nodes
+end
+
 function Data:IsFlightPathKnown(step)
     if not (Compat.has.taxiMap and step.mapID and Enum.FlightPathState) then return false end
 
-    local nodes = Compat:Guard(C_TaxiMap.GetAllTaxiNodes, step.mapID)
+    local nodes = TaxiNodesFor(step.mapID)
     if not nodes then return false end
 
     for _, node in ipairs(nodes) do
@@ -278,8 +306,12 @@ end
 -- distance). Returns nil if the position APIs aren't available or the
 -- player's world position can't be read - callers fall back to their own
 -- coarser estimate in that case.
+-- Phase 3: this runs from Arrow's 20 Hz update loop, so a client missing
+-- C_Map entirely (not just this one method) can't be allowed to throw here
+-- the way a bare `C_Map.GetWorldPosFromMapPos` would - same `C_Map and`
+-- guard shape Data:SetWaypoint already uses below.
 function Data:RealDistanceToStep(mapID, point)
-    if not (mapID and point.x and point.y
+    if not (mapID and point.x and point.y and C_Map
             and C_Map.GetWorldPosFromMapPos and CreateVector2D and UnitPosition) then
         return nil
     end
@@ -348,17 +380,63 @@ local function Attempt(fn, ...)
     return Compat:ErrorCount() == before, a, b, c
 end
 
-function Data:SetWaypoint(step)
+-- P2.8 (reduced - see plan 08's audit correction; the EffectiveTarget half
+-- of the original fix is deferred, it needs an Arrow->Data hook this batch
+-- doesn't add): SetIndex/Reconcile call this on every step change even
+-- when the step's own target didn't actually move (re-applying the same
+-- index, or landing on a run of steps that share coordinates), stomping
+-- the player's own map pin/TomTom waypoint every time. lastWaypoint
+-- remembers the last target actually set, so a repeat call for the SAME
+-- (mapID, x, y) is a no-op - UNLESS `force` is true, which the Map button
+-- (UI.lua) passes so an explicit "take me there" click always works even
+-- if the player closed their map or cleared the pin since it was set.
+--
+-- New: also removes the PREVIOUS TomTom waypoint before adding the next
+-- one - without this, TomTom.AddWaypoint had nothing removing the old
+-- pin, so they piled up in TomTom's own list for the rest of the session.
+local lastWaypoint = nil   -- { mapID, x, y }
+local lastTomTomUID = nil
+
+function Data:SetWaypoint(step, force)
     local mapID = self:StepMap(step)
     if not mapID or not step.x or not step.y then return false end
 
+    if not force and lastWaypoint and lastWaypoint.mapID == mapID
+            and lastWaypoint.x == step.x and lastWaypoint.y == step.y then
+        return true
+    end
+
+    -- Invalidate now, before actually trying anything: the TomTom branch
+    -- below removes the PREVIOUS pin before it knows whether the new one
+    -- will succeed. If it then fails (and the native fallback also fails
+    -- or isn't available), leaving lastWaypoint pointing at the old
+    -- target would falsely dedupe every later call for that same target
+    -- as "already set" - even though nothing is actually on screen
+    -- anymore - until the Map button's force=true call is used to recover.
+    lastWaypoint = nil
+
     if _G.TomTom and _G.TomTom.AddWaypoint then
-        local ok = Attempt(_G.TomTom.AddWaypoint, _G.TomTom, mapID, step.x / 100, step.y / 100, {
+        -- Guard's own session error budget (not this function's target
+        -- cache) can be exhausted here on a very unlucky session - in that
+        -- narrow case Guard skips the removal without running it, and
+        -- this still clears lastTomTomUID, leaving that one pin
+        -- unreachable for later removal. Rare enough (20 unrelated errors
+        -- addon-wide first) not to special-case further.
+        if lastTomTomUID and _G.TomTom.RemoveWaypoint then
+            Compat:Guard(_G.TomTom.RemoveWaypoint, _G.TomTom, lastTomTomUID)
+            lastTomTomUID = nil
+        end
+
+        local ok, uid = Attempt(_G.TomTom.AddWaypoint, _G.TomTom, mapID, step.x / 100, step.y / 100, {
             title = step.note or step.name or "TuFFlevels",
             crazy = true,
             persistent = false,
         })
-        if ok then return true end
+        if ok then
+            lastTomTomUID = uid
+            lastWaypoint = { mapID = mapID, x = step.x, y = step.y }
+            return true
+        end
         -- TomTom threw - fall through and try the native pin instead of
         -- just giving up, in case TomTom is present but broken.
     end
@@ -379,6 +457,7 @@ function Data:SetWaypoint(step)
                 if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
                     Attempt(C_SuperTrack.SetSuperTrackedUserWaypoint, true)
                 end
+                lastWaypoint = { mapID = mapID, x = step.x, y = step.y }
                 return true
             end
         end
