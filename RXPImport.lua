@@ -201,10 +201,20 @@ function RXPImport:Parse(text)
     local curStep
 
     local function FinishStep()
-        if curStep and not curStep._skip and
-           (curStep.type or curStep.zone or (#curStep._notes > 0)) then
+        if curStep and not curStep._skip then
+            -- Fold accumulated notes into the step's note text before the
+            -- scratch table is dropped, so it isn't lost before anything
+            -- reads it.
+            if curStep._notes and #curStep._notes > 0 then
+                curStep.note = table.concat(curStep._notes, " - ")
+            end
             curStep._notes = nil
-            table.insert(route.steps, curStep)
+            if curStep.type or curStep.zone or curStep.note then
+                table.insert(route.steps, curStep)
+            end
+            -- else: nothing but a scratch table came out of this step
+            -- (no type, no zone, no note text) - drop it rather than
+            -- keeping a content-free placeholder.
         end
         curStep = nil
     end
@@ -373,14 +383,19 @@ function RXPImport:Parse(text)
     FinishStep()
 
     for _, s in ipairs(route.steps) do
-        if s._notes and #s._notes > 0 then
-            s.note = table.concat(s._notes, " - ")
-        end
-        s._notes = nil
+        -- (_notes -> note concatenation now happens in FinishStep, before
+        -- _notes is nil'd, so there's nothing left to fold in here.)
         if not s.type then
-            s.type = s.zone and "travel" or "note"
-            if not s.name then
-                s.name = s.note or "Guide note"
+            if s.zone then
+                s.type = "travel"
+                -- A travel step can legitimately carry no note text.
+                if not s.name then s.name = s.note or "Guide note" end
+            else
+                -- FinishStep only lets a zoneless, typeless step through
+                -- when it has note text, so s.note is always set here -
+                -- no "Guide note" placeholder fallback needed.
+                s.type = "note"
+                if not s.name then s.name = s.note end
             end
         end
         if s._infoOnly then
