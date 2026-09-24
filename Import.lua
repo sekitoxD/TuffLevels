@@ -19,6 +19,9 @@ ns.Import = Import
 Import.titles = {}       -- [questID] = title
 Import.pending = {}
 Import.ids = {}
+Import.ticker = nil      -- active C_Timer.NewTicker, if a scan is running
+Import.scanning = false
+Import.scanToken = 0     -- bumped per scan so a cancelled scan's callbacks can't touch newer data
 
 --------------------------------------------------------------------------
 -- Gathering
@@ -31,15 +34,35 @@ function Import:GetCompletedIDs()
     return list
 end
 
+-- Stop any scan currently in flight so its ticker can never fire again and
+-- touch a later scan's titles/ids. Safe to call even if nothing is running.
+function Import:CancelScan()
+    if self.ticker then
+        self.ticker:Cancel()
+        self.ticker = nil
+    end
+    self.scanning = false
+end
+
 -- Quest titles aren't held in memory for completed quests. We ask the client
 -- to load each one, then read the title once it arrives.
 function Import:RequestTitles(ids, onProgress, onDone)
+    self:CancelScan()
+
     self.titles = {}
     self.pending = {}
     self.ids = ids
+    self.scanning = true
+
+    self.scanToken = self.scanToken + 1
+    local token = self.scanToken
 
     local total = #ids
-    if total == 0 then if onDone then onDone(0, 0) end return end
+    if total == 0 then
+        self.scanning = false
+        if onDone then onDone(0, 0) end
+        return
+    end
 
     for _, id in ipairs(ids) do
         self.pending[id] = true
@@ -49,8 +72,11 @@ function Import:RequestTitles(ids, onProgress, onDone)
     -- Poll rather than relying purely on the load event, since some IDs
     -- never resolve and would otherwise hang the whole import.
     local elapsed = 0
-    local ticker
-    ticker = C_Timer.NewTicker and C_Timer.NewTicker(0.5, function()
+    self.ticker = C_Timer.NewTicker and C_Timer.NewTicker(0.5, function()
+        -- A newer scan cancelled this ticker already, but guard anyway in
+        -- case a tick was already queued the instant it was cancelled.
+        if self.scanToken ~= token then return end
+
         elapsed = elapsed + 0.5
         local got = 0
 
@@ -68,13 +94,15 @@ function Import:RequestTitles(ids, onProgress, onDone)
         if onProgress then onProgress(got, total) end
 
         if got >= total or elapsed >= 8 then
-            if ticker then ticker:Cancel() end
+            if self.ticker then self.ticker:Cancel() ; self.ticker = nil end
+            self.scanning = false
             if onDone then onDone(got, total) end
         end
     end)
 
     -- No ticker API: read once and move on.
-    if not ticker then
+    if not self.ticker then
+        self.scanning = false
         local got = 0
         for _, id in ipairs(ids) do
             local title = Compat:Guard(C_QuestLog.GetTitleForQuestID, id)
@@ -165,6 +193,7 @@ function Import:Show()
         win:RegisterForDrag("LeftButton")
         win:SetScript("OnDragStart", win.StartMoving)
         win:SetScript("OnDragStop", win.StopMovingOrSizing)
+        win:SetScript("OnHide", function() Import:CancelScan() end)
 
         ns.Theme:Skin(win)
 
@@ -208,6 +237,8 @@ function Import:Show()
     end
 
     win:Show()
+
+    if self.scanning then return end
 
     local ids = self:GetCompletedIDs()
 
