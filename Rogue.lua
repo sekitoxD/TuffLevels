@@ -74,18 +74,65 @@ Rogue.trainingNote =
 -- Learned-ability tracking
 --------------------------------------------------------------------------
 
+-- Per-character, not account-wide - a level-30 alt shouldn't inherit a
+-- level-60 main's learned-ability history.
 function Rogue:Record(spellName, level)
-    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    local db = Compat:InitSavedVar("TuFFlevelsCharDB")
     db.rogueLearned = db.rogueLearned or {}
 
-    if not db.rogueLearned[spellName] then
+    -- false (from TakeBaseline below) counts as "already present" too, so
+    -- this never overwrites a pre-baseline entry with a guessed level.
+    if db.rogueLearned[spellName] == nil then
         db.rogueLearned[spellName] = level
     end
 end
 
 function Rogue:Learned()
-    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    local db = Compat:InitSavedVar("TuFFlevelsCharDB")
     return db.rogueLearned or {}
+end
+
+-- Snapshot whatever's already in the spellbook the first time SPELLS_CHANGED
+-- fires this session, before anything gets recorded with a level. Without
+-- this, the first spellbook scan would stamp every pre-existing ability
+-- (from a fresh install, or every single session on Forever, where
+-- SavedVariables never persist) with the level you happen to be *right now*,
+-- not the level you actually learned it at.
+--
+-- Baseline entries are recorded as `false` - "known, but we don't know
+-- when" - rather than guessing, and are excluded from the learned list.
+-- `db.rogueSeeded` persists on clients where SavedVariables survive, so this
+-- only runs once ever there; on Forever it can't persist, so it retakes
+-- every session, but that only ever adds more false entries - it can't turn
+-- an already-recorded real level back into a guess.
+function Rogue:TakeBaseline()
+    local db = Compat:InitSavedVar("TuFFlevelsCharDB")
+    if db.rogueSeeded then return end
+    db.rogueLearned = db.rogueLearned or {}
+
+    -- Guard against seeding from an empty/not-yet-populated spellbook (the
+    -- comment above about SPELLS_CHANGED vs. PLAYER_LOGIN is exactly this
+    -- risk) - an empty baseline marked "seeded" would make the NEXT real
+    -- learn event stamp the whole spellbook with the current level, the
+    -- very bug this baseline exists to prevent. Only latch rogueSeeded once
+    -- at least one entry was actually read.
+    local sawAny = false
+    for i = 1, 200 do
+        local name = Compat:GetSpellBookName(i)
+        if not name then break end
+        sawAny = true
+        -- Skip a not-yet-learnable ability (future class-trainer unlock,
+        -- greyed out in the spellbook) - baselining it as "already known"
+        -- would permanently hide it once actually trained, since Record's
+        -- `== nil` check would then treat it as already seen.
+        if not Compat:IsSpellBookItemFuture(i) and db.rogueLearned[name] == nil then
+            db.rogueLearned[name] = false
+        end
+    end
+
+    if sawAny then
+        db.rogueSeeded = true
+    end
 end
 
 --------------------------------------------------------------------------
@@ -313,8 +360,13 @@ function Rogue:BuildTraining()
         table.insert(lines, ("   %s%s|r"):format(Theme.hex.faint, m.note))
     end
 
+    -- `false` entries are pre-baseline abilities (already known before we
+    -- started tracking) - we don't know when those were learned, so they're
+    -- left out of the list rather than shown with a guessed level.
     local count = 0
-    for _ in pairs(learned) do count = count + 1 end
+    for _, lvl in pairs(learned) do
+        if lvl then count = count + 1 end
+    end
 
     table.insert(lines, "")
     table.insert(lines, Theme.hex.accent .. "What you've learned|r")
@@ -328,7 +380,9 @@ function Rogue:BuildTraining()
         -- sort by level
         local sorted = {}
         for name, lvl in pairs(learned) do
-            table.insert(sorted, { name = name, level = lvl })
+            if lvl then
+                table.insert(sorted, { name = name, level = lvl })
+            end
         end
         table.sort(sorted, function(a, b)
             if a.level == b.level then return a.name < b.name end
@@ -510,10 +564,16 @@ end
 
 local rf = CreateFrame("Frame")
 
+-- LEARNED_SPELL_IN_TAB is the Classic Era name; Mainline (Forever/Retail)
+-- renamed it to LEARNED_SPELL_IN_SKILL_LINE at 11.0. Register both and
+-- handle either - Compat:RegisterEvents pcall-rejects whichever name the
+-- current client doesn't recognize (always exactly one of the two, so
+-- don't read anything into `/tuff client` listing one as rejected).
 local _, missingEvents = Compat:RegisterEvents(rf, {
     "LEARNED_SPELL_IN_TAB",
+    "LEARNED_SPELL_IN_SKILL_LINE",
+    "SPELLS_CHANGED",
     "PLAYER_LEVEL_UP",
-    "CHAT_MSG_SYSTEM",
 })
 if ns.Core and ns.Core.missingEvents then
     for _, e in ipairs(missingEvents) do table.insert(ns.Core.missingEvents, e) end
@@ -539,7 +599,16 @@ rf:SetScript("OnEvent", Compat:Wrap("Rogue", function(self, event, ...)
         end
         Rogue:Refresh()
 
-    elseif event == "LEARNED_SPELL_IN_TAB" then
+    elseif event == "SPELLS_CHANGED" then
+        -- Fires early and often; TakeBaseline is a no-op once db.rogueSeeded
+        -- is set, so this only actually scans once per character on a
+        -- client where SavedVariables persist (Classic Era/Retail), or
+        -- once per session on Forever, where they don't (spellbook may
+        -- still be empty at PLAYER_LOGIN, which is why this isn't keyed
+        -- off PLAYER_LOGIN instead).
+        Rogue:TakeBaseline()
+
+    elseif event == "LEARNED_SPELL_IN_TAB" or event == "LEARNED_SPELL_IN_SKILL_LINE" then
         -- The payload varies by client; record the level regardless and let
         -- the spellbook scan below attach names.
         Rogue:ScanSpellbook()

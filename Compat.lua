@@ -419,6 +419,28 @@ function Compat:GetSpellBookName(index)
     return nil
 end
 
+-- The spellbook lists abilities you can't use YET (a future class-trainer
+-- unlock, greyed out) alongside ones you actually know, both under the
+-- same GetSpellBookName - Rogue.lua's baseline/learned tracking needs to
+-- tell them apart, or a future ability gets seeded as "already known" and
+-- then never shows a real learned-level once you actually train it. Errs
+-- toward "known" (false) if this can't be determined, since treating an
+-- already-known spell as "future" would just skip recording it once, while
+-- the reverse permanently hides it (see Rogue.lua's P1.11/P2.11 comments).
+function Compat:IsSpellBookItemFuture(index)
+    if C_SpellBook and C_SpellBook.GetSpellBookItemType then
+        local bank = Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
+        local ok, itemType = pcall(C_SpellBook.GetSpellBookItemType, index, bank)
+        local future = Enum.SpellBookItemType and Enum.SpellBookItemType.FutureSpell
+        return ok and future ~= nil and itemType == future
+    end
+    if _G.GetSpellBookItemInfo then
+        local ok, spellType = pcall(_G.GetSpellBookItemInfo, index, "spell")
+        return ok and spellType == "FUTURESPELL"
+    end
+    return false
+end
+
 -- SetResizeBounds is the modern min/max-size call; older clients only have
 -- the SetMinResize/SetMaxResize pair it replaced. Try the new one first.
 function Compat:SetResizeBounds(frame, minW, minH, maxW, maxH)
