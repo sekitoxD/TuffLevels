@@ -209,6 +209,22 @@ function Zones:Show()
     table.insert(lines, ("|cffffd100You are level %d.|r"):format(level))
     table.insert(lines, "")
 
+    -- P2.12: this table is Horde-only (see the file header) - showing it
+    -- unconditionally to an Alliance character gave wrong guidance instead
+    -- of none. ns.Data may not be loaded in every context this fires from,
+    -- so guard the call rather than assume it; an unknown/undetectable
+    -- faction falls back to the existing Horde content rather than a
+    -- blank window, same as it did for everyone before this fix.
+    local faction = ns.Data and ns.Data:PlayerFaction()
+    if faction == "Alliance" then
+        table.insert(lines, "|cffff5555Alliance zone guidance isn't authored yet.|r")
+        table.insert(lines, "This addon only has Horde leveling zones written up so far.")
+        win.text:SetText(table.concat(lines, "\n"))
+        win.body:SetHeight(math.max(10, win.text:GetStringHeight() + 20))
+        win:Show()
+        return
+    end
+
     local current = self:ForLevel(level, race)
     if #current > 0 then
         table.insert(lines, "|cff00ff00Right now you should be in:|r")

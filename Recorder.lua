@@ -17,6 +17,7 @@ ns.Recorder = Recorder
 
 Recorder.active = false
 Recorder.log = {}
+Recorder.warnedNearCap = false   -- P2.10: has the near-hard-cap warning fired this recording?
 
 -- The NPC you are currently talking to. QUEST_ACCEPTED can fire after the
 -- dialog closes, so we grab the name while the frame is still open and
@@ -94,6 +95,32 @@ local function MaybeNudgeExport()
         "this client won't restore them next login. Menu > Save this as a route."):format(#Recorder.log))
 end
 
+-- P2.10: a session-long recording had no size limit at all - on a client
+-- where SavedVariables persist (Classic Era/Retail) that's unbounded
+-- growth across an entire leveling run. RECORD_WARN_AT is a one-time
+-- heads-up; RECORD_HARD_CAP actually stops recording rather than letting
+-- it grow forever or (the audit-corrected part) silently dropping entries
+-- past the cap while pretending recording is still active - which is why
+-- the cap check below runs AFTER the insert, not before: the entry that
+-- crosses the cap is still recorded, only the NEXT one is refused.
+local RECORD_WARN_AT = 2000
+local RECORD_HARD_CAP = 10000
+
+-- Turns recording off and explains why, from any of the three places that
+-- can discover the log is already at/past the cap (a fresh insert here,
+-- Start() being asked to resume an already-full log, or Restore() finding
+-- one at login). /tuff rec clear, not "start a fresh recording" - Start()
+-- resumes db.recordLog rather than clearing it, so that phrasing would
+-- just send the player straight back into this same message.
+local function StopAtHardCap()
+    Recorder.active = false
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    db.recording = false
+    ns.Print(("|cffff5555Recording stopped at its %d-step hard cap.|r Export what you have now - " ..
+        "Menu > Save this as a route - then /tuff rec clear before starting a new one."):format(RECORD_HARD_CAP))
+    if ns.Panel then ns.Panel:Refresh() end
+end
+
 local function Record(entry)
     if not Recorder.active then return end
     CheckZoneChange()
@@ -114,13 +141,36 @@ local function Record(entry)
     Recorder:Persist()
     if ns.Panel then ns.Panel:Refresh() end
     MaybeNudgeExport()
+
+    if #Recorder.log >= RECORD_HARD_CAP then
+        StopAtHardCap()
+        return
+    end
+
+    if #Recorder.log >= RECORD_WARN_AT and not Recorder.warnedNearCap then
+        Recorder.warnedNearCap = true
+        ns.Print(("|cffffff00Recording has reached %d steps.|r Consider exporting soon - " ..
+            "Menu > Save this as a route."):format(#Recorder.log))
+    end
 end
 
 function Recorder:Start()
-    self.active = true
     local db = Compat:InitSavedVar("TuFFlevelsDB")
-    db.recording = true
     db.recordLog = db.recordLog or {}
+    -- Resumes db.recordLog rather than clearing it (recording is meant to
+    -- survive a /reload on a client where SavedVariables persist), so an
+    -- already-full log from before must be cleared first (/tuff rec
+    -- clear) rather than silently resuming straight into StopAtHardCap on
+    -- the very next event.
+    if #db.recordLog >= RECORD_HARD_CAP then
+        ns.Print(("|cffff5555This recording already has %d steps, its hard cap.|r Export it first if you " ..
+            "haven't - Menu > Save this as a route - then /tuff rec clear before starting a new one."):format(#db.recordLog))
+        return
+    end
+
+    self.active = true
+    self.warnedNearCap = false
+    db.recording = true
     self.log = db.recordLog
     ns.Print("|cff00ff00Recording.|r Just play - everything is being written down.")
 end
@@ -134,6 +184,7 @@ end
 
 function Recorder:Clear()
     self.log = {}
+    self.warnedNearCap = false
     local db = Compat:InitSavedVar("TuFFlevelsDB")
     db.recordLog = {}
     ns.Print("Recording cleared.")
@@ -148,6 +199,16 @@ function Recorder:Restore()
     local db = Compat:InitSavedVar("TuFFlevelsDB")
     self.log = db.recordLog or {}
     self.active = db.recording or false
+
+    if self.active and #self.log >= RECORD_HARD_CAP then
+        -- A session ended (crash, force-quit) between the log reaching
+        -- the cap and Record() getting a chance to notice and stop it -
+        -- don't resume into a recording that would immediately try (and
+        -- fail) to add one more entry past the cap.
+        StopAtHardCap()
+        return
+    end
+
     if self.active then
         ns.Print(("|cff00ff00Recording resumed.|r %d steps so far."):format(#self.log))
     elseif Compat:SavedVarsAreBroken() then
@@ -385,6 +446,14 @@ rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
         return
     end
 
+    -- P2.9: this used to sit below the QUEST_DETAIL/etc. capture branch,
+    -- so CaptureNPC() (a few guarded UnitName calls) ran on every NPC
+    -- interaction in the game, recording on or off. Every remaining event
+    -- this handler cares about only matters while actually recording -
+    -- PLAYER_LEAVING_WORLD's own body already no-ops when inactive, so
+    -- moving this above it changes nothing observable there either.
+    if not Recorder.active then return end
+
     if event == "QUEST_DETAIL" or event == "QUEST_PROGRESS"
        or event == "QUEST_COMPLETE" or event == "GOSSIP_SHOW" then
         CaptureNPC()
@@ -392,14 +461,12 @@ rf:SetScript("OnEvent", Compat:Wrap("Recorder", function(self, event, ...)
     end
 
     if event == "PLAYER_LEAVING_WORLD" then
-        if Recorder.active and Compat:SavedVarsAreBroken() and #Recorder.log > 0 then
+        if Compat:SavedVarsAreBroken() and #Recorder.log > 0 then
             ns.Print(("|cffffff00%d steps recorded, not yet exported.|r Export now if you're logging out - " ..
                 "this client won't restore them next login."):format(#Recorder.log))
         end
         return
     end
-
-    if not Recorder.active then return end
 
     if event == "ZONE_CHANGED_NEW_AREA" then
         CheckZoneChange()

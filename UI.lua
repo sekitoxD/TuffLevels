@@ -110,6 +110,12 @@ function UI:Build()
         local p, _, rp, x, y = self:GetPoint()
         db.pos = { p, rp, x, y }
     end)
+    -- P2.6: Refresh() now skips its work while the frame is hidden (below),
+    -- so whatever's displayed can go stale while it's hidden (a step
+    -- advance, a quest event, anything else that would normally trigger a
+    -- Refresh call). Catch back up the moment it's shown again instead of
+    -- waiting for the next unrelated event to happen to refresh it.
+    frame:SetScript("OnShow", function() UI:Refresh() end)
 
     frame:SetResizable(true)
     ns.Compat:SetResizeBounds(frame, 260, 180, 600, 700)
@@ -331,8 +337,12 @@ end
 -- Refresh
 --------------------------------------------------------------------------
 
+-- P2.6: called on every quest/step/level event while the tracker is open -
+-- skip the work entirely while it's hidden (Menu > Hide, or minimized),
+-- since nothing drawn here is visible anyway. OnShow (above, in Build())
+-- catches it back up the moment it becomes visible again.
 function UI:Refresh()
-    if not frame then return end
+    if not frame or not frame:IsShown() then return end
     local Core = ns.Core
 
     if frame.newsBtn then
@@ -478,5 +488,8 @@ end
 
 function UI:Toggle()
     if not frame then self:Build() end
-    if frame:IsShown() then frame:Hide() else frame:Show() ; self:Refresh() end
+    -- Show() now triggers OnShow -> Refresh() (P2.6) on its own, so the
+    -- explicit Refresh() call this used to make right after Show() would
+    -- just be a redundant second one.
+    if frame:IsShown() then frame:Hide() else frame:Show() end
 end
