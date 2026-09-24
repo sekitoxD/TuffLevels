@@ -269,6 +269,18 @@ function Core:SetIndex(n, opts)
     self.index = math.max(1, math.min(n, total + 1))
     if opts.pin then self.pinned = true end
 
+    -- P1.6: any index change that isn't a plain +1 advance (Back, goto,
+    -- catch-up, a progress-code restore) breaks the mapping Pace's
+    -- step-cumulative timing depends on between step index and actual
+    -- elapsed time - tell it so it stops trusting step splits for the rest
+    -- of this run. A genuine +1 advance (Advance(), or Reconcile catching
+    -- up past already-done steps, which assigns self.index directly and
+    -- never goes through this function) doesn't break that mapping, so
+    -- it's left alone.
+    if ns.Pace and self.index ~= old and self.index ~= old + 1 then
+        ns.Pace:InvalidateStepSplits(old)
+    end
+
     self:Save()
     if ns.UI then ns.UI:Refresh() end
     local step = self:CurrentStep()
@@ -466,9 +478,24 @@ function Core:ApplyProgressCode(code)
         return false, "checksum mismatch - check for a typo"
     end
 
+    -- Same reasoning as LoadRoute, but ONLY when this actually switches to
+    -- a DIFFERENT route than whatever Pace was already tracking: without a
+    -- fresh start there, its stale currentSectionName (from the old route)
+    -- would get recorded under the new route's name on the next section
+    -- transition - a cross-route version of the corruption P1.6 exists to
+    -- prevent. Restoring a code for the SAME route Pace is already
+    -- tracking must NOT restart the run - that would silently wipe this
+    -- session's XP/hour sample and every split recorded so far, for no
+    -- reason (SetIndex's own hook already invalidates step/section splits
+    -- for the jump itself).
+    local switchedRoute = self.active ~= match
     self.active = match
     self.pinned = false
     self:SetIndex(index)
+    -- Runs AFTER SetIndex so OnRouteLoad (if it fires) captures the
+    -- restored index/section, not whatever was current before this code
+    -- was applied.
+    if switchedRoute and ns.Pace then ns.Pace:OnRouteLoad() end
     self:Reconcile()
     return true
 end
@@ -481,10 +508,19 @@ function Core:LoadRoute(name)
     local route = self.routes[name]
     if not route then return false end
 
+    -- P1.6: if this is a RESELECT of the route already active (not a
+    -- switch to a different one), capture the position it's about to be
+    -- reset FROM - Pace's horizon computation needs to know real progress
+    -- already reached at least this far this session, or a reselect
+    -- followed by clicking straight back to that spot would look exactly
+    -- like a fresh start and record near-zero bests for everything it
+    -- skips past on the way back.
+    local resumeFrom = (self.active == route) and self.index or nil
+
     self.active = route
     self.pinned = false
     self.index = 1
-    if ns.Pace then ns.Pace:OnRouteLoad() end
+    if ns.Pace then ns.Pace:OnRouteLoad(resumeFrom) end
     self:Reconcile()
     self:Save()
     if ns.UI then ns.UI:Refresh() end
@@ -581,6 +617,16 @@ function Core:Load()
             self.index = 1
         end
     end
+
+    -- P1.6: Pace:StartRun must run BEFORE Reconcile below, not after (the
+    -- PLAYER_LOGIN handler used to call it afterward instead). StartRun
+    -- captures Core.index (and scans the route for already-done content -
+    -- see ScanDoneHorizon) before Reconcile has a chance to walk it
+    -- forward past already-done steps right here during login - otherwise
+    -- Pace's run-start reference would reflect wherever Reconcile's walk
+    -- happened to land instead of the true starting index restored from
+    -- SavedVariables.
+    if ns.Pace then ns.Pace:StartRun() end
     self:Reconcile()
 end
 
@@ -711,7 +757,10 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
         Core:Load()
 
         if ns.Automation then ns.Automation:Load() end
-        if ns.Pace then ns.Pace:StartRun() end
+        -- Pace:StartRun already ran inside Core:Load() above, before its
+        -- own Reconcile call (see the comment there) - calling it again
+        -- here would re-derive stepSplitsValid from whatever index
+        -- Reconcile already advanced to, undoing that fix.
         if ns.UI then ns.UI:Build() ; ns.UI:Refresh() end
 
         -- Sitting at step 1 with quest flags saying otherwise means either
