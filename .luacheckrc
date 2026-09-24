@@ -89,7 +89,7 @@ read_globals = {
     -- Misc client state
     "InCombatLockdown", "IsShiftKeyDown", "GetCVar", "SetCVar",
     "CreateVector2D", "Enum", "GetZoneText", "time", "date", "CreateColor",
-    "GetLocale",
+    "GetLocale", "GetTime",
 }
 
 -- RXPImport's token dispatcher has deliberate no-op branches (a token that

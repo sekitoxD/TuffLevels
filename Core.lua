@@ -818,6 +818,21 @@ f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
             ThrottledReconcile()
         end
     end
+end, function(firstTrip)
+    -- P2.2: this handler is the event-driven half of the step engine -
+    -- quest accept/turn-in/log-update, level-up, trainer/death/hearth
+    -- detection, zone changes. Tripping it silently would leave that dead
+    -- with no explanation. It's NOT the travel-step ticker (a separate,
+    -- unwrapped C_Timer.NewTicker further up this file), so don't claim
+    -- ALL auto-advance stops. Compat:Wrap's own decay (~5 quiet minutes)
+    -- may re-enable it without needing a /reload - re-enabling itself can
+    -- happen more than once (a module that fails again as soon as it's
+    -- given its budget back just re-trips every cycle for the rest of the
+    -- session), but this print only fires on the FIRST trip (firstTrip),
+    -- so don't spam the player with a recovery message that isn't sticking.
+    if firstTrip then
+        Print("|cffff5555Event-driven auto-advance is off after repeated errors (/tuff errors for details).|r It may come back on its own after a few quiet minutes, or /reload now.")
+    end
 end))
 
 --------------------------------------------------------------------------

@@ -158,9 +158,17 @@ function Arrow:Build()
     Arrow.textOnly = db.arrowTextOnly or false
     Arrow.deferToTomTom = db.arrowDeferToTomTom or false
 
-    local guardedUpdate = Compat:Wrap("Arrow", function() Arrow:Update() end, function()
+    -- P2.2: onTrip now runs on every re-trip after a decay (a genuinely
+    -- broken Update() will fail its way back to tripped every ~5 minutes
+    -- for the rest of the session, not just once) - frame:Hide() has to
+    -- happen every single time or the arrow would stay stuck showing
+    -- stale state once Compat:Wrap's own repeat-trip message goes silent,
+    -- but the player-facing print is still only useful once.
+    local guardedUpdate = Compat:Wrap("Arrow", function() Arrow:Update() end, function(firstTrip)
         frame:Hide()
-        ns.Print("|cffff5555Arrow disabled after repeated errors.|r /tuff errors for details.")
+        if firstTrip then
+            ns.Print("|cffff5555Arrow disabled after repeated errors.|r /tuff errors for details.")
+        end
     end)
 
     -- Driven by a standalone ticker instead of this frame's own OnUpdate:

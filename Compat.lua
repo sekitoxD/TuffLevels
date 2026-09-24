@@ -714,13 +714,53 @@ end
 -- each distinct error message is only printed once - after that it just
 -- counts, so a spammy handler doesn't spam chat.
 
-local moduleCounts  = {}   -- [name] = count
-local moduleTripped = {}   -- [name] = true once that module goes silent
-local seenMessages  = {}   -- [name] = { [message] = true }
-local totalWrapped  = 0
+local moduleCounts    = {}   -- [name] = count since its last decay (drives the trip threshold)
+local moduleLifetime  = {}   -- [name] = count for the whole session, never decays - what /tuff errors shows
+local moduleTripped   = {}   -- [name] = true once that module goes silent
+local moduleNotified  = {}   -- [name] = true once its trip MESSAGE has ever printed (never decays; onTrip itself still runs every trip)
+local moduleLastError = {}   -- [name] = GetTime() of that module's last error
+local seenMessages    = {}   -- [name] = { [message] = true }
+local totalWrapped    = 0
+local totalLastError  = nil  -- GetTime() of the last error from ANY module
 
 local MODULE_BUDGET = 5
 local TOTAL_WRAP_BUDGET = 30   -- well under the client's 100-error cap
+local DECAY_SECONDS = 300      -- ~5 quiet minutes gives a module its budget back
+
+-- P2.2: a burst of MODULE_BUDGET errors anywhere in a module - even ones
+-- unrelated to whatever set off the burst - permanently silenced it for
+-- the rest of the session, since a tripped module never calls its wrapped
+-- fn again and so never got another chance to reset. Called at the TOP of
+-- every wrapped call (Compat:Wrap below), before the moduleTripped
+-- short-circuit, specifically so a tripped module still gets evaluated
+-- here on its next event/tick even though its own fn never runs - only
+-- that lets it actually untrip rather than just resetting a count nothing
+-- will ever read again. The lifetime total decays the same way, based on
+-- the last error from ANY module: without that, totalWrapped would stay
+-- pinned at TOTAL_WRAP_BUDGET forever once the addon's lifetime error
+-- count reaches it, permanently tripping the next module to hit its own
+-- very first error regardless of how long everything had been quiet.
+--
+-- Deliberately only clears the DECAYING budget counters (moduleCounts,
+-- moduleTripped, moduleLastError) - never moduleLifetime, so /tuff errors
+-- still shows a module's error history for the session even long after it
+-- quietly recovered; and never moduleNotified, so a module that's
+-- genuinely broken (fails again as soon as it's given its budget back)
+-- doesn't re-print its trip MESSAGE every ~5 minutes for the rest of the
+-- session (onTrip itself still runs every re-trip - see finishWrap).
+local function DecayIfQuiet(name)
+    if not (moduleLastError[name] or totalLastError) then return end
+    local now = GetTime()
+    if moduleLastError[name] and now - moduleLastError[name] > DECAY_SECONDS then
+        moduleCounts[name] = nil
+        moduleTripped[name] = nil
+        moduleLastError[name] = nil
+    end
+    if totalLastError and now - totalLastError > DECAY_SECONDS then
+        totalWrapped = 0
+        totalLastError = nil
+    end
+end
 
 -- P2.1: same tail-call shape as Guard's `finish` above, but with Wrap's
 -- own per-module accounting (message dedup, per-module + total budgets,
@@ -736,7 +776,10 @@ local function finishWrap(name, onTrip, ok, ...)
     seenMessages[name][msg] = true
 
     moduleCounts[name] = (moduleCounts[name] or 0) + 1
+    moduleLifetime[name] = (moduleLifetime[name] or 0) + 1
     totalWrapped = totalWrapped + 1
+    moduleLastError[name] = GetTime()
+    totalLastError = GetTime()
     Compat.lastError = msg
 
     if isNewMessage then
@@ -746,28 +789,56 @@ local function finishWrap(name, onTrip, ok, ...)
     if not moduleTripped[name]
        and (moduleCounts[name] >= MODULE_BUDGET or totalWrapped >= TOTAL_WRAP_BUDGET) then
         moduleTripped[name] = true
-        print(("|cffff5555TuFFlevels|r: %s hit its error limit and is now suppressed. /tuff errors"):format(name))
-        if onTrip then pcall(onTrip) end
+
+        -- A module that's genuinely broken (not just a transient burst)
+        -- will decay, get its budget back, fail its way straight back to
+        -- tripped, and repeat that every ~5 minutes for the rest of the
+        -- session - onTrip must still run EVERY time that happens (it's
+        -- often a protective state change, e.g. Arrow re-hiding its
+        -- frame, which has to happen again each re-trip or the frame
+        -- would stay stuck showing stale state), but Compat's own trip
+        -- message would just be noise on repeat. `firstTrip` lets each
+        -- onTrip decide for itself whether to also print its own
+        -- player-facing message (Arrow's does; Marker's pure state-reset
+        -- one doesn't need to) - only the state-change half is mandatory
+        -- on every trip.
+        local firstTrip = not moduleNotified[name]
+        moduleNotified[name] = true
+        if firstTrip then
+            print(("|cffff5555TuFFlevels|r: %s hit its error limit and is now suppressed. /tuff errors"):format(name))
+        end
+        if onTrip then pcall(onTrip, firstTrip) end
     end
 
     return nil
 end
 
 -- Wraps fn so it never throws past this call. name groups it for
--- accounting and for /tuff errors. onTrip, if given, runs once the first
--- time this module's budget is spent (e.g. hide a frame, disable a
--- feature) instead of going silent with no explanation.
+-- accounting and for /tuff errors. onTrip, if given, runs every time this
+-- module's budget is spent (e.g. hide a frame, disable a feature) -
+-- called as onTrip(firstTrip), where firstTrip is true only the very
+-- first time this module ever trips this session, for callbacks that also
+-- want to print their own one-time player-facing message without
+-- repeating it on every decay-then-re-trip cycle.
 function Compat:Wrap(name, fn, onTrip)
     return function(...)
+        DecayIfQuiet(name)
         if moduleTripped[name] then return end
         return finishWrap(name, onTrip, pcall(fn, ...))
     end
 end
 
--- [name] = { count = n, lastError = "..." }, for /tuff errors.
+-- [name] = { count = n, lastError = "..." }, for /tuff errors. `count` is
+-- the session's lifetime total, not the decaying budget count P2.2 resets
+-- every ~5 quiet minutes - otherwise a module that quietly recovered would
+-- vanish from this list entirely, right as its own trip message pointed
+-- the player here for details. `tripped` still reflects LIVE status
+-- (false again once it's actually decayed and untripped, not just once
+-- notified) - it's the two together that tell the full story: "did this
+-- trip, and is it still tripped right now".
 function Compat:ModuleErrorCounts()
     local out = {}
-    for name, count in pairs(moduleCounts) do
+    for name, count in pairs(moduleLifetime) do
         out[name] = { count = count, tripped = moduleTripped[name] or false }
     end
     return out

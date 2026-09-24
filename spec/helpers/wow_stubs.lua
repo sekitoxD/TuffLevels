@@ -75,6 +75,11 @@ function M.Install()
     _G.IsShiftKeyDown = _G.IsShiftKeyDown or function() return false end
     _G.GetZoneText = _G.GetZoneText or function() return "" end
     _G.time = _G.time or os.time
+    -- os.clock() is monotonic and process-local, the same shape as WoW's
+    -- own GetTime() (seconds since the client started, not wall-clock) -
+    -- a spec that needs to control it directly (Compat's error-budget
+    -- decay) overrides _G.GetTime itself rather than relying on this.
+    _G.GetTime = _G.GetTime or os.clock
 end
 
 --- Loads one addon source file the way WoW's client does: the file's

@@ -120,6 +120,127 @@ describe("Compat:Wrap", function()
     end)
 end)
 
+describe("Compat:Wrap decay (P2.2)", function()
+    -- A tripped module never calls its own fn again, so nothing but the
+    -- wrapper itself (checked on every call, before the trip
+    -- short-circuit) can ever give it its budget back - these tests drive
+    -- a fully controllable fake GetTime() to prove that actually happens
+    -- after a quiet period, not just that the counters exist. Same
+    -- leaked-stub concern as the SetCVar/GetCVar tests further down this
+    -- file: wow_stubs' `_G.GetTime = _G.GetTime or os.clock` default only
+    -- applies once per process, so snapshot and restore it around every
+    -- test here.
+    local savedGetTime
+
+    before_each(function()
+        savedGetTime = _G.GetTime
+    end)
+
+    after_each(function()
+        _G.GetTime = savedGetTime
+    end)
+
+    it("gives a tripped module its budget back after a quiet period, and actually untrips it", function()
+        local fakeNow = 1000
+        _G.GetTime = function() return fakeNow end
+        local Compat = NewCompat()
+
+        local calls = 0
+        local wrapped = Compat:Wrap("Flaky", function()
+            calls = calls + 1
+            error("boom")
+        end)
+
+        for _ = 1, 5 do wrapped() end
+        assert.equals(5, calls)
+        assert.is_true(Compat:ModuleErrorCounts()["Flaky"].tripped)
+
+        -- Not quiet long enough yet - still tripped, fn still not called.
+        fakeNow = fakeNow + 100
+        wrapped()
+        assert.equals(5, calls)
+
+        -- Past the decay window: untripped, so fn actually runs again -
+        -- proving this isn't just a count reset nothing would ever read.
+        fakeNow = fakeNow + 301
+        wrapped()
+        assert.equals(6, calls)
+        assert.is_false(Compat:ModuleErrorCounts()["Flaky"].tripped)
+
+        -- The decaying budget count must have actually reset, not just
+        -- the trip flag - one more failure right after shouldn't
+        -- immediately re-trip, the way it would if moduleCounts had
+        -- stayed at 5 (or climbed past it) straight through the decay.
+        wrapped()
+        assert.equals(7, calls)
+        assert.is_false(Compat:ModuleErrorCounts()["Flaky"].tripped)
+
+        -- Lifetime count (what /tuff errors shows) never resets, and
+        -- keeps growing across the decay - it's the session-wide history,
+        -- separate from the decaying budget that gates tripping.
+        assert.equals(7, Compat:ModuleErrorCounts()["Flaky"].count)
+    end)
+
+    it("still runs onTrip on every re-trip, but only marks firstTrip once", function()
+        -- onTrip is often a protective state change (Arrow re-hiding its
+        -- frame), not just a message - it must keep running on every
+        -- re-trip after a decay, even though Compat's own trip message
+        -- only prints once. firstTrip tells onTrip which situation it's
+        -- in, for callbacks that also want to print their own message
+        -- only the first time.
+        local fakeNow = 1000
+        _G.GetTime = function() return fakeNow end
+        local Compat = NewCompat()
+
+        local trips = {}
+        local wrapped = Compat:Wrap("Flaky", function() error("boom") end, function(firstTrip)
+            table.insert(trips, firstTrip)
+        end)
+
+        for _ = 1, 5 do wrapped() end
+        assert.equals(1, #trips)
+        assert.is_true(trips[1])
+
+        -- Past the decay window, failing its way back to tripped calls
+        -- onTrip again - but this time firstTrip is false.
+        fakeNow = fakeNow + 301
+        for _ = 1, 5 do wrapped() end
+        assert.equals(2, #trips)
+        assert.is_false(trips[2])
+    end)
+
+    it("decays the shared lifetime total the same way", function()
+        local fakeNow = 1000
+        _G.GetTime = function() return fakeNow end
+        local Compat = NewCompat()
+
+        -- 30 distinct modules, one failure each - each stays well under
+        -- its own per-module budget of 5, but the 30th pushes the SHARED
+        -- lifetime total to its own cap.
+        for i = 1, 30 do
+            Compat:Wrap("Mod" .. i, function() error("boom") end)()
+        end
+        assert.is_true(Compat:ModuleErrorCounts()["Mod30"].tripped)
+
+        -- A brand new module, never having failed before, trips on its
+        -- very FIRST failure purely off the shared total - proves the
+        -- total is actually shared across modules, not per-module.
+        local fresh = Compat:Wrap("Fresh", function() error("boom") end)
+        fresh()
+        assert.is_true(Compat:ModuleErrorCounts()["Fresh"].tripped)
+
+        -- Past the decay window, the shared total resets. A DIFFERENT
+        -- brand new module's first-ever failure no longer trips it off a
+        -- stale lifetime count - this specifically isolates the shared
+        -- total's own decay from each module's independent per-module
+        -- decay (which alone wouldn't need the total to reset at all).
+        fakeNow = fakeNow + 301
+        local anotherFresh = Compat:Wrap("AnotherFresh", function() error("boom") end)
+        anotherFresh()
+        assert.is_false(Compat:ModuleErrorCounts()["AnotherFresh"].tripped)
+    end)
+end)
+
 describe("Compat:RegisterUnitEvents", function()
     -- P1.1: UNIT_SPELLCAST_SUCCEEDED/UNIT_QUEST_LOG_CHANGED must be
     -- registered player-only via RegisterUnitEvent, but fall back to a
