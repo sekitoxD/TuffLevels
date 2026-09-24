@@ -31,49 +31,54 @@ local CHANGELOG = {
     "Added an RXPGuides (RestedXP) guide importer (/tuff rxp, or Menu > Content & Import) alongside the existing Guidelime importer - paste in a Classic-flavored guide you already have installed and get a TuFFlevels route back. Ships no RXPGuides content itself, same isolation as the QuestieDB/Guidelime integrations.",
 }
 
+-- Fixed content (the changelog text is a load-time constant) - build once
+-- and reuse on reopen instead of creating a fresh frame/widget set every
+-- time (plan 08 batch 8 / P1.4). The seen-version bookkeeping still runs on
+-- every open since it's cheap state, not part of the leaked frame problem.
 function Panel:ShowChangelogDialog()
-    if self.changelogBox then self.changelogBox:Hide() end
-
     local db = Compat:InitSavedVar("TuFFlevelsDB")
     db.lastSeenChangelogVersion = CHANGELOG_VERSION
     if ns.UI and ns.UI.Refresh then ns.UI:Refresh() end
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(400, 240)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+    if not self.changelogBox then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(400, 240)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("What's new - " .. CHANGELOG_VERSION)
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("What's new - " .. CHANGELOG_VERSION)
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 20, -46)
-    body:SetPoint("TOPRIGHT", -20, -46)
-    body:SetJustifyH("LEFT")
-    body:SetSpacing(6)
-    body:SetTextColor(unpack(ns.Theme.color.text))
+        local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        body:SetPoint("TOPLEFT", 20, -46)
+        body:SetPoint("TOPRIGHT", -20, -46)
+        body:SetJustifyH("LEFT")
+        body:SetSpacing(6)
+        body:SetTextColor(unpack(ns.Theme.color.text))
 
-    local lines = {}
-    for _, entry in ipairs(CHANGELOG) do
-        table.insert(lines, "- " .. entry)
+        local lines = {}
+        for _, entry in ipairs(CHANGELOG) do
+            table.insert(lines, "- " .. entry)
+        end
+        body:SetText(table.concat(lines, "\n"))
+
+        FitDialogToBody(f, body, 46, 60, 160)
+
+        local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        ok:SetSize(100, 22)
+        ok:SetPoint("BOTTOM", 0, 16)
+        ok:SetText("Close")
+        ok:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinChildren(f)
+
+        self.changelogBox = f
     end
-    body:SetText(table.concat(lines, "\n"))
 
-    FitDialogToBody(f, body, 46, 60, 160)
-
-    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    ok:SetSize(100, 22)
-    ok:SetPoint("BOTTOM", 0, 16)
-    ok:SetText("Close")
-    ok:SetScript("OnClick", function() f:Hide() end)
-    ns.Theme:SkinChildren(f)
-
-    self.changelogBox = f
-    f:Show()
+    self.changelogBox:Show()
 end
 
 function Panel:HasUnseenChangelog()
@@ -397,79 +402,84 @@ end
 --------------------------------------------------------------------------
 
 -- Occasional-use route setup/backup actions, split out of the main list.
--- Rebuilt fresh on every open (same pattern as ShowRoutePicker/
--- ShowCatchUpDialog below) rather than persisted and live-refreshed - most
--- of these buttons have no on/off state to keep in sync while the panel
--- sits open, unlike the toggles on the main panel. Recording is the one
--- exception here, and its own click handler updates its own text directly
--- (see below) rather than needing this menu to be a persisted frame.
+-- Button set is fixed; only the Recording button's label and the steps-
+-- recorded count change while the menu is open (or between opens, if
+-- recording was toggled elsewhere) - build once and refresh those two
+-- widgets on every open instead of rebuilding the whole menu (plan 08
+-- batch 8 / P1.4).
 function Panel:ShowContentMenu()
-    if self.contentMenu then self.contentMenu:Hide() end
+    if not self.contentMenu then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(240, 332)
+        f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
+        f:SetFrameStrata("DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(240, 332)
-    f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
-    f:SetFrameStrata("DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Content & Import")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Content & Import")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        MakeButton(f, "Import spreadsheet", -42, function()
+            ns.SheetImport:Show()
+        end)
+        MakeButton(f, "Import a guide", -68, function()
+            ns.GuideImport:Show()
+        end)
+        MakeButton(f, "Import RXPGuides guide", -94, function()
+            ns.RXPImport:Show()
+        end)
+        MakeButton(f, "Write a route (text)", -120, function()
+            ns.CompactGuide:Show()
+        end)
+        MakeButton(f, "Recover past quests", -146, function()
+            ns.Import:Show()
+        end)
 
-    MakeButton(f, "Import spreadsheet", -42, function()
-        ns.SheetImport:Show()
-    end)
-    MakeButton(f, "Import a guide", -68, function()
-        ns.GuideImport:Show()
-    end)
-    MakeButton(f, "Import RXPGuides guide", -94, function()
-        ns.RXPImport:Show()
-    end)
-    MakeButton(f, "Write a route (text)", -120, function()
-        ns.CompactGuide:Show()
-    end)
-    MakeButton(f, "Recover past quests", -146, function()
-        ns.Import:Show()
-    end)
+        -- Recording moved here from the main panel (2026-09-20): a
+        -- route-authoring tool that's off by default, sitting right next to
+        -- "Save this as a route" now that both are occasional-use actions
+        -- rather than something a player following a route needs on the
+        -- main list. Recording has on/off state that can change while the
+        -- menu is left open, so its own click handler updates its own text
+        -- directly, the same pattern ShowDisplayMenu's mobBtn already uses;
+        -- both are also refreshed on every reopen below.
+        local recBtn
+        recBtn = MakeButton(f, "Start recording", -172, function()
+            if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
+            recBtn:SetText(ns.Recorder.active and "Stop recording" or "Start recording")
+            f.recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
+            Panel:Refresh()
+        end)
+        f.recBtn = recBtn
 
-    -- Recording moved here from the main panel (2026-09-20): a
-    -- route-authoring tool that's off by default, sitting right next to
-    -- "Save this as a route" now that both are occasional-use actions
-    -- rather than something a player following a route needs on the main
-    -- list. This menu is rebuilt fresh on every open, but Recording (unlike
-    -- the other buttons here) has on/off state that can change while the
-    -- menu is left open, so its own click handler updates its own text
-    -- directly, the same pattern ShowDisplayMenu's mobBtn already uses.
-    local recBtn, recStatus
-    recBtn = MakeButton(f, ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording", -172, function()
-        if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
-        recBtn:SetText(ns.Recorder.active and "Stop recording" or "Start recording")
-        recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
-        Panel:Refresh()
-    end)
+        local recStatus = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        recStatus:SetPoint("TOP", 0, -192)
+        recStatus:SetTextColor(unpack(ns.Theme.color.dim))
+        f.recStatus = recStatus
 
-    recStatus = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    recStatus:SetPoint("TOP", 0, -192)
-    recStatus:SetTextColor(unpack(ns.Theme.color.dim))
-    recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
+        MakeButton(f, "Save this as a route", -218, function()
+            ns.Recorder:ShowExport()
+        end)
+        MakeButton(f, "Progress code", -244, function()
+            Panel:ShowProgressCode()
+        end)
 
-    MakeButton(f, "Save this as a route", -218, function()
-        ns.Recorder:ShowExport()
-    end)
-    MakeButton(f, "Progress code", -244, function()
-        Panel:ShowProgressCode()
-    end)
+        local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        close:SetSize(100, 22)
+        close:SetPoint("BOTTOM", 0, 14)
+        close:SetText("Close")
+        close:SetScript("OnClick", function() f:Hide() end)
 
-    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    close:SetSize(100, 22)
-    close:SetPoint("BOTTOM", 0, 14)
-    close:SetText("Close")
-    close:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinChildren(f)
+        self.contentMenu = f
+    end
 
-    ns.Theme:SkinChildren(f)
-    self.contentMenu = f
+    local f = self.contentMenu
+    f.recBtn:SetText(ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording")
+    f.recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
+
     f:Show()
 end
 
@@ -477,80 +487,84 @@ end
 -- Display settings submenu
 --------------------------------------------------------------------------
 
+-- Button set is fixed; every button's label reflects live on/off state that
+-- can change between opens (or while the menu sits open, via its own click
+-- handler) - build once and refresh all five labels on every open instead
+-- of rebuilding the whole menu (plan 08 batch 8 / P1.4).
 function Panel:ShowDisplayMenu()
-    if self.displayMenu then self.displayMenu:Hide() end
+    if not self.displayMenu then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(240, 320)
+        f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
+        f:SetFrameStrata("DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(240, 320)
-    f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
-    f:SetFrameStrata("DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Display settings")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Display settings")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        f.mobBtn = MakeButton(f, "Objective mobs", -42, function()
+            ns.Marker:ToggleMobs()
+            f.mobBtn:SetText(ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
+        end)
 
-    local mobBtn
-    mobBtn = MakeButton(f, ns.Marker and ns.Marker.markMobs
-        and "Objective mobs: on" or "Objective mobs: off", -42, function()
-        ns.Marker:ToggleMobs()
-        mobBtn:SetText(ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
-    end)
+        -- plans/01-bug-fixes.md V4: "nameplateShowFriends" isn't a registered
+        -- cvar on Forever at all - read the same "nameplateShowFriendlyNPCs"
+        -- cvar Marker:EnableFriendlyPlates/DisableFriendlyPlates confirm
+        -- success against, via the same C_CVar-preferring Compat wrapper, or
+        -- this button's label and on/off click logic silently invert on
+        -- Forever.
+        f.platesBtn = MakeButton(f, "Nameplates", -68, function()
+            local cur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
+            if cur == "1" then ns.Marker:DisableFriendlyPlates()
+            else ns.Marker:EnableFriendlyPlates() end
+            local now = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
+            f.platesBtn:SetText(now == "1" and "Nameplates: on" or "Nameplates: off")
+        end)
 
-    -- plans/01-bug-fixes.md V4: "nameplateShowFriends" isn't a registered
-    -- cvar on Forever at all - read the same "nameplateShowFriendlyNPCs"
-    -- cvar Marker:EnableFriendlyPlates/DisableFriendlyPlates confirm success
-    -- against, via the same C_CVar-preferring Compat wrapper, or this
-    -- button's label and on/off click logic silently invert on Forever.
-    local platesBtn
+        MakeButton(f, "Colors", -94, function()
+            Panel:ShowColorPicker()
+        end)
+
+        MakeButton(f, "Reset arrow position", -120, function()
+            ns.Arrow:ResetPosition()
+        end)
+
+        f.cbBtn = MakeButton(f, "Arrow colorblind colors", -146, function()
+            ns.Arrow:ToggleColorblind()
+            f.cbBtn:SetText(ns.Arrow.colorblind and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
+        end)
+
+        f.textOnlyBtn = MakeButton(f, "Arrow text-only mode", -172, function()
+            ns.Arrow:ToggleTextOnly()
+            f.textOnlyBtn:SetText(ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
+        end)
+
+        f.tomtomBtn = MakeButton(f, "Defer arrow to TomTom", -198, function()
+            ns.Arrow:ToggleDeferToTomTom()
+            f.tomtomBtn:SetText(ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
+        end)
+
+        local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        close:SetSize(100, 22)
+        close:SetPoint("BOTTOM", 0, 14)
+        close:SetText("Close")
+        close:SetScript("OnClick", function() f:Hide() end)
+
+        ns.Theme:SkinChildren(f)
+        self.displayMenu = f
+    end
+
+    local f = self.displayMenu
+    f.mobBtn:SetText(ns.Marker and ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
     local plateCur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
-    platesBtn = MakeButton(f, plateCur == "1" and "Nameplates: on" or "Nameplates: off", -68, function()
-        local cur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
-        if cur == "1" then ns.Marker:DisableFriendlyPlates()
-        else ns.Marker:EnableFriendlyPlates() end
-        local now = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
-        platesBtn:SetText(now == "1" and "Nameplates: on" or "Nameplates: off")
-    end)
+    f.platesBtn:SetText(plateCur == "1" and "Nameplates: on" or "Nameplates: off")
+    f.cbBtn:SetText(ns.Arrow and ns.Arrow.colorblind and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
+    f.textOnlyBtn:SetText(ns.Arrow and ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
+    f.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
 
-    MakeButton(f, "Colors", -94, function()
-        Panel:ShowColorPicker()
-    end)
-
-    MakeButton(f, "Reset arrow position", -120, function()
-        ns.Arrow:ResetPosition()
-    end)
-
-    local cbBtn
-    cbBtn = MakeButton(f, ns.Arrow and ns.Arrow.colorblind
-        and "Arrow colorblind colors: on" or "Arrow colorblind colors: off", -146, function()
-        ns.Arrow:ToggleColorblind()
-        cbBtn:SetText(ns.Arrow.colorblind and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
-    end)
-
-    local textOnlyBtn
-    textOnlyBtn = MakeButton(f, ns.Arrow and ns.Arrow.textOnly
-        and "Arrow text-only mode: on" or "Arrow text-only mode: off", -172, function()
-        ns.Arrow:ToggleTextOnly()
-        textOnlyBtn:SetText(ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
-    end)
-
-    local tomtomBtn
-    tomtomBtn = MakeButton(f, ns.Arrow and ns.Arrow.deferToTomTom
-        and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off", -198, function()
-        ns.Arrow:ToggleDeferToTomTom()
-        tomtomBtn:SetText(ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
-    end)
-
-    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    close:SetSize(100, 22)
-    close:SetPoint("BOTTOM", 0, 14)
-    close:SetText("Close")
-    close:SetScript("OnClick", function() f:Hide() end)
-
-    ns.Theme:SkinChildren(f)
-    self.displayMenu = f
     f:Show()
 end
 
@@ -601,41 +615,80 @@ end
 -- Route picker
 --------------------------------------------------------------------------
 
-function Panel:ShowRoutePicker()
-    if self.picker then self.picker:Hide() end
-
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(320, 260)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
-
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Choose a route")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
-
-    local y = -42
-    local count = 0
-    for name, route in pairs(ns.Core.routes) do
-        local suffix = ("  (%s-%s)"):format(
-            route.levels and route.levels[1] or "?",
-            route.levels and route.levels[2] or "?")
-        local b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+-- The route list changes size (routes installed/removed between opens) and
+-- content (which routes exist), so this can't be pure build-once like the
+-- fixed-content dialogs - it pools route buttons instead: reuse existing
+-- ones, create more as needed, hide any surplus left over from a previous
+-- open that had more routes (same shape as Progress.lua's EnsureRow).
+local function EnsureRouteButton(f, i)
+    local b = f.rowPool[i]
+    if not b then
+        b = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         b:SetSize(280, 22)
-        b:SetPoint("TOP", 0, y)
-
+        b:SetPoint("TOP", 0, -42 - (i - 1) * 26)
         local fs = b:GetFontString()
         if fs then
             local fontFile, _, fontFlags = fs:GetFont()
             fs:SetFont(fontFile, 11, fontFlags)
         end
+        ns.Theme:SkinButton(b)
+        f.rowPool[i] = b
+    end
+    return b
+end
+
+function Panel:ShowRoutePicker()
+    if not self.picker then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(320, 260)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
+
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Choose a route")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
+
+        local none = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        none:SetPoint("CENTER")
+        none:SetText("No routes installed yet.\nPlay, then Save this as a route.")
+        none:SetTextColor(unpack(ns.Theme.color.dim))
+        f.none = none
+
+        local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        close:SetSize(100, 22)
+        close:SetPoint("BOTTOM", 0, 14)
+        close:SetText("Close")
+        close:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinButton(close)
+
+        f.rowPool = {}
+        self.picker = f
+    end
+
+    local f = self.picker
+
+    -- Deterministic order (Phase 3): `pairs` iteration order isn't stable,
+    -- so the button order used to reshuffle on every open.
+    local names = {}
+    for name in pairs(ns.Core.routes) do table.insert(names, name) end
+    table.sort(names)
+
+    local count = #names
+    for i, name in ipairs(names) do
+        local route = ns.Core.routes[name]
+        local suffix = ("  (%s-%s)"):format(
+            route.levels and route.levels[1] or "?",
+            route.levels and route.levels[2] or "?")
+        local b = EnsureRouteButton(f, i)
 
         b:SetText(name .. suffix)
 
         -- Last resort if it still overflows at the smaller size: trim the
         -- route name (never the level range) with an ellipsis.
+        local fs = b:GetFontString()
         if fs then
             local avail = b:GetWidth() - 20
             local trimmed = name
@@ -649,16 +702,14 @@ function Panel:ShowRoutePicker()
             ns.Core:LoadRoute(name)
             f:Hide()
         end)
-        y = y - 26
-        count = count + 1
+        b:Show()
     end
 
-    if count == 0 then
-        local none = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        none:SetPoint("CENTER")
-        none:SetText("No routes installed yet.\nPlay, then Save this as a route.")
-        none:SetTextColor(unpack(ns.Theme.color.dim))
+    for i = count + 1, #f.rowPool do
+        f.rowPool[i]:Hide()
     end
+
+    f.none:SetShown(count == 0)
 
     -- Height was fixed at the original 260 regardless of how many routes
     -- exist - with enough routes registered the last rows ran past the
@@ -667,18 +718,6 @@ function Panel:ShowRoutePicker()
     -- top of it and ate the click instead). Grow to fit instead.
     f:SetHeight(math.max(260, 42 + count * 26 + 60))
 
-    local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    close:SetSize(100, 22)
-    close:SetPoint("BOTTOM", 0, 14)
-    close:SetText("Close")
-    close:SetScript("OnClick", function() f:Hide() end)
-
-    -- Route buttons above were left on Blizzard's default UIPanelButtonTemplate
-    -- look - every other dialog in this addon re-skins its buttons via
-    -- SkinChildren right before showing; this one just never got it.
-    ns.Theme:SkinChildren(f)
-
-    self.picker = f
     f:Show()
 end
 
@@ -688,47 +727,39 @@ end
 
 -- Confirms before jumping, since a route can run to ~3000 steps and
 -- Core:CatchUp(true) would otherwise silently teleport the tracked step.
+-- Whether a jump is even possible (canJump) changes every open, so both
+-- Confirm/Cancel and Close are built once and just shown/hidden per case,
+-- rather than rebuilding the button row from scratch each time.
 function Panel:ShowCatchUpDialog()
-    if self.catchUpBox then self.catchUpBox:Hide() end
-
     local Core = ns.Core
     if not Core.active then
         ns.Print("No route loaded.")
         return
     end
 
-    local furthest = Core:PreviewCatchUp()
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(360, 150)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+    if not self.catchUpBox then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(360, 150)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Catch up on quests")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Catch up on quests")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 20, -46)
-    body:SetPoint("TOPRIGHT", -20, -46)
-    body:SetJustifyH("LEFT")
-    body:SetSpacing(4)
-    body:SetTextColor(unpack(ns.Theme.color.text))
+        local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        body:SetPoint("TOPLEFT", 20, -46)
+        body:SetPoint("TOPRIGHT", -20, -46)
+        body:SetJustifyH("LEFT")
+        body:SetSpacing(4)
+        body:SetTextColor(unpack(ns.Theme.color.text))
+        f.body = body
 
-    local canJump = furthest and furthest > Core.index
-    if canJump then
-        body:SetText(("Jump from step %d to step %d of %d?\nScans forward for quests already done."):format(
-            Core.index, furthest, #Core.active.steps))
-    else
-        body:SetText("Already caught up - nothing ahead looks done.")
-    end
-
-    local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    confirm:SetSize(100, 22)
-
-    if canJump then
+        local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        confirm:SetSize(100, 22)
         confirm:SetPoint("BOTTOM", -55, 16)
         confirm:SetText("Confirm")
         confirm:SetScript("OnClick", function()
@@ -736,20 +767,39 @@ function Panel:ShowCatchUpDialog()
             f:Hide()
             Panel:Refresh()
         end)
+        f.confirm = confirm
 
         local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         cancel:SetSize(100, 22)
         cancel:SetPoint("BOTTOM", 55, 16)
         cancel:SetText("Cancel")
         cancel:SetScript("OnClick", function() f:Hide() end)
-    else
-        confirm:SetPoint("BOTTOM", 0, 16)
-        confirm:SetText("Close")
-        confirm:SetScript("OnClick", function() f:Hide() end)
-    end
-    ns.Theme:SkinChildren(f)
+        f.cancel = cancel
 
-    self.catchUpBox = f
+        local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        close:SetSize(100, 22)
+        close:SetPoint("BOTTOM", 0, 16)
+        close:SetText("Close")
+        close:SetScript("OnClick", function() f:Hide() end)
+        f.close = close
+
+        ns.Theme:SkinChildren(f)
+        self.catchUpBox = f
+    end
+
+    local f = self.catchUpBox
+    local furthest = Core:PreviewCatchUp()
+    local canJump = furthest and furthest > Core.index
+    if canJump then
+        f.body:SetText(("Jump from step %d to step %d of %d?\nScans forward for quests already done."):format(
+            Core.index, furthest, #Core.active.steps))
+    else
+        f.body:SetText("Already caught up - nothing ahead looks done.")
+    end
+    f.confirm:SetShown(canJump)
+    f.cancel:SetShown(canJump)
+    f.close:SetShown(not canJump)
+
     f:Show()
 end
 
@@ -760,54 +810,61 @@ end
 -- Same scan/jump as the Catch-up dialog above, but triggered unprompted
 -- when login finds the tracker sitting at step 1 while quest flags say
 -- otherwise (SavedVariables loss, or quests done outside the addon).
+-- `furthest` is the one thing that changes per open - build once and
+-- refresh the body text instead of rebuilding the whole frame.
 function Panel:ShowResumePrompt(furthest)
-    if self.resumeBox then self.resumeBox:Hide() end
-
     local Core = ns.Core
     if not Core.active then return end
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(360, 150)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+    if not self.resumeBox then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(360, 150)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Welcome back")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Welcome back")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 20, -46)
-    body:SetPoint("TOPRIGHT", -20, -46)
-    body:SetJustifyH("LEFT")
-    body:SetSpacing(4)
-    body:SetTextColor(unpack(ns.Theme.color.text))
-    body:SetText(("You're at step 1, but quests up to step %d of %d already look done.\nJump the tracker to step %d?"):format(
+        local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        body:SetPoint("TOPLEFT", 20, -46)
+        body:SetPoint("TOPRIGHT", -20, -46)
+        body:SetJustifyH("LEFT")
+        body:SetSpacing(4)
+        body:SetTextColor(unpack(ns.Theme.color.text))
+        f.body = body
+
+        local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        confirm:SetSize(100, 22)
+        confirm:SetPoint("BOTTOM", -55, 16)
+        confirm:SetText("Jump")
+        confirm:SetScript("OnClick", function()
+            Core:CatchUp(true)
+            f:Hide()
+            Panel:Refresh()
+        end)
+
+        local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        cancel:SetSize(100, 22)
+        cancel:SetPoint("BOTTOM", 55, 16)
+        cancel:SetText("Not now")
+        cancel:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinChildren(f)
+
+        self.resumeBox = f
+    end
+
+    local f = self.resumeBox
+    f.body:SetText(("You're at step 1, but quests up to step %d of %d already look done.\nJump the tracker to step %d?"):format(
         furthest, #Core.active.steps, furthest))
-
-    FitDialogToBody(f, body, 46, 60, 150)
-
-    local confirm = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    confirm:SetSize(100, 22)
-    confirm:SetPoint("BOTTOM", -55, 16)
-    confirm:SetText("Jump")
-    confirm:SetScript("OnClick", function()
-        Core:CatchUp(true)
-        f:Hide()
-        Panel:Refresh()
-    end)
-
-    local cancel = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    cancel:SetSize(100, 22)
-    cancel:SetPoint("BOTTOM", 55, 16)
-    cancel:SetText("Not now")
-    cancel:SetScript("OnClick", function() f:Hide() end)
-    ns.Theme:SkinChildren(f)
-
-    self.resumeBox = f
+    -- Show() before fitting height to the body text: on a reopen the frame
+    -- starts hidden (Jump/Not now hid it last time), and GetStringHeight()
+    -- on a hidden FontString isn't guaranteed to reflect the wrapped text.
     f:Show()
+    FitDialogToBody(f, f.body, 46, 60, 150)
 end
 
 --------------------------------------------------------------------------
@@ -815,7 +872,9 @@ end
 --------------------------------------------------------------------------
 
 -- A short, copy-pasteable stand-in for SavedVariables when those can't be
--- relied on: encodes route + step with a typo-catching checksum.
+-- relied on: encodes route + step with a typo-catching checksum. The code
+-- itself changes every open (route/step can move between opens) - build
+-- once and refresh the edit box text instead of rebuilding the frame.
 function Panel:ShowProgressCode()
     local Core = ns.Core
     local code = Core:GetProgressCode()
@@ -824,42 +883,46 @@ function Panel:ShowProgressCode()
         return
     end
 
-    if self.codeBox then self.codeBox:Hide() end
+    if not self.codeBox then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(360, 150)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(360, 150)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Progress code")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Progress code")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        local help = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        help:SetPoint("TOP", 0, -42)
+        help:SetTextColor(unpack(ns.Theme.color.dim))
+        help:SetText("Ctrl+C to copy. Restore later with /tuff code <code>")
 
-    local help = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    help:SetPoint("TOP", 0, -42)
-    help:SetTextColor(unpack(ns.Theme.color.dim))
-    help:SetText("Ctrl+C to copy. Restore later with /tuff code <code>")
+        local edit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
+        edit:SetSize(300, 24)
+        edit:SetPoint("TOP", 0, -68)
+        edit:SetAutoFocus(true)
+        edit:SetScript("OnEscapePressed", function() f:Hide() end)
+        edit:SetScript("OnEnterPressed", function(box) box:HighlightText() end)
+        f.edit = edit
 
-    local edit = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
-    edit:SetSize(300, 24)
-    edit:SetPoint("TOP", 0, -68)
-    edit:SetAutoFocus(true)
-    edit:SetText(code)
-    edit:HighlightText()
-    edit:SetScript("OnEscapePressed", function() f:Hide() end)
-    edit:SetScript("OnEnterPressed", function(self) self:HighlightText() end)
+        local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        ok:SetSize(100, 22)
+        ok:SetPoint("BOTTOM", 0, 16)
+        ok:SetText("Close")
+        ok:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinChildren(f)
 
-    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    ok:SetSize(100, 22)
-    ok:SetPoint("BOTTOM", 0, 16)
-    ok:SetText("Close")
-    ok:SetScript("OnClick", function() f:Hide() end)
-    ns.Theme:SkinChildren(f)
+        self.codeBox = f
+    end
 
-    self.codeBox = f
+    local f = self.codeBox
+    f.edit:SetText(code)
+    f.edit:HighlightText()
+
     f:Show()
 end
 
@@ -867,66 +930,68 @@ end
 -- Help
 --------------------------------------------------------------------------
 
+-- Fixed content - build once and reuse on reopen (plan 08 batch 8 / P1.4).
 function Panel:ShowHelpDialog()
-    if self.helpBox then self.helpBox:Hide() end
+    if not self.helpBox then
+        local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        f:SetSize(420, 280)
+        f:SetPoint("CENTER")
+        f:SetFrameStrata("FULLSCREEN_DIALOG")
+        f:EnableMouse(true)
+        ns.Theme:Skin(f)
 
-    local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(420, 280)
-    f:SetPoint("CENTER")
-    f:SetFrameStrata("FULLSCREEN_DIALOG")
-    f:EnableMouse(true)
-    ns.Theme:Skin(f)
+        local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("TOP", 0, -14)
+        t:SetText("Auto progress & catch-up")
+        t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-    local t = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    t:SetPoint("TOP", 0, -14)
-    t:SetText("Auto progress & catch-up")
-    t:SetTextColor(unpack(ns.Theme.color.lilac))
+        local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        body:SetPoint("TOPLEFT", 20, -46)
+        body:SetPoint("TOPRIGHT", -20, -46)
+        body:SetJustifyH("LEFT")
+        body:SetSpacing(4)
+        body:SetTextColor(unpack(ns.Theme.color.text))
+        body:SetText(
+            "The tracker auto-advances on its own. Accepting, completing and " ..
+            "turning in a quest all move the current step forward without you " ..
+            "doing anything - that's why there's no manual \"done\" button.\n\n" ..
+            "|cffffd100Catch-up mode|r is for when you're ahead of the tracker - you " ..
+            "already did some of the quests it hasn't caught up to yet (e.g. you " ..
+            "loaded a route mid-level, or skipped steps).\n\n" ..
+            "|cffffd100/tuff catchup|r previews how far forward it can scan based on " ..
+            "quests you've already completed, without moving anything.\n" ..
+            "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
+            "The |cffffd100Catch up on quests|r button on this menu does the same " ..
+            "thing with a confirm dialog instead of typing commands.\n\n" ..
+            "|cffffd100Auto accept/turn-in|r (off by default, on by default every " ..
+            "login on Forever since it can't remember an explicit off there - " ..
+            "toggle top-left on the tracker or in this menu) accepts and turns " ..
+            "in quests for you, but only the ones matching your current step, " ..
+            "and never guesses when a turn-in has more than one reward to " ..
+            "choose from. Hold Shift to skip it for a single dialog without " ..
+            "turning it off.\n\n" ..
+            "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
+            "how long your current section is taking versus your best time for it, " ..
+            "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
+            "/tuff pace) gives you a copyable summary of the run.\n\n" ..
+            "|cffffd100Write a route (text)|r (or /tuff write) is a quicker way to " ..
+            "author a route than a Lua table - one line per step, e.g. " ..
+            "|cffa0a0a0accept 4641 npc=Kaltunk at=1411,42.6,68.8|r. See " ..
+            "CompactGuide.lua's header for the full format.")
 
-    local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 20, -46)
-    body:SetPoint("TOPRIGHT", -20, -46)
-    body:SetJustifyH("LEFT")
-    body:SetSpacing(4)
-    body:SetTextColor(unpack(ns.Theme.color.text))
-    body:SetText(
-        "The tracker auto-advances on its own. Accepting, completing and " ..
-        "turning in a quest all move the current step forward without you " ..
-        "doing anything - that's why there's no manual \"done\" button.\n\n" ..
-        "|cffffd100Catch-up mode|r is for when you're ahead of the tracker - you " ..
-        "already did some of the quests it hasn't caught up to yet (e.g. you " ..
-        "loaded a route mid-level, or skipped steps).\n\n" ..
-        "|cffffd100/tuff catchup|r previews how far forward it can scan based on " ..
-        "quests you've already completed, without moving anything.\n" ..
-        "|cffffd100/tuff catchup confirm|r jumps to that step for real.\n\n" ..
-        "The |cffffd100Catch up on quests|r button on this menu does the same " ..
-        "thing with a confirm dialog instead of typing commands.\n\n" ..
-        "|cffffd100Auto accept/turn-in|r (off by default, on by default every " ..
-        "login on Forever since it can't remember an explicit off there - " ..
-        "toggle top-left on the tracker or in this menu) accepts and turns " ..
-        "in quests for you, but only the ones matching your current step, " ..
-        "and never guesses when a turn-in has more than one reward to " ..
-        "choose from. Hold Shift to skip it for a single dialog without " ..
-        "turning it off.\n\n" ..
-        "|cffffd100Pace tracking|r runs automatically - the Progress window shows " ..
-        "how long your current section is taking versus your best time for it, " ..
-        "plus XP/hour and a level ETA. |cffffd100Export splits|r there (or " ..
-        "/tuff pace) gives you a copyable summary of the run.\n\n" ..
-        "|cffffd100Write a route (text)|r (or /tuff write) is a quicker way to " ..
-        "author a route than a Lua table - one line per step, e.g. " ..
-        "|cffa0a0a0accept 4641 npc=Kaltunk at=1411,42.6,68.8|r. See " ..
-        "CompactGuide.lua's header for the full format.")
+        FitDialogToBody(f, body, 46, 60, 160)
 
-    FitDialogToBody(f, body, 46, 60, 160)
+        local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        ok:SetSize(100, 22)
+        ok:SetPoint("BOTTOM", 0, 16)
+        ok:SetText("Close")
+        ok:SetScript("OnClick", function() f:Hide() end)
+        ns.Theme:SkinChildren(f)
 
-    local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-    ok:SetSize(100, 22)
-    ok:SetPoint("BOTTOM", 0, 16)
-    ok:SetText("Close")
-    ok:SetScript("OnClick", function() f:Hide() end)
-    ns.Theme:SkinChildren(f)
+        self.helpBox = f
+    end
 
-    self.helpBox = f
-    f:Show()
+    self.helpBox:Show()
 end
 
 --------------------------------------------------------------------------
@@ -936,8 +1001,15 @@ end
 -- Palette changes apply immediately: Theme:ApplyPalette() updates the live
 -- color tables and Theme:ReapplyAll() repaints every already-built frame
 -- Skin()/SkinButton() touched, instead of waiting for the next /reload.
+-- Content is fixed (ns.Theme.presets doesn't change at runtime) - build
+-- once and reuse on reopen, same as the other fixed-content dialogs (plan
+-- 08 batch 8 / P1.4; the audit correction over the original finding is
+-- that this one does NOT need a button pool, unlike ShowRoutePicker).
 function Panel:ShowColorPicker()
-    if self.colorPicker then self.colorPicker:Hide() end
+    if self.colorPicker then
+        self.colorPicker:Show()
+        return
+    end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     f:SetSize(340, 440)
@@ -985,9 +1057,9 @@ function Panel:ShowColorPicker()
     eb:SetSize(280, 24)
     eb:SetPoint("TOP", hint, "BOTTOM", 0, -28)
     eb:SetAutoFocus(false)
-    eb:SetScript("OnEnterPressed", function(self)
-        local text = self:GetText()
-        self:ClearFocus()
+    eb:SetScript("OnEnterPressed", function(box)
+        local text = box:GetText()
+        box:ClearFocus()
         if text == "" then return end
 
         local updates, bad = {}, {}
@@ -1013,7 +1085,7 @@ function Panel:ShowColorPicker()
         end
         ns.Theme:ApplyPalette(updates)
         ns.Theme:ReapplyAll()
-        self:SetText("")
+        box:SetText("")
         ns.Print("Custom colors applied.")
     end)
 

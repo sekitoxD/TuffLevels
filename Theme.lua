@@ -54,11 +54,16 @@ local function unpackc(c, a)
 end
 
 -- Frames/buttons Skin()/SkinButton() have painted, so a palette change can
--- repaint them live instead of waiting for the next Build(). Weak-keyed so
--- closed/destroyed frames don't keep this table growing forever. The value
--- is "frame" or "button" for Skin()/SkinButton()'s own elements, or a
--- function(obj) for a one-off decorative element outside that shape (e.g.
--- UI.lua's section header bar) that needs its own repaint logic.
+-- repaint them live instead of waiting for the next Build(). Weak-keyed,
+-- though in practice a WoW frame parented to UIParent is never garbage
+-- collected while the game runs, so this table doesn't actually self-trim -
+-- what keeps it bounded is that Panel.lua's dialogs are now build-once (plan
+-- 08 batch 8 / P1.4) instead of creating a fresh frame on every open, so
+-- each dialog only ever adds its widgets to this table once per session
+-- rather than once per open. The value is "frame" or "button" for
+-- Skin()/SkinButton()'s own elements, or a function(obj) for a one-off
+-- decorative element outside that shape (e.g. UI.lua's section header bar)
+-- that needs its own repaint logic.
 Theme._skinned = setmetatable({}, { __mode = "k" })
 
 --------------------------------------------------------------------------
