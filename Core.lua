@@ -81,7 +81,7 @@ local function ResolveQuest(step)
     local id = Compat:GetQuestIDByName(step.questName)
     if id then
         step.quest = id
-        Compat:SaveNameCache()
+        Compat:SaveNameCache(step.questName:lower(), id)
     end
     return id
 end

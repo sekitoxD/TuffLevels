@@ -368,3 +368,202 @@ describe("Compat:SetCVarSafe / GetCVarSafe", function()
         assert.is_false(Compat:SetCVarSafe("nameplateShowFriends", 1))
     end)
 end)
+
+describe("Compat:GetQuestIDByName / SaveNameCache (P2.3)", function()
+    -- InitSavedVar reuses whatever's already sitting in the real global
+    -- (that's the whole point - it survives a /reload on a client where
+    -- SavedVariables actually persist), so unlike Compat's own file-scope
+    -- locals, TuFFlevelsDB does NOT reset just because NewCompat() loads a
+    -- fresh Compat.lua chunk. Snapshot and restore it, same shape as the
+    -- C_QuestLog/C_Map stubs in this file.
+    local savedCQuestLog, savedDB
+
+    before_each(function()
+        savedCQuestLog = _G.C_QuestLog
+        savedDB = _G.TuFFlevelsDB
+        _G.TuFFlevelsDB = nil
+    end)
+
+    after_each(function()
+        _G.C_QuestLog = savedCQuestLog
+        _G.TuFFlevelsDB = savedDB
+    end)
+
+    it("resolves a name from the live quest log and caches it", function()
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return 1 end,
+            GetInfo = function(i)
+                if i == 1 then
+                    return { title = "Rite of Passage", questID = 111, isHeader = false }
+                end
+            end,
+        }
+        local Compat = NewCompat()
+        assert.equals(111, Compat:GetQuestIDByName("Rite of Passage"))
+
+        -- Cached: still resolves even after the quest is turned in and
+        -- leaves the log entirely (LogIndex invalidated and rebuilt
+        -- without it) - proves nameCache itself is answering the second
+        -- call, not just LogIndex's own separate memoization.
+        Compat:InvalidateLogIndex()
+        _G.C_QuestLog.GetNumQuestLogEntries = function() return 0 end
+        _G.C_QuestLog.GetInfo = function() return nil end
+        assert.equals(111, Compat:GetQuestIDByName("Rite of Passage"))
+    end)
+
+    it("does not resolve a name that isn't in the log", function()
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return 0 end,
+            GetInfo = function() return nil end,
+        }
+        local Compat = NewCompat()
+        assert.is_nil(Compat:GetQuestIDByName("Nonexistent Quest"))
+    end)
+
+    -- P2.3's regression risk: a step further down a route, for a quest
+    -- already held, must still auto-advance later even if that quest gets
+    -- turned in (and leaves the log) before its OWN step is ever directly
+    -- evaluated by name - that only works if resolving ANY name merges
+    -- the whole log index into nameCache, not just the one key that was
+    -- actually asked for.
+    it("opportunistically caches every quest currently in the log, not just the one asked about", function()
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return 2 end,
+            GetInfo = function(i)
+                if i == 1 then return { title = "Quest A", questID = 1, isHeader = false } end
+                if i == 2 then return { title = "Quest B", questID = 2, isHeader = false } end
+            end,
+        }
+        local Compat = NewCompat()
+        -- Only "Quest A" is asked about here - "Quest B" is never queried.
+        assert.equals(1, Compat:GetQuestIDByName("Quest A"))
+
+        -- "Quest B" is turned in and leaves the log before its own step is
+        -- ever evaluated by name.
+        Compat:InvalidateLogIndex()
+        _G.C_QuestLog.GetNumQuestLogEntries = function() return 0 end
+        _G.C_QuestLog.GetInfo = function() return nil end
+
+        -- Still resolves: the earlier lookup for "Quest A" merged the
+        -- WHOLE log index (including "Quest B") into nameCache.
+        assert.equals(2, Compat:GetQuestIDByName("Quest B"))
+    end)
+
+    -- Round-2 review finding: the in-memory merge alone isn't enough - on
+    -- a client where SavedVariables persist (Classic Era/Retail), "Quest
+    -- B" from the scenario above would resolve fine for the rest of THIS
+    -- session, but be lost again after a relog, since LoadNameCache only
+    -- restores whatever actually got persisted. The merge must write to
+    -- TuFFlevelsDB.questNames too, not just nameCache.
+    it("also persists opportunistically-merged names to SavedVariables, not just memory", function()
+        _G.C_QuestLog = {
+            GetNumQuestLogEntries = function() return 2 end,
+            GetInfo = function(i)
+                if i == 1 then return { title = "Quest A", questID = 1, isHeader = false } end
+                if i == 2 then return { title = "Quest B", questID = 2, isHeader = false } end
+            end,
+        }
+        local Compat = NewCompat()
+        -- Only "Quest A" is asked about - "Quest B" is never queried.
+        assert.equals(1, Compat:GetQuestIDByName("Quest A"))
+
+        -- Both should already be in SavedVariables, not just nameCache -
+        -- resolving "Quest A" merged the whole log index into both.
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
+        assert.equals(1, db.questNames["quest a"])
+        assert.equals(2, db.questNames["quest b"])
+    end)
+
+    it("SaveNameCache writes only the one name/id pair it's given", function()
+        local Compat = NewCompat()
+        Compat:SaveNameCache("rite of passage", 111)
+        Compat:SaveNameCache("a different quest", 222)
+
+        local db = Compat:InitSavedVar("TuFFlevelsDB")
+        assert.equals(111, db.questNames["rite of passage"])
+        assert.equals(222, db.questNames["a different quest"])
+
+        -- "Only" means only - nothing else should have appeared.
+        local count = 0
+        for _ in pairs(db.questNames) do count = count + 1 end
+        assert.equals(2, count)
+    end)
+
+    it("SaveNameCache does nothing when nothing actually resolved", function()
+        local Compat = NewCompat()
+        Compat:SaveNameCache("some quest", nil)
+        -- Checked directly against the real global, not through
+        -- InitSavedVar - calling InitSavedVar itself would create the
+        -- table as a side effect, making this assertion meaningless.
+        assert.is_nil(_G.TuFFlevelsDB)
+    end)
+end)
+
+describe("Compat:MapID (P2.5)", function()
+    local savedCMap
+
+    before_each(function()
+        savedCMap = _G.C_Map
+    end)
+
+    after_each(function()
+        _G.C_Map = savedCMap
+    end)
+
+    it("resolves a zone once ZoneIndex has built", function()
+        -- A zone/ID deliberately absent from CLASSIC_MAP_IDS, so this can
+        -- only resolve via a genuinely-built ZoneIndex, not the static
+        -- fallback table.
+        _G.C_Map = {
+            GetMapChildrenInfo = function(root)
+                if root == 946 then
+                    return { { name = "Fakezone Test Area", mapID = 9999 } }
+                end
+                return {}
+            end,
+        }
+        local Compat = NewCompat()
+        assert.equals(9999, Compat:MapID("Fakezone Test Area"))
+        assert.equals(9999, Compat:MapID("Fakezone Test Area"))
+    end)
+
+    -- The audit correction's specific concern: an empty ZoneIndex doesn't
+    -- mean the zone doesn't exist, only that the map system isn't up yet -
+    -- CLASSIC_MAP_IDS can still supply a plausible-looking fallback value
+    -- in the meantime, and caching THAT would permanently shadow the real
+    -- answer once ZoneIndex actually builds and disagrees with it.
+    it("never caches a value obtained before ZoneIndex actually built, even a valid fallback one", function()
+        -- Durotar resolves via the static CLASSIC_MAP_IDS fallback (1411)
+        -- while C_Map reports nothing yet (ZoneIndex still empty).
+        _G.C_Map = { GetMapChildrenInfo = function() return {} end }
+        local Compat = NewCompat()
+        assert.equals(1411, Compat:MapID("Durotar"))
+
+        -- The map system "comes up" with a DIFFERENT answer for the same
+        -- zone (plausible on Mainline, where uiMapIDs don't necessarily
+        -- match Classic's). If the fallback value above got cached, this
+        -- would still (wrongly) return 1411 instead of the new value.
+        _G.C_Map.GetMapChildrenInfo = function(root)
+            if root == 946 then return { { name = "Durotar", mapID = 555 } } end
+            return {}
+        end
+        assert.equals(555, Compat:MapID("Durotar"))
+    end)
+
+    it("never caches a miss, so a zone can resolve later once the map system catches up", function()
+        -- A zone deliberately absent from the static CLASSIC_MAP_IDS
+        -- fallback table, so the only way to resolve it is via ZoneIndex.
+        _G.C_Map = { GetMapChildrenInfo = function() return {} end }
+        local Compat = NewCompat()
+        assert.is_nil(Compat:MapID("Fakezone Test Area"))
+
+        -- The map system "comes up" between calls - a real login scenario,
+        -- where C_Map isn't ready yet the first few times it's asked. Must
+        -- not have poisoned this zone with the earlier miss.
+        _G.C_Map.GetMapChildrenInfo = function(root)
+            if root == 946 then return { { name = "Fakezone Test Area", mapID = 9999 } } end
+            return {}
+        end
+        assert.equals(9999, Compat:MapID("Fakezone Test Area"))
+    end)
+end)

@@ -561,15 +561,34 @@ local function ZoneIndex()
     return built
 end
 
+-- P2.5: on Arrow's 20 Hz path and every step of a route walk, MapID used to
+-- re-lowercase, re-resolve the alias table, and do two table lookups every
+-- single call. Cache the final answer keyed on the raw (un-lowercased)
+-- zone string, so a cache hit skips the :lower() call too, not just the
+-- lookups. Only cache once ZoneIndex() has actually built (an empty index
+-- just means the map system isn't up yet, not that the zone doesn't
+-- exist) and never cache a miss - either would risk permanently poisoning
+-- a zone's lookup for the rest of the session on a value obtained before
+-- the real data was ready.
+local mapIDCache = {}
+
 -- Returns the uiMapID this client uses for a zone name, or nil.
 function Compat:MapID(zone)
     if type(zone) ~= "string" or zone == "" then return nil end
+
+    local cached = mapIDCache[zone]
+    if cached then return cached end
 
     local key = zone:lower()
     key = ZONE_ALIASES[key] or key
 
     local index = ZoneIndex()
-    return index[key] or CLASSIC_MAP_IDS[key]
+    local mapID = index[key] or CLASSIC_MAP_IDS[key]
+
+    if mapID and next(index) then
+        mapIDCache[zone] = mapID
+    end
+    return mapID
 end
 
 --------------------------------------------------------------------------
@@ -614,13 +633,41 @@ local function LogIndex()
     return map
 end
 
+-- P2.3: used to copy every entry in LogIndex() into nameCache (AND
+-- SavedVariables, via the caller's SaveNameCache() call) on EVERY miss -
+-- correct (it's how a step further down the route, for a quest you're
+-- already holding, still auto-advances even if that quest gets turned in
+-- before Reconcile/Progress ever directly asks about it by name, including
+-- across a later relog on a client where SavedVariables persist), but
+-- wasteful: a route with hundreds of unresolved name-based steps (e.g. the
+-- whole Progress window walking every step at once) could trigger that
+-- full-table copy hundreds of times against a LogIndex() that never
+-- actually changed in between. Merge at most once per LogIndex REBUILD
+-- instead (logIndexAtLastMerge tracks which build nameCache was last
+-- synced from, by table identity - LogIndex() returns a fresh table only
+-- when the log actually changes, per InvalidateLogIndex above) - same
+-- eventual coverage (both in memory and persisted), but bounded to once
+-- per quest event instead of once per lookup.
+local logIndexAtLastMerge
+
+local function MergeLogIndexIntoCache(index)
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    db.questNames = db.questNames or {}
+    for title, questID in pairs(index) do
+        nameCache[title] = questID
+        db.questNames[title] = questID
+    end
+end
+
 function Compat:GetQuestIDByName(name)
     if not name then return nil end
     local key = name:lower()
     if nameCache[key] then return nameCache[key] end
 
-    for title, questID in pairs(LogIndex()) do
-        nameCache[title] = questID
+    local index = LogIndex()
+    if index ~= logIndexAtLastMerge then
+        MergeLogIndexIntoCache(index)
+        logIndexAtLastMerge = index
     end
     return nameCache[key]
 end
@@ -645,10 +692,16 @@ function Compat:LoadNameCache()
     for name, id in pairs(db.questNames) do nameCache[name] = id end
 end
 
-function Compat:SaveNameCache()
+-- P2.3: writes only the ONE name/id pair that was just resolved, not the
+-- whole (permanently-growing) nameCache - the caller (Core.ResolveQuest)
+-- calls this once per name-based step's first resolution, so a route with
+-- hundreds of them used to mean hundreds of full-table copies into
+-- SavedVariables, each one copying an ever-larger table.
+function Compat:SaveNameCache(name, questID)
+    if not (name and questID) then return end
     local db = self:InitSavedVar("TuFFlevelsDB")
     db.questNames = db.questNames or {}
-    for name, id in pairs(nameCache) do db.questNames[name] = id end
+    db.questNames[name] = questID
 end
 
 --------------------------------------------------------------------------
