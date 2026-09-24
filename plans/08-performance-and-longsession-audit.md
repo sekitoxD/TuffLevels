@@ -1,8 +1,14 @@
 # Plan 8: Performance and long-session audit fixes
 
-**Status: in progress (audited 2026-09-22; see "Audit corrections" + batch table). PRIORITY — do this before starting any other new plan.**
-When picking up work in this repo with no other in-flight plan specified, start
-here first.
+**Status: Phase 1 and Phase 2 done and committed (all 17 batches; see the
+batch table below for review history and per-batch [G] notes). Phase 3 is
+mostly deferred - see its own section for which items got folded in and
+which didn't. Remaining before this plan is fully closed out: the [G]
+in-game verification passes listed per batch (nothing here can substitute
+for actually playing it), and confirming CI on the final pushed commit
+(busted/luacheck have been green throughout Phase 2; `validate-routes` has
+been red since before this plan and is explicitly out of scope - see its
+own note under "Audit corrections").**
 
 Source: a four-way parallel `code-reviewer` audit of every addon file outside
 `tools/` (Compat.lua, Core.lua, Data.lua / Marker.lua, Arrow.lua, Pace.lua /
@@ -467,46 +473,76 @@ bug — real, but lower urgency than Phase 1's active bugs and hot loops.
 Not urgent; batch these into the same commit as whichever Phase 1/2 item
 touches the same file, rather than a dedicated pass.
 
-- Arrow re-computes map/distance twice per tick (`Bearing` then
-  `EffectiveTarget` each call `GetBestMapForUnit`/`RealDistanceToStep`
-  independently) and re-`SetText`s unchanged strings every tick —
-  `Arrow.lua:50-77,235,250`.
-- `Pace:XPPerHour` counts AFK/alt-tab time against wall-clock — `Pace.lua:215`.
-- Route-picker button order is nondeterministic (`pairs` iteration) —
-  `Panel.lua:621`; sort like `Core:AutoSelectRoute` already does.
-- `Core:Reconcile`'s paranoia guard is a hardcoded `5000` vs. documented
-  ~3000-step routes — `Core.lua:257`; use `#self.active.steps + 1`.
-- `Data:RealDistanceToStep` is missing the `C_Map and` guard that
-  `Data:SetWaypoint` has, so it can throw on a client without `C_Map` from
-  inside the 20 Hz arrow loop — `Data.lua:283`.
-- `TuFFlevelsDB.questNames` has no eviction path, unbounded (but small — a few
-  hundred KB even in the worst case) — `Compat.lua:600-604`.
-- `Rogue.lua:522-547` registers `CHAT_MSG_SYSTEM` with no handler branch — dead
-  registration, drop it or wire it up.
-- `SheetImport.lua:302` — `levels = {1, 1}` written into exported routes when
-  no source row carried a level.
-- `CompactGuide.lua:138` — quoted-value parser can't represent an embedded `"`.
-- Marker: stale marker possible if `GetNamePlateForUnit` returns nil during
-  `NAME_PLATE_UNIT_REMOVED` — `Marker.lua:454-459`; self-corrects on next
-  `NAME_PLATE_UNIT_ADDED` unless `IsRestricted()` short-circuits first. Key
-  `active` by unit token as a belt-and-braces fix.
+- ~~Arrow re-computes map/distance twice per tick...~~ Arrow's own half
+  (re-`SetText`ing unchanged strings, the `Bearing` side) was folded into
+  batch 6. The `EffectiveTarget`/`Data.lua` side of the double-compute is
+  the same thing P2.8's audit correction explicitly deferred ("needs an
+  Arrow->Data hook") - still open, needs its own small plan/batch once that
+  hook exists.
+- **Deferred, not fixed:** `Pace:XPPerHour` counts AFK/alt-tab time against
+  wall-clock — `Pace.lua:215`. No Phase 1/2 batch touched this specific
+  function (batch 5's extensive Pace.lua rework was entirely about P1.6's
+  correctness, not XP-rate accuracy) - cosmetic-only (an inflated/deflated
+  XP/hour and level-ETA display during genuinely idle time), not a
+  correctness or performance bug, so it wasn't opportunistically bundled in.
+- ~~Route-picker button order is nondeterministic...~~ Fixed in batch 8
+  (Panel.lua's `ShowRoutePicker`, sorted alphabetically).
+- ~~`Core:Reconcile`'s paranoia guard is a hardcoded `5000`...~~ Fixed in
+  batch 2 (`#self.active.steps + 1`).
+- ~~`Data:RealDistanceToStep` is missing the `C_Map and` guard...~~ Fixed in
+  batch 16.
+- **Deferred, not fixed:** `TuFFlevelsDB.questNames` has no eviction path —
+  `Compat.lua:600-604`. Batches 3, 12, and 14 all touched this general area
+  (for P1.12, P2.1, and P2.3 respectively) but none of them needed to solve
+  eviction specifically, and the plan's own note already says this is small
+  enough (a few hundred KB worst case) not to force the issue.
+- ~~`Rogue.lua` registers `CHAT_MSG_SYSTEM` with no handler branch...~~
+  Fixed in batch 11 (dropped the dead registration).
+- **Deferred, not fixed:** `SheetImport.lua:302` — `levels = {1, 1}`
+  written into exported routes when no source row carried a level. No
+  Phase 1/2 batch touched `SheetImport.lua` at all in this plan.
+- **Deferred, not fixed:** `CompactGuide.lua:138` — quoted-value parser
+  can't represent an embedded `"`. No Phase 1/2 batch touched
+  `CompactGuide.lua` at all in this plan.
+- ~~Marker: stale marker possible if `GetNamePlateForUnit` returns nil...~~
+  Fixed in batch 7 (`active` keyed by unit token).
 
-**Impact:** scattered one-line fixes, no cross-module risk.
+**Impact:** scattered one-line fixes, no cross-module risk. 6 of 10 got
+folded into a Phase 1/2 batch that happened to touch the same file; the
+remaining 4 (Arrow/Data double-compute's other half, Pace's AFK counting,
+questNames eviction, SheetImport/CompactGuide's two parser gaps) are
+explicitly deferred, not silently dropped - none of them are correctness
+bugs, just missed-optimization/cosmetic-quality items.
 **Performance:** negligible individually.
-**Dev time:** ~1 hour if bundled in, otherwise skip without much lost.
+**Dev time:** ~1 hour if bundled in, otherwise skip without much lost - the
+remaining 4 are small enough to fold into whichever future plan next
+touches Arrow/Data, Pace, SheetImport, or CompactGuide.
 
 ---
 
 ## Done when
 
-- [ ] Phase 1 (P1.1-P1.13) implemented and committed.
-- [ ] `luacheck` and `busted spec/` green in CI on the branch/commit.
+- [x] Phase 1 (P1.1-P1.13) implemented and committed. All 11 batches (1-11)
+      done and reviewed - see the batch table for each one's review history.
+- [x] `luacheck` and `busted spec/` green in CI on the branch/commit -
+      confirmed on every push through batch 15; `validate-routes` remains
+      red, unrelated to this plan (see its own note above).
 - [ ] [G] verification pass for each Phase 1 item per its own line above,
       covering at minimum: Forever (for P1.2, P1.11, P1.12's SavedVariables-
       adjacent behavior) and one non-Forever target (for anything that touches
-      persisted SavedVariables state, e.g. P1.6, P1.10).
-- [ ] Phase 2 (P2.1-P2.12) implemented and committed as a separate pass, with
+      persisted SavedVariables state, e.g. P1.6, P1.10). Still needs an
+      actual in-game session - nothing in this plan or its review rounds
+      substitutes for that.
+- [x] Phase 2 (P2.1-P2.12) implemented and committed as a separate pass, with
       its own regression check since it touches the shared `Compat.lua`/
-      `Data.lua` surface every module depends on.
-- [ ] Phase 3 items folded into whichever Phase 1/2 commit touches the same
-      file, or explicitly deferred with a one-line note why.
+      `Data.lua` surface every module depends on. All 6 batches (12-17)
+      done and reviewed - several needed 2-3 review rounds to land
+      correctly (batch 5 in particular was a full redesign after 3 rounds
+      of an unraveling patch approach; batches 14, 16, and 17 each had at
+      least one real bug caught and fixed before shipping). P2.8 shipped in
+      reduced form per its own audit correction - the EffectiveTarget
+      consistency half is still open, see Phase 3's note on it.
+- [x] Phase 3 items folded into whichever Phase 1/2 commit touches the same
+      file, or explicitly deferred with a one-line note why - see Phase 3's
+      section above for which is which (6 of 10 folded in, 4 explicitly
+      deferred).
