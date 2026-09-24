@@ -138,6 +138,32 @@ describe("IsStepDone", function()
     end)
 end)
 
+describe("ResolveQuest (ambiguous steps)", function()
+    -- P1.5: evaluating an `ambiguous` step against whatever ONE link of a
+    -- multi-link chain quest happens to be in the live log must never
+    -- permanently bind that answer to step.quest UNLESS it's genuinely the
+    -- current step - otherwise a full-route walk (Progress, /tuff verify)
+    -- would mis-stamp every other link's step with the same id.
+    it("never permanently binds step.quest for a same-name step that isn't current", function()
+        local ns, Core, Data = NewCore()
+        local step1 = { type = "turnin", questName = "Linked Quest", ambiguous = true }
+        local step2 = { type = "turnin", questName = "Linked Quest", ambiguous = true }
+        Core.active = { name = "Chain", steps = { step1, step2 } }
+        Core.index = 1
+        ns.Compat.nameCache["Linked Quest"] = 555
+        Data.complete[555] = true
+
+        -- step2 is NOT Core:CurrentStep() - it must still evaluate
+        -- correctly against the live-resolved id, but never persist it.
+        assert.is_true(Core.IsStepDone(step2))
+        assert.is_nil(step2.quest)
+
+        -- step1 IS Core:CurrentStep() - evaluating it binds normally.
+        assert.is_true(Core.IsStepDone(step1))
+        assert.equals(555, step1.quest)
+    end)
+end)
+
 describe("StepApplies", function()
     local _, Core, Data
 
@@ -194,6 +220,51 @@ describe("SetIndex", function()
         Core:SetIndex(2, { pin = true })
         assert.is_true(Core.pinned)
     end)
+
+    -- P1.13: _pathIndex tracks progress through a step's own multi-point
+    -- path and must reset on the step that BECOMES current so the arrow
+    -- re-walks from the start after a backtrack, instead of skipping ahead
+    -- to wherever it was left. _eventDone must NOT be cleared here - that
+    -- would un-complete an already-finished trainer/death/hearth/travel
+    -- step the moment the tracker moves back onto it (e.g. via /tuff back).
+    it("clears _pathIndex but not _eventDone on the step it moves onto", function()
+        local _, Core = NewCore()
+        Core.active = SampleRoute()
+        local step2 = Core.active.steps[2]
+        step2._pathIndex = 3
+        step2._eventDone = true
+
+        Core:SetIndex(2)
+
+        assert.is_nil(step2._pathIndex)
+        assert.is_true(step2._eventDone)
+    end)
+
+    it("does not touch _pathIndex on steps it doesn't move onto", function()
+        local _, Core = NewCore()
+        Core.active = SampleRoute()
+        local step1 = Core.active.steps[1]
+        step1._pathIndex = 7
+
+        Core:SetIndex(2) -- moves onto step 2, not step 1
+
+        assert.equals(7, step1._pathIndex)
+    end)
+
+    it("does not clear _pathIndex when re-applying the SAME index", function()
+        -- Re-selecting the current step (e.g. clicking its own row in
+        -- Progress, or /tuff goto <current>) must not throw away in-
+        -- progress path position on a step the player never left.
+        local _, Core = NewCore()
+        Core.active = SampleRoute()
+        Core:SetIndex(2)
+        local step2 = Core.active.steps[2]
+        step2._pathIndex = 3
+
+        Core:SetIndex(2) -- same index as before
+
+        assert.equals(3, step2._pathIndex)
+    end)
 end)
 
 describe("Reconcile", function()
@@ -230,6 +301,56 @@ describe("Reconcile", function()
         -- optional step 1 is skipped even though "manual" never auto-detects,
         -- but step 2 (not optional, not done) blocks the walk
         assert.equals(2, Core.index)
+    end)
+
+    -- P1.13's SetIndex fix has a matching branch in Reconcile's own
+    -- "moved" path, since Reconcile assigns self.index directly rather
+    -- than calling SetIndex.
+    it("clears _pathIndex on the step it advances onto", function()
+        local _, Core, Data = NewCore()
+        Core.active = SampleRoute()
+        Core.index = 1
+        Data.inLog[100] = true -- step 1 (accept 100) done
+        local step2 = Core.active.steps[2]
+        step2._pathIndex = 4
+
+        Core:Reconcile()
+
+        assert.equals(2, Core.index)
+        assert.is_nil(step2._pathIndex)
+    end)
+
+    -- Phase 3: the paranoia guard used to be a hardcoded 5000 vs. the
+    -- documented ~3000-step routes; it's now #steps+1, which must still be
+    -- enough to walk a route where every step but the last is done.
+    it("terminates a full walk on a longer all-but-last-done route", function()
+        local _, Core, Data = NewCore()
+        local steps = {}
+        for i = 1, 10 do
+            steps[i] = { type = "accept", quest = i }
+            if i < 10 then Data.inLog[i] = true end
+        end
+        Core.active = { name = "Long", steps = steps }
+        Core.index = 1
+        Core:Reconcile()
+        assert.equals(10, Core.index)
+    end)
+
+    -- The guard needs exactly #steps+1 iterations to walk a route where
+    -- EVERY step (including the last) is done, landing one past the end -
+    -- a guard of just #steps would break one short and strand the tracker
+    -- on the last step instead of advancing past it.
+    it("walks all the way past the end of a fully-done route", function()
+        local _, Core, Data = NewCore()
+        local steps = {}
+        for i = 1, 10 do
+            steps[i] = { type = "accept", quest = i }
+            Data.inLog[i] = true
+        end
+        Core.active = { name = "AllDone", steps = steps }
+        Core.index = 1
+        Core:Reconcile()
+        assert.equals(11, Core.index) -- #steps (10) + 1
     end)
 end)
 

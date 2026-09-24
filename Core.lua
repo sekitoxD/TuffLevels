@@ -62,7 +62,19 @@ local function ResolveQuest(step)
     -- don't let the name cache answer and don't teach it a wrong answer.
     if step.ambiguous then
         local id = Compat:GetQuestIDByNameLive(step.questName)
-        if id then step.quest = id end
+        -- Only bind step.quest permanently while this step is genuinely
+        -- the current one. A full-route walk (Progress's RebuildCache,
+        -- Sections(), PreviewCatchUp, /tuff verify) evaluates every step
+        -- against whatever ONE link of the chain quest happens to be in
+        -- the live log right now - binding there would permanently and
+        -- silently mis-stamp every other link's step with that same id.
+        -- During Reconcile's forward walk this still binds correctly:
+        -- self.index is advanced to a step before that step is checked, so
+        -- the step being evaluated there is always Core:CurrentStep() at
+        -- the moment of this comparison.
+        if id and step == Core:CurrentStep() then
+            step.quest = id
+        end
         return id
     end
 
@@ -83,10 +95,15 @@ Core.ResolveQuest = ResolveQuest
 local function StepOwnConditionDone(step)
     local t = step.type
 
-    -- name-based steps need an ID before anything can be checked
-    if not step.quest and step.questName then
-        ResolveQuest(step)
-        if not step.quest then
+    -- name-based steps need an ID before anything can be checked. Thread
+    -- the resolved id through as a local instead of re-reading step.quest:
+    -- ResolveQuest deliberately doesn't write step.quest for an `ambiguous`
+    -- step unless this IS the current step (see ResolveQuest), so step.quest
+    -- can still be nil here even though we do have a live-resolved answer.
+    local questID = step.quest
+    if not questID and step.questName then
+        questID = ResolveQuest(step)
+        if not questID then
             -- unresolved: can't auto-detect, user advances manually
             return false
         end
@@ -94,18 +111,18 @@ local function StepOwnConditionDone(step)
 
     if t == "accept" then
         -- Satisfied once it's in the log OR already turned in.
-        return Data:IsQuestInLog(step.quest) or Data:IsQuestComplete(step.quest)
+        return Data:IsQuestInLog(questID) or Data:IsQuestComplete(questID)
 
     elseif t == "turnin" then
-        return Data:IsQuestComplete(step.quest)
+        return Data:IsQuestComplete(questID)
 
     elseif t == "complete" then
         if step.objective then
-            return Data:IsQuestObjectiveDone(step.quest, step.objective)
-                or Data:IsQuestComplete(step.quest)
+            return Data:IsQuestObjectiveDone(questID, step.objective)
+                or Data:IsQuestComplete(questID)
         end
         -- Objectives done but not handed in yet.
-        return Data:IsQuestReadyToTurnIn(step.quest) or Data:IsQuestComplete(step.quest)
+        return Data:IsQuestReadyToTurnIn(questID) or Data:IsQuestComplete(questID)
 
     elseif t == "grind" then
         return Data:PlayerLevel() >= step.targetLevel
@@ -238,11 +255,16 @@ function Core:CurrentStep()
     return self.active.steps[self.index]
 end
 
--- The only place self.index is assigned. Clamps to the valid range, saves,
--- and refreshes every dependent module. Never advances further on its own -
--- call Reconcile separately if auto-advance past done steps is wanted.
+-- The only place self.index is assigned OUTSIDE of LoadRoute, Load, and
+-- Reconcile's own forward walk (all three set it directly on a fresh
+-- route/session or an already-verified-done step, not a real navigation,
+-- so none of them need this function's path-reset/refresh work). Clamps to
+-- the valid range, saves, and refreshes every dependent module. Never
+-- advances further on its own - call Reconcile separately if auto-advance
+-- past done steps is wanted.
 function Core:SetIndex(n, opts)
     opts = opts or {}
+    local old = self.index
     local total = self.active and #self.active.steps or 0
     self.index = math.max(1, math.min(n, total + 1))
     if opts.pin then self.pinned = true end
@@ -250,7 +272,22 @@ function Core:SetIndex(n, opts)
     self:Save()
     if ns.UI then ns.UI:Refresh() end
     local step = self:CurrentStep()
-    if step then Data:SetWaypoint(step) end
+    if step then
+        if self.index ~= old then
+            -- Reset only the path-walk progress on the step that BECOMES
+            -- current - NOT _eventDone, which would un-complete an
+            -- already-finished trainer/hearth/travel step (e.g. after
+            -- /tuff reset moves back through one). Covers backward moves
+            -- (Back, goto) where the arrow would otherwise skip straight to
+            -- a later waypoint instead of re-walking the authored path from
+            -- the first unvisited point. Guarded on an actual index change
+            -- so re-applying the SAME index (e.g. clicking the current
+            -- step's own row, or /tuff goto <current>) doesn't throw away
+            -- in-progress path position on a step the player never left.
+            step._pathIndex = nil
+        end
+        Data:SetWaypoint(step)
+    end
     if ns.Marker then ns.Marker:RescanAll() end
     if ns.Panel then ns.Panel:Refresh() end
     if ns.Progress then ns.Progress:Refresh() end
@@ -268,9 +305,10 @@ function Core:Reconcile()
 
     if not self.pinned then
         local guard = 0
+        local guardMax = #self.active.steps + 1
         while self.index <= #self.active.steps do
             guard = guard + 1
-            if guard > 5000 then break end   -- paranoia
+            if guard > guardMax then break end   -- paranoia
 
             local step = self.active.steps[self.index]
             -- `optional` never blocks auto-advance, done or not - it's a
@@ -296,7 +334,12 @@ function Core:Reconcile()
     if moved then
         self:Save()
         local step = self:CurrentStep()
-        if step then Data:SetWaypoint(step) end
+        if step then
+            -- See SetIndex's matching comment: reset path-walk progress
+            -- only, never _eventDone, on the step that just became current.
+            step._pathIndex = nil
+            Data:SetWaypoint(step)
+        end
         if ns.Marker then ns.Marker:RescanAll() end
         if ns.Panel then ns.Panel:Refresh() end
         if ns.Pace then ns.Pace:OnStepAdvance() end

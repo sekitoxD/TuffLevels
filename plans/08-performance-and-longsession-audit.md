@@ -105,22 +105,28 @@ conflicts with an item's original "Fix:", this section wins.**
 - **P2.12** — guard with `if ns.Data then`.
 - New [G] to check: `UIPanelScrollFrameTemplate` in Import.lua:179 and
   Rogue.lua:476 may throw on Forever like Progress's scrollbar did.
+- **Out of scope, found while running CI:** the `validate-routes` CI job has
+  failed on every commit since before plan 08: 15,721 errors across 49
+  route files. Most are steps with coordinates but no numeric `map`, and the
+  `Routes/Horde/Solo/*` files have "no ns.RegisterRoute call found". That's
+  route data vs. validator rules, not engine code, so it needs its own plan.
+  The luacheck job was fixed separately (commit b2e74d2); busted was green.
 
 ### Commit batches (in order; each code-reviewed before commit + push)
 
 | # | Batch | Status |
 |---|---|---|
 | 1 | Core + Compat + spec helpers: P1.1 | done (reviewed); [G] pending: city/mob pack on all 3 clients, hearth step still completes |
-| 2 | Core: P1.5 + P1.13 + Phase 3 `#steps+1` guard, with core_spec tests | not started |
+| 2 | Core: P1.5 + P1.13 + Phase 3 `#steps+1` guard, with core_spec tests | done (reviewed, one round of fixes applied: SetIndex now only resets `_pathIndex` on an actual index change, comment corrected re: Reconcile also assigning `self.index` directly); [G] pending: two ambiguous-flagged steps for the same chain quest, open Progress mid-chain |
 | 3 | Automation: P1.12, P1.9 | done (reviewed); [G] pending: QUEST_GREETING multi-quest NPC |
 | 4 | Progress: P1.3 | done (reviewed); [G] pending: long route open during turn-in burst, scroll full list, route switch |
 | 5 | Pace (+ Core hook): P1.6 | not started |
 | 6 | Arrow: P1.2 + Phase 3 arrow items (Arrow.lua half; Data.lua half of the double map/distance compute moves to batch 16) | done (reviewed); [G] pending: fresh login no route, zone transition, TomTom defer on→off |
-| 7 | Marker: P1.7 + Phase 3 unit-keyed `active` | not started |
-| 8 | Panel + Theme comment: P1.4 + sorted route picker | not started |
-| 9 | Import: P1.8 | not started |
-| 10 | RXPImport: P1.10 | not started |
-| 11 | Rogue: P1.11 + P2.11 + drop `CHAT_MSG_SYSTEM` | not started |
+| 7 | Marker: P1.7 + Phase 3 unit-keyed `active` | done (reviewed, one round of fixes applied: throttled-rescan timer callback now wrapped in `Compat:Wrap`, mob cache also keyed on the step it was built for since LoadRoute can change step without a RescanAll, marker holder reparents if its unit's nameplate frame gets rebound, throttled rescan skips work while markers are disabled); [G] pending: populated zone with plates on, objective completes without a step change, switch routes mid-session |
+| 8 | Panel + Theme comment: P1.4 + sorted route picker | done (reviewed, one round of fixes applied: stale/contradictory comment above ShowContentMenu removed, ShowResumePrompt now Shows before fitting height to body text since GetStringHeight on a hidden reused frame isn't reliable); [G] pending: open each dialog ~10 times, route picker with routes added/removed, catch-up with and without a jump available |
+| 9 | Import: P1.8 | done (reviewed, no fixes needed); [G] pending: open the import window, click it again mid-scan, close it mid-scan |
+| 10 | RXPImport: P1.10 | done (reviewed, no fixes needed); [G] pending: import a real RXP guide excerpt with vendor/hint lines |
+| 11 | Rogue: P1.11 + P2.11 + drop `CHAT_MSG_SYSTEM` | done (reviewed, one round of fixes applied: `TakeBaseline` no longer latches `rogueSeeded` off an empty/not-yet-populated spellbook read, and now skips not-yet-learnable "future" spellbook entries via a new `Compat:IsSpellBookItemFuture` wrapper so they don't get permanently baselined as already-known; comment fixes). Known remaining gap, not fixed (low severity per review): old account-wide `TuFFlevelsDB.rogueLearned` data from before this batch is orphaned, not migrated or cleared. [G] pending: Forever and/or Retail rogue, train a new ability, confirm it appears; confirm a pre-existing (not-yet-trained) ability doesn't show a level until actually trained |
 | 12 | Compat: P2.1 + compat_spec | not started |
 | 13 | Compat + stubs + .luacheckrc: P2.2 | not started |
 | 14 | Compat: P2.3 + P2.5 | not started |
