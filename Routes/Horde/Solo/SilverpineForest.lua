@@ -627,22 +627,17 @@ Leg(7, "Silverpine Forest", {
       location = "The Sepulcher", atLevel = 23, logCount = 16, x = 44.0, y = 41.0,
     },
     {
-      type = "accept", questName = "A Frightened Request", zone = "Silverpine Forest",
-      npc = "Tabitha Heartweaver", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
-      note = "Ruins of Lordaeron quest (min level 15). The source only says Silverpine Forest, not where in it - check the Sepulcher first.",
-    },
-    {
       type = "travel", name = "The Sepulcher to Undercity", zone = "Silverpine Forest",
-      location = "The Sepulcher", atLevel = 23, logCount = 16, x = 45.6, y = 42.6,
+      location = "The Sepulcher", atLevel = 23, logCount = 15, x = 45.6, y = 42.6,
       note = "Take the flight path.",
     },
     {
       type = "turnin", questName = "A Husband's Revenge", zone = "Undercity",
-      location = "Trade Quarter", atLevel = 23, logCount = 15, x = 62.0, y = 43.0,
+      location = "Trade Quarter", atLevel = 23, logCount = 14, x = 62.0, y = 43.0,
     },
     {
       type = "trainer", name = "Class Trainer", zone = "Undercity", atLevel = 23,
-      logCount = 15, note = "Several spots around here - check the whole area.",
+      logCount = 14, note = "Several spots around here - check the whole area.",
     },
     {
       type = "note", name = "Note",
@@ -651,7 +646,7 @@ Leg(7, "Silverpine Forest", {
     },
     {
       type = "turnin", questName = "Rot Hide Origins", zone = "Undercity",
-      location = "Magic Quarter", atLevel = 23, logCount = 14, x = 84.0, y = 17.0,
+      location = "Magic Quarter", atLevel = 23, logCount = 13, x = 84.0, y = 17.0,
     },
     {
       type = "note", name = "Skip: T",
@@ -660,7 +655,7 @@ Leg(7, "Silverpine Forest", {
     },
     {
       type = "turnin", questName = "Wand to Bethor", zone = "Undercity",
-      location = "Magic Quarter", atLevel = 23, logCount = 13, x = 84.0, y = 17.0,
+      location = "Magic Quarter", atLevel = 23, logCount = 12, x = 84.0, y = 17.0,
     },
 
     -- Ruins of Lordaeron (Forever only) ------------------------------------
@@ -675,16 +670,25 @@ Leg(7, "Silverpine Forest", {
     },
     {
       type = "accept", questName = "Light's Justice", zone = "Undercity",
-      npc = "Morbin Lightbane", atLevel = 23, logCount = 15, forever = true, races = { "Orc", "Troll" },
+      npc = "Morbin Lightbane", atLevel = 23, logCount = 14, forever = true, races = { "Orc", "Troll" },
+      x = 57.8, y = 89.8,
     },
     {
       type = "accept", questName = "The New Plague", zone = "Undercity",
-      npc = "Theodore Griffs", atLevel = 23, logCount = 16, forever = true, races = { "Orc", "Troll" },
+      npc = "Theodore Griffs", atLevel = 23, logCount = 15, forever = true, races = { "Orc", "Troll" },
+      x = 47.0, y = 72.6,
       note = "Not the same quest as A New Plague in Brill.",
     },
     {
       type = "accept", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
-      npc = "Oran Snakewrithe", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
+      npc = "Oran Snakewrithe", atLevel = 23, logCount = 16, forever = true, races = { "Orc", "Troll" },
+      note = "Wowhead's dungeon-quest guide lists this quest as picked up inside the dungeon rather than from an NPC beforehand, but its rows for this name look scrape-ambiguous (two entries, likely one per faction) against foreverchanges.pro's structured giver name used here. Kept as originally sourced pending in-game verification.",
+    },
+    {
+      type = "accept", questName = "A Frightened Request", zone = "Undercity",
+      npc = "Tabitha Heartweaver", atLevel = 23, logCount = 17, forever = true, races = { "Orc", "Troll" },
+      x = 34.0, y = 21.0,
+      note = "Location corrected from Wowhead's dungeon-quest guide (was guessed as Silverpine Forest; the guide gives Undercity with this coordinate). Unverified in-game.",
     },
     {
       type = "accept", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades",
@@ -746,9 +750,10 @@ Leg(7, "Silverpine Forest", {
       x = 59.4, y = 52.4, approx = true, forever = true, races = { "Orc", "Troll" },
     },
     {
-      type = "turnin", questName = "A Frightened Request", atLevel = 23, logCount = 13,
+      type = "turnin", questName = "A Frightened Request", zone = "Undercity",
+      npc = "Tabitha Heartweaver", atLevel = 23, logCount = 13, x = 34.0, y = 21.0,
       forever = true, races = { "Orc", "Troll" },
-      note = "The source doesn't name the turn-in NPC. If it's Tabitha Heartweaver in Silverpine, fly there from the Undercity before you hearth. It's worth about 7,000 XP.",
+      note = "Same NPC as the accept, per Wowhead's dungeon-quest guide - no extra travel needed. Worth about 7,000 XP. Unverified in-game.",
     },
     {
       type = "hearth", name = "Hearth to Camp Taurajo", zone = "Undercity",
