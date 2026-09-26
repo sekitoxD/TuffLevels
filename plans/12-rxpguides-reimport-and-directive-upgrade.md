@@ -281,6 +281,30 @@ decision is explicitly deferred, not made by this section.
         generator), so a quest missing from the source guide's path (or
         dropped during parsing) just won't appear. A genuine content gap,
         not a code defect - no fix applied, noted for chapter review.
+- [x] 2026-09-27: Independent code-review audit of the two playtest-fix
+      commits (`code-reviewer` agent), requested before any further pushes.
+      Found two real issues that hadn't shipped to a wider audience yet and
+      one minor doc-accuracy issue; all three fixed same day, no gameplay
+      content changed:
+      - `UI.lua`'s `StepLabel` preferred a live QuestieDB quest title over
+        a step's own `name`/`questName` whenever a provider was available -
+        dead code until this round's `Data.lua` fix made `GetQuestName`
+        actually return results for the first time, at which point it
+        would have started replacing RXPGuides-derived steps' own
+        instructions ("Kill Yarrog Baneshadow...") with generic quest
+        titles on every client with Questie installed. Flipped to DB-title-
+        as-fallback-only, matching CLAUDE.md's "QuestieDB enriches, route
+        data is authoritative" design rule.
+      - The new bare `.xp N` → `xp`-step conversion in `RXPImport.lua`
+        unconditionally set `step.type`, so a real guide shape (an
+        `.accept`/`.turnin`/`.complete` directive followed by its own
+        trailing `.xp N` grind hint) would have silently lost its actual
+        quest action the next time a chapter is parsed. Guarded with
+        `and not step.type`; regression spec added.
+      - This file's own header overstated the Nartok/77586 turnin dedup as
+        "exact-duplicate" like the other four - it was actually two real
+        money-threshold variants of the same turn-in. Corrected; no
+        functional change (`spellID` is inert on a `turnin` step).
 - [ ] Chapter 2 ("6-10 Durotar"), chapter 3 ("10-12 Durotar" / the
       "10-12 Tirisfal" branch it leads into for Undead - out of scope for
       this Orc/Troll route, skip it), then the shared
