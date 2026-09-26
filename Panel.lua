@@ -23,9 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.3"
+local CHANGELOG_VERSION = "1.7.4"
 local CHANGELOG = {
-    "312 'Skip: ...'/'Skip for now: ...' advice notes across the route files (and the Guidelime importer's own [QS] skip directive) are now marked optional, so the tracker auto-advances past them like it already does for section headers instead of needing a manual Next click for a note that never had anything to actually do.",
+    "Added `item` and `spell` step types (done once you hold an item / know a spell) and taught the RXPGuides importer to parse .itemcount/.train/.maxlevel into them, so guide instructions like 'equip this weapon' or 'learn this rune' can auto-detect instead of always falling back to a manual note.",
 }
 
 -- Fixed content (the changelog text is a load-time constant) - build once
