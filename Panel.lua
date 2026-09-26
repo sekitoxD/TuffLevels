@@ -23,9 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.4"
+local CHANGELOG_VERSION = "1.7.5"
 local CHANGELOG = {
-    "Added `item` and `spell` step types (done once you hold an item / know a spell) and taught the RXPGuides importer to parse .itemcount/.train/.maxlevel into them, so guide instructions like 'equip this weapon' or 'learn this rune' can auto-detect instead of always falling back to a manual note.",
+    "Fixed two RXPGuides import bugs found while testing the new item/spell step types: a decorative |T texture-icon token was gluing a raw path onto step names, and nested |c color tokens (a common RXPGuides pattern) only half-stripped, leaving raw color codes in some step text (already visible in Routes/Horde/Mulgore.lua).",
 }
 
 -- Fixed content (the changelog text is a load-time constant) - build once
