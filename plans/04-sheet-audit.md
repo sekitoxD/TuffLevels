@@ -202,8 +202,10 @@ carries less data per step and more mess per column.
   XXXX/5400 into Level 8`, `XXXX/8800 into Level 11`, `XXXX/11400 into level 13`. The XP
   thresholds these steps exist to state were never filled in. Carried through verbatim, since
   inventing numbers would be worse than showing the gap.
-- **T3 — a quest-name mismatch.** Row 120 accepts `Delivery to Silverpine`; row 144 turns in
-  `Delivery to Silverpine Forest`. One of the two is wrong.
+- ~~**T3 — a quest-name mismatch.**~~ **Fixed (2026-09-25).** Row 120 accepted `Delivery to
+  Silverpine`; row 144 turned in `Delivery to Silverpine Forest`. Confirmed via Wowhead (quest
+  ID 445) that "Delivery to Silverpine Forest" is the real name — the accept step in
+  `Routes/Horde/TirisfalStart.lua` now matches.
 - **T4 — chain links are distinguished only by a free-text note.** `A New Plague` appears four
   times, `At War with the Scarlet Crusade` four times, `Arugal's Folly` three, with the link
   identified in the notes column (`"Part 2, for killing murlocs"`). This is the same hazard as
@@ -263,12 +265,10 @@ the addon knows nothing about.
 3. **Trainer-step coordinates in the solo route** (F7) — 28 of 29 are blank.
 4. **The four quest-log count breaks** (F9) and the one level regression (F10) need someone to
    decide which number is right.
-5. **T3 - quest-name mismatch, investigated, not fixed.** Row 120 accepts `Delivery to
-   Silverpine` (`TirisfalStart.lua:428`); row 144 turns in `Delivery to Silverpine Forest`
-   (`TirisfalStart.lua:521`). Whichever one doesn't match the live quest log's actual title will
-   never auto-resolve for that step - not a silent-skip risk like T4, just a lost auto-advance
-   on one step. Left both strings as they were rather than guessing which is the real title;
-   needs an in-game or DB check.
+5. ~~**T3 - quest-name mismatch.**~~ **Fixed (2026-09-25).** Row 120 accepted `Delivery to
+   Silverpine` (`TirisfalStart.lua:428`); row 144 turned in `Delivery to Silverpine Forest`
+   (`TirisfalStart.lua:521`). Wowhead quest ID 445 confirms "Delivery to Silverpine Forest" is
+   the real title; the accept step now matches it. Still not run through `/tuff verify` in-game.
 6. ~~**Tag the Tirisfal chain links `ambiguous`**~~ **Fixed.** All 36 steps across the three
    repeated-name chains (`A New Plague` x4 links/13 steps, `At War with the Scarlet Crusade`
    x4 links/14 steps, `Arugal's Folly` x3 links/9 steps) now carry `ambiguous = true` and a

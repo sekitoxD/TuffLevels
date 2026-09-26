@@ -23,12 +23,11 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.6.0"
+local CHANGELOG_VERSION = "1.7.1"
 local CHANGELOG = {
-    "Alliance leveling routes added: Human, Dwarf/Gnome, and Night Elf, each a full 1-60 path (TuFFlevels had zero Alliance content before this). Converted from RXPGuides' Classic-flavored guides - see the Credits & License section at the bottom of each Routes/Alliance/*.lua file; unlike the rest of this addon (MIT), those three files are CC BY-NC-SA 4.0. Marked as sample routes (unverified IDs) until run through /tuff verify and played.",
-    "Tauren leveling route added (Routes/Horde/Mulgore.lua, full 1-60) - Horde previously had no Mulgore-starting route at all. Same conversion/licensing approach as the Alliance routes above; self-contained, doesn't touch the existing Orc/Troll Solo/ route. About 24 steps reference a continent-level zone (Kalimdor/Eastern Kingdoms) this addon's zone table doesn't resolve yet - everything except those steps' arrows works.",
-    "Added a Rogue-specific class-quest chain to the Horde Durotar route (Gornek -> Rwag, Encrypted Tablet/Parchment, Backstab training) - the existing generic 'Class Trainer - check the whole area' placeholder had nothing Rogue-specific.",
-    "Added an RXPGuides (RestedXP) guide importer (/tuff rxp, or Menu > Content & Import) alongside the existing Guidelime importer - paste in a Classic-flavored guide you already have installed and get a TuFFlevels route back. Ships no RXPGuides content itself, same isolation as the QuestieDB/Guidelime integrations.",
+    "Fixed the Tauren route's (Routes/Horde/Mulgore.lua) continent-level zone bug: ~34 steps tagged 'Kalimdor'/'Eastern Kingdoms' instead of a real zone had permanently dead arrows and un-completable travel steps. Re-authored to real zones (Durotar, The Barrens, Ashenvale, Moonglade, Stranglethorn Vale, Westfall, Tirisfal Glades, Badlands) with coordinates cross-checked against independent sources; a few are marked approximate pending an in-game /tuff capture pass, and the two Gnomeregan-transponder interior steps are left as an honest unconfirmed gap rather than guessed.",
+    "Fixed a quest-name mismatch in the Undead starting route (Routes/Horde/TirisfalStart.lua): the accept step said 'Delivery to Silverpine', the turn-in said 'Delivery to Silverpine Forest' - only one could ever auto-resolve. Corrected to the real quest name.",
+    "README corrected: Forever ships no built-in quest database, but a manually-installed Questie works there (confirmed 2026-09-20) - three spots still said 'none exists'/'Classic Era only'.",
 }
 
 -- Fixed content (the changelog text is a load-time constant) - build once

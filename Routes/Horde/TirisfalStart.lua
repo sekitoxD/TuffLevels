@@ -425,7 +425,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           location = "Brill",
         },
         { type = "turnin", name = "A New Plague (part 3)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades", location = "Brill" },
-        { type = "accept", questName = "Delivery to Silverpine", zone = "Tirisfal Glades", location = "Brill" },
+        { type = "accept", questName = "Delivery to Silverpine Forest", zone = "Tirisfal Glades", location = "Brill" },
         {
           type = "accept", name = "A New Plague (part 4)", questName = "A New Plague", ambiguous = true, zone = "Tirisfal Glades",
           location = "Brill", note = "Part 4, give drink to dwarf in basement.",

@@ -28,12 +28,12 @@ So routes are data files a human writes. The addon executes them and the databas
 | Client | Folder | Interface | Project | Quest database |
 |---|---|---|---|---|
 | Classic Era | `_classic_era_` | 11507 | CLASSIC | QuestieDB |
-| Forever | `_classic_beta_` | 16001 | **MAINLINE** | none exists |
+| Forever | `_classic_beta_` | 16001 | **MAINLINE** | none built-in, but a manually-installed Questie works |
 | Retail (Midnight) | `_retail_` | 120100+ | MAINLINE | none needed |
 
 Ships with per-flavor TOCs. Drop the folder in and the client picks the right one.
 
-Optional: **QuestieDB** (Classic Era only), **TomTom** (arrow waypoints, falls back to native map pins). Neither required — route files carry their own coordinates.
+Optional: **QuestieDB** (built into Classic Era; on Forever a manually-installed Questie provides it), **TomTom** (arrow waypoints, falls back to native map pins). Neither required — route files carry their own coordinates.
 
 ---
 
@@ -53,7 +53,7 @@ Three beta bugs the addon handles:
 
 `ReloadUI()` is protected — type `/reload`.
 
-**There is no quest database for Forever.** Questie covers Classic content only, and Forever ships three new zones and 1,000+ new quests nobody has catalogued. `/tuff capture` is the whole data-acquisition story there: play it, capture, paste. That's a real advantage — you'd be building route data at the same time as everyone else rather than behind them.
+**Forever ships no built-in quest database, but a manually-installed Questie works there.** Its coverage of the Classic content Forever shares is confirmed; whether it also covers Forever's three new zones and 1,000+ new quests is unconfirmed. Where it doesn't, `/tuff capture` is the data-acquisition story: play it, capture, paste. That's a real advantage — you'd be building route data at the same time as everyone else rather than behind them.
 
 ---
 
