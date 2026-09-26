@@ -383,7 +383,7 @@ function RXPImport:Parse(text)
                             local lvl = tonumber(argText:match("^(%d+)"))
                             if lvl then step.skipIfLevel = lvl end
 
-                        elseif cmd == "xp" and argText:match("^%d+$") then
+                        elseif cmd == "xp" and argText:match("^%d+$") and not step.type then
                             -- A bare ".xp N" (no operator, no +/-/. partial-XP
                             -- modifier, no comma-separated gate arg - just a
                             -- plain level number) means "grind to level N"
@@ -403,6 +403,20 @@ function RXPImport:Parse(text)
                             -- level N, since a plain `note` step has no
                             -- detectable condition and always needs a manual
                             -- Next click).
+                            --
+                            -- `not step.type` guards against a real guide
+                            -- shape: a step already typed by an earlier
+                            -- `.accept`/`.turnin`/`.complete`/etc. directive,
+                            -- with a trailing `.xp N` grind hint on its own
+                            -- line below. Without this guard the xp branch
+                            -- would win (directives are "last one sets the
+                            -- type" elsewhere in this parser) and silently
+                            -- turn a real turn-in/accept step into an inert
+                            -- xp-gate, losing the quest action entirely -
+                            -- caught in code review, 2026-09-27, before any
+                            -- shipped route was regenerated through this
+                            -- path. `.xp` gating an existing typed step stays
+                            -- a plain note the same as before this change.
                             local lvl = tonumber(argText)
                             step.type = "xp"
                             step.xp = { level = lvl, pct = 0 }

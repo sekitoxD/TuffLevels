@@ -75,14 +75,20 @@
 --   class I'm not playing"). Audited the rest of the file for the same
 --   quest-ID/item-purchase-grouped class-inconsistency pattern - no
 --   further instances found in this chapter.
--- - FIXED (2026-09-26, in-game playtest): the raw parse contained several
---   exact-duplicate accept/turnin/complete steps for the same quest+NPC
---   (Galgar/4402, Foreman Thazz'ril/6394, a Vile Familiars kill/792, a
---   Shikrik accept/1516, and a split Nartok/77586 turnin) - almost
---   certainly the source guide's OR-condition branches (the "kept
---   unfiltered" warnings the harness prints) both surviving for a
---   character that matched both. Since a quest can only be turned in
---   once, the second copy silently read as already-done and Reconcile
+-- - FIXED (2026-09-26, in-game playtest; corrected 2026-09-27 code review
+--   - the Nartok item below was mislabeled "exact-duplicate" here, it
+--   wasn't): the raw parse contained several redundant accept/turnin/
+--   complete steps for the same quest+NPC - four were byte-identical
+--   exact duplicates (Galgar/4402, Foreman Thazz'ril/6394, a Vile
+--   Familiars kill/792, a Shikrik accept/1516), almost certainly the
+--   source guide's OR-condition branches (the "kept unfiltered" warnings
+--   the harness prints) both surviving for a character that matched
+--   both. The Nartok/77586 turnin was different: two real money-threshold
+--   variants of the same turn-in (`spellID = 1454` vs `695`), not a byte-
+--   identical copy - `spellID` is inert on a `turnin` step either way, so
+--   merging to one was still correct, just for a different reason. Since
+--   a quest can only be turned in once, the second copy of each silently
+--   read as already-done and Reconcile
 --   skipped it with no visible action - this is what looked like "auto
 --   turning in quests" at an NPC with more than one turn-in. Deduped to
 --   one copy per quest+NPC. If this resurfaces on a later chapter, it's

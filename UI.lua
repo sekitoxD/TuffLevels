@@ -62,9 +62,20 @@ local function StepLabel(step)
         return ("level %s, %s%% XP"):format(step.xp.level or "?", step.xp.pct or 0)
     end
 
+    -- Route-authored text is the source of truth (CLAUDE.md: QuestieDB only
+    -- enriches, it's never authoritative over route data) - an RXPGuides-
+    -- derived step's `name` is often a full instruction ("Kill Yarrog
+    -- Baneshadow. Loot him for the Burning Blade Medallion"), not just an
+    -- NPC name, and a raw DB quest title would silently replace that
+    -- instruction the moment a provider became available. Only fall back to
+    -- the DB title when the step carries no name of its own at all - caught
+    -- in code review, 2026-09-27, right as Data:GetQuestName's long-broken
+    -- colon-call bug (see Data.lua) started actually returning results for
+    -- the first time and would otherwise have changed every numeric-quest
+    -- step's headline with no route file changed and no user request.
     local name = step.questName or step.name
-    if step.quest and ns.Data and ns.Data:HasProvider() then
-        name = ns.Data:GetQuestName(step.quest, name)
+    if not name and step.quest and ns.Data and ns.Data:HasProvider() then
+        name = ns.Data:GetQuestName(step.quest)
     end
     return name or step.type
 end

@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.8"
+local CHANGELOG_VERSION = "1.7.9"
 local CHANGELOG = {
+    "Code review caught two issues in yesterday's fixes before they could ship further: the /tuff verify quest-lookup fix would have started replacing route-authored step instructions with generic QuestieDB quest titles on the tracker (now only used when a step has no text of its own); and a bare '.xp N' grind step could have silently overwritten a real accept/turnin/complete step's type if a guide listed both on the same step (now guarded).",
     "Fixed two steps in the Orc/Troll test route missing a class filter that a sibling step for the same quest/item correctly had - one routed non-Warlocks to a quest they could never accept (reported as a party quest-share 'prerequisite' failure), the other told non-Hunters to buy Hunter-only ammo.",
     "RXPGuides import now converts a bare '.xp N' grind directive (no partial-XP modifier) into a real auto-detecting step instead of a dead note that always needed a manual Next click, even once you were already past the target level.",
     "Fixed /tuff verify reporting every quest ID as 'not found in database' even for well-known quests - Data.lua was calling QuestieDB's GetQuest with a colon (method-call syntax) when the real function takes only the quest ID, so every lookup silently received the wrong argument and failed. This affected every route, not just the new test one.",

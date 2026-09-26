@@ -121,4 +121,20 @@ step
         assert.equals("note", route.steps[1].type)
         assert.is_nil(route.steps[1].xp)
     end)
+
+    it("does not let a trailing '.xp N' hint overwrite an already-typed step", function()
+        -- Real guide shape: a turn-in (or accept/complete/etc.) directive
+        -- followed by its own trailing ".xp N" grind hint on the next
+        -- line. Directives are "last one wins" for step.type elsewhere in
+        -- this parser, so without a guard the xp branch would silently
+        -- turn a real turn-in into an inert xp-gate and lose the quest
+        -- action entirely - caught in code review, 2026-09-27.
+        local route = RXPImport:Parse([[
+step
+    .turnin 788
+    .xp 5
+]])
+        assert.equals("turnin", route.steps[1].type)
+        assert.equals(788, route.steps[1].quest)
+    end)
 end)
