@@ -166,6 +166,75 @@ better coordinates) rather than swapping its entire provenance. This
 would need its own smaller audit once Phase 1's tooling/workflow exists
 to actually run that diff.
 
+## Phase 3 (revised, 2026-09-25): parallel test route instead of in-place replacement
+
+Decided against the in-place replacement framing Phase 3 above describes.
+Reconciling every tracked correction in `plans/04-sheet-audit.md` against a
+fresh RXPGuides parse *before* anything is testable is backwards - it means
+15-25+ hours of reconciliation risk before a single step of the new content
+has been played. Instead: build the RXPGuides-derived Orc/Troll route as a
+**second, separately-registered route**, side by side with ONSLAUGHT, so it
+can be manually played on a dedicated test character through the existing
+route picker (`Panel:ShowRoutePicker`, `/tuff route <name>`) while
+`Routes/Horde/Solo/*.lua` is not touched at all. Only after it's been played
+and compared does a promote/merge/discard decision get made - the same
+"prove the workflow on the lower-stakes route first" caution Phase 1 already
+applies to Mulgore, just carried one step further: prove the *output* in
+real play before deciding it should replace anything.
+
+**Impact**: new files only - a new `Routes/Horde/OrcTrollRXP.lua` (single
+file, same shape as `Mulgore.lua` rather than the `Solo/` leg-split
+convention, since there's no existing multi-file structure to match yet),
+registered under a distinct name (e.g. `"RXPGuides Orc/Troll 1-60 (TEST,
+parse in progress)"`) and flagged `sample = true` so `Core:AutoSelectRoute`
+ranks it below ONSLAUGHT for any character that hasn't explicitly picked it
+- the same demotion mechanism Mulgore already relies on, no engine change
+needed. Added to the load list in all three `.toc` files, after
+`Mulgore.lua`. Zero lines of `Routes/Horde/Solo/*.lua` or
+`TirisfalStart.lua` change.
+
+**Performance**: none - one more registered route is the same cost model
+as every other route file already loaded (a table in `Core.routes`, only
+walked by `Reconcile`/`AutoSelectRoute` when active or during auto-select
+ranking).
+
+**Dev time**: building the full Orc/Troll leveling span this way is the
+same underlying parse volume as the original Phase 3 estimate (**15-25+
+hours**, same two source files: `Classic-Horde-01-12_Durotar.lua` and the
+shared `Classic-Horde-30-60.lua`) - this doesn't shrink the total work, it
+only removes the up-front reconciliation-before-testable-output blocker and
+lets it ship incrementally, chapter by chapter, exactly like Phase 1's
+Mulgore workflow (parse -> build steps -> `/tuff verify` -> commit per
+chapter/small group), each increment independently testable on the dedicated
+character without any risk to ONSLAUGHT. First slice (chapter 1, "1-6
+Durotar") is a small, boundable first commit; the remaining chapters follow
+the same per-chapter cadence as Phase 1.
+
+**Once manually played through**: the forward-port-gaps-only alternative
+Phase 3 above already floats becomes decidable with real evidence in hand -
+diff the new route's content against ONSLAUGHT's tracked corrections
+(`plans/04-sheet-audit.md`) to see whether the right outcome is "promote
+this route to replace ONSLAUGHT," "forward-port specific gaps into
+ONSLAUGHT and delete the test route," or "keep both indefinitely." That
+decision is explicitly deferred, not made by this section.
+
+### Progress checkpoint (update this as chapters land)
+
+- [x] 2026-09-25: `spec/rxp_harness.lua` promoted from scratch into the
+      repo (headless real-Lua parse-and-dump tool, per the "Tooling already
+      built" section above).
+- [x] 2026-09-25: `Routes/Horde/OrcTrollRXP.lua` created and registered,
+      chapter 1 ("1-6 Durotar" from `Classic-Horde-01-12_Durotar.lua`)
+      parsed and committed. Wired into all three `.toc` files.
+- [ ] Chapter 2 ("6-10 Durotar"), chapter 3 ("10-12 Durotar" / the
+      "10-12 Tirisfal" branch it leads into for Undead - out of scope for
+      this Orc/Troll route, skip it), then the shared
+      `Classic-Horde-30-60.lua` 36 chapters (Barrens onward).
+- [ ] Manual in-game playtest of chapter 1 on a fresh Orc/Troll test
+      character via the route picker.
+- [ ] Promote/forward-port/keep-both decision, once enough of the route is
+      playable to compare meaningfully against ONSLAUGHT.
+
 ## Recommended sequencing
 
 1. Land Phase 1 on Mulgore.lua first, chapter by chapter, checkpointing

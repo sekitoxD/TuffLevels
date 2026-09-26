@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.5"
+local CHANGELOG_VERSION = "1.7.6"
 local CHANGELOG = {
+    "Added an experimental Orc/Troll test route (Routes/Horde/OrcTrollRXP.lua, pick it manually from Available Guides) parsed fresh from RXPGuides source - a separate, parallel route alongside the existing ONSLAUGHT route, which is untouched. Currently covers levels 1-6 only; more chapters land incrementally.",
     "Fixed two RXPGuides import bugs found while testing the new item/spell step types: a decorative |T texture-icon token was gluing a raw path onto step names, and nested |c color tokens (a common RXPGuides pattern) only half-stripped, leaving raw color codes in some step text (already visible in Routes/Horde/Mulgore.lua).",
 }
 

@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Classic Era.
 ## Author: sekitoxD
-## Version: 1.7.5
+## Version: 1.7.6
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom
@@ -41,6 +41,7 @@ Routes\Horde\TirisfalStart.lua
 # -- 4.0, see the file's Credits & License section; not MIT like the rest
 # -- of this addon). Self-contained, not part of the Solo/ Leg() system. --
 Routes\Horde\Mulgore.lua
+Routes\Horde\OrcTrollRXP.lua
 
 # -- Alliance 1-60 (converted from RXPGuides Classic guides - CC BY-NC-SA
 # -- 4.0, see each file's Credits & License section; not MIT like the rest
