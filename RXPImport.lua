@@ -97,10 +97,29 @@ end
 -- RXPGuides' `|cRXP_CATEGORY_Label|r` tokens are its own authoring-time
 -- color macros, not real WoW escape sequences - the human-readable text is
 -- the "Label" part. Strip them down to plain text, and strip any real WoW
--- color codes the same way.
+-- color/texture codes the same way. `|Tpath:size|t` is a decorative icon
+-- (e.g. a chat-bubble glyph before "Talk to X") with no text content at
+-- all - found live (2026-09-25) gluing a raw texture path onto every
+-- accept step's name until this was added; drop it entirely rather than
+-- leaving the path behind.
 local function StripColorTokens(text)
     if not text then return text end
-    text = text:gsub("|c%u[%u_]*_(.-)|r", "%1")
+    text = text:gsub("|T[^|]*|t", "")
+    -- RXPGuides commonly nests one colored phrase inside another (e.g.
+    -- `|cRXP_WARN_Kill |cRXP_ENEMY_Mottled Boars|r. Loot them...|r`) - a
+    -- single pass matches the OUTER opener against the FIRST |r it finds,
+    -- which is the inner pair's closer, leaving the inner |c opener
+    -- stranded and unstripped (confirmed live in Routes/Horde/Mulgore.lua's
+    -- existing "Kill |cRXP_ENEMY_Plainstriders..." text, 2026-09-25).
+    -- [^|]- can't cross into a nested |c, so each pass only ever resolves
+    -- the innermost pair - repeat until a pass makes no more changes to
+    -- peel outward one layer at a time.
+    local changed = true
+    while changed do
+        local new = text:gsub("|c%u[%u_]*_([^|]-)|r", "%1")
+        changed = (new ~= text)
+        text = new
+    end
     text = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
     return text
 end
