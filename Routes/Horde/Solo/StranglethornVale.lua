@@ -96,7 +96,7 @@ Leg(17, "Stranglethorn Vale", {
       location = "Booty Bay", atLevel = 34, logCount = 8, x = 28.2, y = 77.4,
     },
     {
-      type = "note", name = "Skip for now: S",
+      type = "note", optional = true, name = "Skip for now: S",
       note = "Do not pick up yet - the route comes back for Scaring Shaky on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 34, x = 27.8, y = 77.0,
     },
@@ -164,7 +164,7 @@ Leg(17, "Stranglethorn Vale", {
       location = "Grom'gol Base Camp", atLevel = 34, logCount = 15, x = 32.2, y = 27.8,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Vile Reef on a later pass.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 34, x = 32.2,
       y = 27.8,
@@ -174,7 +174,7 @@ Leg(17, "Stranglethorn Vale", {
       location = "Grom'gol Base Camp", atLevel = 34, logCount = 16, x = 32.2, y = 27.8,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Trollbane, Grim Message on a later pass.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 34, x = 32.2,
       y = 27.8,
@@ -220,7 +220,7 @@ Leg(17, "Stranglethorn Vale", {
       atLevel = 34, logCount = 17, x = 35.6, y = 10.6,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Green Hills of Stranglethorn on a later pass.",
       zone = "Stranglethorn Vale", location = "Nesingwary's Expedition", atLevel = 34,
       x = 35.6, y = 10.6,
@@ -423,7 +423,7 @@ Leg(17, "Stranglethorn Vale", {
       location = "Booty Bay", atLevel = 35, logCount = 16, x = 27.0, y = 77.2,
     },
     {
-      type = "note", name = "Skip for now: V",
+      type = "note", optional = true, name = "Skip for now: V",
       note = "Do not pick up yet - the route comes back for Venture Company Mining on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 35, x = 27.0, y = 77.2,
     },
@@ -461,7 +461,7 @@ Leg(17, "Stranglethorn Vale", {
       location = "Grom'gol Base Camp", atLevel = 35, logCount = 13, x = 32.2, y = 27.7,
     },
     {
-      type = "note", name = "Skip for now: B",
+      type = "note", optional = true, name = "Skip for now: B",
       note = "Do not pick up yet - the route comes back for Bloodscalp Clan Heads on a later pass.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 35, x = 32.2,
       y = 27.7,
@@ -899,7 +899,7 @@ Leg(24, "Stranglethorn Vale", {
       location = "Grom'gol Base Camp", atLevel = 42, logCount = 15, x = 32.3, y = 27.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Mind's Eye. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 42, x = 32.3,
       y = 27.7,

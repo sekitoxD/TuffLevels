@@ -49,7 +49,7 @@ Leg(37, "Un'goro Crater", {
       location = "Broken Pillar", atLevel = 52, logCount = 10, x = 52.7, y = 45.9,
     },
     {
-      type = "note", name = "Skip: I",
+      type = "note", optional = true, name = "Skip: I",
       note = "The route deliberately skips Into the Depths. Low XP for the travel time.",
       zone = "Tanaris", location = "Broken Pillar", atLevel = 52, x = 52.7, y = 45.9,
     },
@@ -140,7 +140,7 @@ Leg(37, "Un'goro Crater", {
       location = "Marshal's Refuge", atLevel = 52, logCount = 16, x = 44.2, y = 11.6,
     },
     {
-      type = "note", name = "Skip for now: L",
+      type = "note", optional = true, name = "Skip for now: L",
       note = "Do not pick up yet - the route comes back for Lost! on a later pass.",
       zone = "Un'goro Crater", location = "Marshal's Refuge", atLevel = 52, x = 43.6, y = 8.5,
     },
@@ -153,7 +153,7 @@ Leg(37, "Un'goro Crater", {
       location = "Marshal's Refuge", atLevel = 52, logCount = 18, x = 43.5, y = 7.4,
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for Alien Ecology on a later pass.",
       zone = "Un'goro Crater", location = "Marshal's Refuge", atLevel = 52, x = 43.9, y = 7.2,
     },
@@ -182,7 +182,7 @@ Leg(37, "Un'goro Crater", {
       location = "Marshal's Refuge", atLevel = 52, logCount = 20, x = 41.9, y = 2.7,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Western Pylon on a later pass.",
       zone = "Un'goro Crater", location = "Marshal's Refuge", atLevel = 52, x = 41.9, y = 2.7,
     },
@@ -197,7 +197,7 @@ Leg(37, "Un'goro Crater", {
       location = "Marshal's Refuge", atLevel = 52, logCount = 19, x = 44.7, y = 8.1,
     },
     {
-      type = "note", name = "Skip for now: I",
+      type = "note", optional = true, name = "Skip for now: I",
       note = "Do not pick up yet - the route comes back for It's a Secret to Everybody #3 on a later pass.",
       zone = "Un'goro Crater", location = "Marshal's Refuge", atLevel = 52, x = 44.7, y = 8.1,
     },
@@ -319,7 +319,7 @@ Leg(37, "Un'goro Crater", {
       logCount = 18, x = 46.4, y = 13.4,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Chasing A-Me 01 #2. Low XP for the travel time.",
       zone = "Un'goro Crater", location = "Fungal Rock", atLevel = 52, x = 67.7, y = 16.8,
     },
@@ -498,7 +498,7 @@ Leg(37, "Un'goro Crater", {
       atLevel = 53, logCount = 14, x = 45.8, y = 64.7,
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for A Call to Arms: The Plaguelands! on a later pass.",
       zone = "Thunder Bluff", location = "Thunder Bluff", atLevel = 53,
     },
@@ -547,7 +547,7 @@ Leg(37, "Un'goro Crater", {
       location = "Ratchet", atLevel = 53, logCount = 12, x = 62.4, y = 38.7,
     },
     {
-      type = "note", name = "Skip: Z",
+      type = "note", optional = true, name = "Skip: Z",
       note = "The route deliberately skips Zapper Fuel. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 53, x = 62.4, y = 38.7,
     },
@@ -571,7 +571,7 @@ Leg(37, "Un'goro Crater", {
       location = "The Drag", atLevel = 53, logCount = 11, x = 55.5, y = 34.1,
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for A Call to Arms: The Plaguelands! on a later pass.",
       zone = "Orgrimmar", location = "Orgrimmar", atLevel = 53,
     },

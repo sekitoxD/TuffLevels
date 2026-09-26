@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Forever / Retail / Classic Era.
 ## Author: sekitoxD
-## Version: 1.7.2
+## Version: 1.7.3
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom

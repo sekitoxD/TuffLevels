@@ -33,7 +33,7 @@ Leg(39, "Winterspring", {
       location = "Felpaw Village", atLevel = 54, logCount = 15, x = 64.8, y = 8.1,
     },
     {
-      type = "note", name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: W",
       note = "Do not pick up yet - the route comes back for Winterfall Activity on a later pass.",
       zone = "Winterspring", location = "Frostfire Hot Springs", atLevel = 54, x = 27.7,
       y = 34.5,
@@ -47,7 +47,7 @@ Leg(39, "Winterspring", {
       location = "Frostfire Hot Springs", atLevel = 54, logCount = 15, x = 31.3, y = 45.2,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for Threat of the Winterfall on a later pass.",
       zone = "Winterspring", location = "Frostfire Hot Springs", atLevel = 54, x = 31.3,
       y = 45.2,
@@ -74,7 +74,7 @@ Leg(39, "Winterspring", {
       note = "Talk to the flight master and learn this flight point.",
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for Are We There, Yeti? #1 on a later pass.",
       zone = "Winterspring", location = "Everlook", atLevel = 54, x = 60.9, y = 37.6,
     },
@@ -87,7 +87,7 @@ Leg(39, "Winterspring", {
       location = "Everlook", atLevel = 54, logCount = 17, x = 60.7, y = 38.2,
     },
     {
-      type = "note", name = "Skip for now: U",
+      type = "note", optional = true, name = "Skip for now: U",
       note = "Do not pick up yet - the route comes back for Ursius of the Shardtooth on a later pass.",
       zone = "Winterspring", location = "Everlook", atLevel = 54, x = 61.9, y = 38.4,
     },
@@ -96,7 +96,7 @@ Leg(39, "Winterspring", {
       location = "Everlook", atLevel = 54, logCount = 16, x = 61.6, y = 38.6,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Chillwind Horns, Duke Nicholas Zverenhoff on a later pass.",
       zone = "Winterspring", location = "Everlook", atLevel = 54, x = 61.6, y = 38.6,
     },
@@ -105,7 +105,7 @@ Leg(39, "Winterspring", {
       location = "Everlook", atLevel = 54, logCount = 17, x = 61.3, y = 39.0,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Sister Pamela. Low XP for the travel time.",
       zone = "Winterspring", location = "Everlook", atLevel = 54, x = 61.3, y = 39.0,
     },
@@ -330,7 +330,7 @@ Leg(42, "Winterspring", {
       location = "Everlook", atLevel = 56, logCount = 18, x = 61.9, y = 38.4,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Shy-Rotam. Low XP for the travel time.",
       zone = "Winterspring", location = "Everlook", atLevel = 56, x = 61.9, y = 38.4,
     },

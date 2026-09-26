@@ -158,7 +158,7 @@ Leg(40, "Undercity", {
       logCount = 13, x = 48.7, y = 71.4,
     },
     {
-      type = "note", name = "Skip for now: V",
+      type = "note", optional = true, name = "Skip for now: V",
       note = "Do not pick up yet - the route comes back for Vivian Lagrave on a later pass.",
       zone = "Undercity", location = "The Apothecarium", atLevel = 54, x = 50.1, y = 68.0,
     },

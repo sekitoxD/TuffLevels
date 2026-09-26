@@ -32,7 +32,7 @@ Leg(30, "Searing Gorge", {
       note = "Talk to the flight master and learn this flight point.",
     },
     {
-      type = "note", name = "Skip: W",
+      type = "note", optional = true, name = "Skip: W",
       note = "The route deliberately skips WANTED: Overseer Maltorius. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Thorium Point", atLevel = 46, x = 37.6, y = 26.5,
     },
@@ -60,7 +60,7 @@ Leg(30, "Searing Gorge", {
       x = 38.6, y = 27.8,
     },
     {
-      type = "note", name = "Skip: W",
+      type = "note", optional = true, name = "Skip: W",
       note = "The route deliberately skips What the Flux?. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Thorium Point", atLevel = 46, x = 38.8, y = 28.5,
     },
@@ -122,7 +122,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 46, logCount = 16, x = 39.1, y = 39.0,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Flame's Casing. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 46, x = 39.1, y = 39.0,
     },
@@ -183,7 +183,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 47, logCount = 11, x = 39.1, y = 39.0,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Torch of Retribution #1. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 47, x = 39.1, y = 39.0,
     },
@@ -199,7 +199,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 47, logCount = 11, x = 39.1, y = 39.0,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Torch of Retribution #2. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 47, x = 39.1, y = 39.2,
     },
@@ -215,7 +215,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 47, logCount = 11, x = 39.1, y = 39.2,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Squire Maltrake. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 47, x = 39.2, y = 39.0,
     },
@@ -229,7 +229,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 47, logCount = 11, x = 39.2, y = 39.0,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Set Them Ablaze!. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 47, x = 39.2, y = 39.0,
     },
@@ -248,7 +248,7 @@ Leg(30, "Searing Gorge", {
       location = "Pyrox Flats", atLevel = 47, logCount = 11, x = 39.2, y = 39.0,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips Trinkets.... Low XP for the travel time.",
       zone = "Searing Gorge", location = "Pyrox Flats", atLevel = 47, x = 38.8, y = 39.0,
     },
@@ -280,7 +280,7 @@ Leg(30, "Searing Gorge", {
       location = "Grimesilt Digsite", atLevel = 47, logCount = 12, x = 65.6, y = 62.2,
     },
     {
-      type = "note", name = "Skip: L",
+      type = "note", optional = true, name = "Skip: L",
       note = "The route deliberately skips Ledger from Tanaris. Low XP for the travel time.",
       zone = "Searing Gorge", location = "Grimesilt Digsite", atLevel = 47, x = 65.6, y = 62.2,
     },
@@ -301,7 +301,7 @@ Leg(30, "Searing Gorge", {
       location = "Stonard", atLevel = 47, logCount = 10, x = 47.9, y = 54.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Temple of Atal'Hakkar. Low XP for the travel time.",
       zone = "Swamp of Sorrows", location = "Stonard", atLevel = 47, x = 47.9, y = 54.8,
     },
@@ -331,7 +331,7 @@ Leg(30, "Searing Gorge", {
       location = "Sen'jin Village", atLevel = 47, logCount = 8, x = 55.9, y = 74.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Spider God. Low XP for the travel time.",
       zone = "Durotar", location = "Sen'jin Village", atLevel = 47, x = 55.9, y = 74.7,
     },

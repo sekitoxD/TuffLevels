@@ -15,7 +15,7 @@ Leg(36, "Burning Steppes", {
 
     { type = "section", name = "Chapter 54: Burning Steppes", levels = { 52, 52 }, zone = "Burning Steppes" },
     {
-      type = "note", name = "Skip: 4 quests here",
+      type = "note", optional = true, name = "Skip: 4 quests here",
       note = "The route deliberately skips Grark Lorkrub, KILL ON SIGHT: Dark Iron Dwarves, Dishamony of Flame, Lost Thunderbrew Recipe. Low XP for the travel time.",
       zone = "Badlands", location = "Kargath", atLevel = 52, x = 5.0, y = 47.6,
     },
@@ -43,7 +43,7 @@ Leg(36, "Burning Steppes", {
       location = "Flame Crest", atLevel = 52, logCount = 16, x = 65.2, y = 23.9,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Heart of the Mountain. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Flame Crest", atLevel = 52, x = 65.2, y = 23.9,
     },
@@ -52,7 +52,7 @@ Leg(36, "Burning Steppes", {
       location = "Flame Crest", atLevel = 52, logCount = 15, x = 66.1, y = 22.0,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Ribbly Screwspigot. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Flame Crest", atLevel = 52, x = 66.1, y = 22.0,
     },
@@ -71,7 +71,7 @@ Leg(36, "Burning Steppes", {
       atLevel = 52, logCount = 15, x = 81.0, y = 29.0, approx = true,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips A Taste of Flame #1. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Slither Rock", atLevel = 52, x = 95.1, y = 31.6,
     },
@@ -87,7 +87,7 @@ Leg(36, "Burning Steppes", {
       logCount = 15, x = 95.1, y = 31.6,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips A Taste of Flame #2. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Slither Rock", atLevel = 52, x = 95.1, y = 31.6,
     },
@@ -145,7 +145,7 @@ Leg(36, "Burning Steppes", {
       location = "The Dustbowl", atLevel = 52, logCount = 12, x = 25.9, y = 44.9,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Rise of the Machines #3. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 52, x = 25.9, y = 44.9,
     },

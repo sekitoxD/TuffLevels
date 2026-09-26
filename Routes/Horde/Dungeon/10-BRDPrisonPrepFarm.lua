@@ -57,7 +57,7 @@ Part(10, {
       location = "Frostfire Hot Springs", logCount = 13,
     },
     {
-      type = "note", name = "Skip: The Videre Elixir (part 1)",
+      type = "note", optional = true, name = "Skip: The Videre Elixir (part 1)",
       note = "The route deliberately skips The Videre Elixir (part 1).", zone = "Winterspring",
       location = "Frostfire Hot Springs",
     },
@@ -156,7 +156,7 @@ Part(10, {
       location = "Frostfire Hot Springs", logCount = 14,
     },
     {
-      type = "note", name = "Skip: Falling to Corruption",
+      type = "note", optional = true, name = "Skip: Falling to Corruption",
       note = "The route deliberately skips Falling to Corruption.", zone = "Winterspring",
       location = "Frostfire Hot Springs",
     },
@@ -212,7 +212,7 @@ Part(10, {
       ambiguous = true, zone = "Felwood", location = "Bloodvenom Post", logCount = 12,
     },
     {
-      type = "note", name = "Skip: Wild Guardians (part 3)",
+      type = "note", optional = true, name = "Skip: Wild Guardians (part 3)",
       note = "The route deliberately skips Wild Guardians (part 3).", zone = "Felwood",
       location = "Bloodvenom Post",
     },
@@ -246,7 +246,7 @@ Part(10, {
     },
     { type = "turnin", questName = "Mold Rhymes With...", zone = "Tanaris", logCount = 9 },
     {
-      type = "note", name = "Skip: Fire Plume Forged",
+      type = "note", optional = true, name = "Skip: Fire Plume Forged",
       note = "The route deliberately skips Fire Plume Forged. Note: Unless you can get two thorium bars per person.... then do it in Ungoro next.",
       zone = "Tanaris",
     },
@@ -255,7 +255,7 @@ Part(10, {
       location = "Steamwheedle Port", logCount = 8,
     },
     {
-      type = "note", name = "Skip: The Lost Tablets of Mosh'aru",
+      type = "note", optional = true, name = "Skip: The Lost Tablets of Mosh'aru",
       note = "The route deliberately skips The Lost Tablets of Mosh'aru.", zone = "Tanaris",
       location = "Steamwheedle Port",
     },

@@ -23,9 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.2"
+local CHANGELOG_VERSION = "1.7.3"
 local CHANGELOG = {
-    "Fixed the Undead 1-60 continuation gap: after finishing the Tirisfal/Silverpine start (Routes/Horde/TirisfalStart.lua), switching into the shared 'ONSLAUGHT Solo Horde 1-60 (Orc/Troll)' route meant manually clicking through ~600 lines of Valley of Trials content Undead can never accept and a duplicate first Silverpine Forest leg they'd already done. Both legs are now race-gated to Orc/Troll (Routes/Horde/Solo/Init.lua's Leg() helper, Durotar.lua, SilverpineForest.lua) so Undead auto-skip past them on the switch instead.",
+    "312 'Skip: ...'/'Skip for now: ...' advice notes across the route files (and the Guidelime importer's own [QS] skip directive) are now marked optional, so the tracker auto-advances past them like it already does for section headers instead of needing a manual Next click for a note that never had anything to actually do.",
 }
 
 -- Fixed content (the changelog text is a load-time constant) - build once

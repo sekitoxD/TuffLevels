@@ -249,7 +249,7 @@ Leg(12, "Hillsbrad Foothills", {
       atLevel = 30,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Soothing Turtle Bisque, Infiltration on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 30, x = 62.2, y = 19.0,
     },
@@ -258,7 +258,7 @@ Leg(12, "Hillsbrad Foothills", {
       location = "Tarren Mill", atLevel = 30, logCount = 10, x = 63.2, y = 20.6,
     },
     {
-      type = "note", name = "Skip for now: 4 quests here",
+      type = "note", optional = true, name = "Skip for now: 4 quests here",
       note = "Do not pick up yet - the route comes back for The Hammer May Fall, Prison Break In, Stone Tokens, Helcular's Revenge on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 30, x = 61.8, y = 19.6,
     },
@@ -295,7 +295,7 @@ Leg(12, "Hillsbrad Foothills", {
       logCount = 8, x = 48.6, y = 69.4,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Elixir of Agony #3, Going, Going, Guano!. Low XP for the travel time.",
       zone = "Undercity", location = "The Apothecarium", atLevel = 30, x = 48.6, y = 69.4,
     },
@@ -337,7 +337,7 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Grom'gol Base Camp", atLevel = 37, logCount = 14, x = 32.2, y = 27.8,
     },
     {
-      type = "note", name = "Skip for now: M",
+      type = "note", optional = true, name = "Skip for now: M",
       note = "Do not pick up yet - the route comes back for Marg Speaks on a later pass.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 37, x = 32.2,
       y = 27.7,
@@ -367,17 +367,17 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Trade Quarter", atLevel = 37, logCount = 14, x = 64.0, y = 49.4,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Reclaimed Treasures. Low XP for the travel time.",
       zone = "Undercity", location = "Trade Quarter", atLevel = 37, x = 62.3, y = 48.6,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Bring the End. Low XP for the travel time.",
       zone = "Undercity", location = "Magic Quarter", atLevel = 37, x = 74.0, y = 33.3,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips The Crown of Will #1, Into The Scarlet Monastery. Low XP for the travel time.",
       zone = "Undercity", location = "Royal Quarter", atLevel = 37, x = 57.7, y = 93.8,
     },
@@ -412,7 +412,7 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Tarren Mill", atLevel = 37, logCount = 17, x = 62.3, y = 19.0,
     },
     {
-      type = "note", name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: W",
       note = "Do not pick up yet - the route comes back for WANTED: Baron Vardus on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 37, x = 62.6, y = 20.7,
     },
@@ -428,7 +428,7 @@ Leg(20, "Hillsbrad Foothills", {
       logCount = 17, x = 62.6, y = 20.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Crown of Will #2. Low XP for the travel time.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 37, x = 62.6, y = 20.7,
     },
@@ -575,7 +575,7 @@ Leg(20, "Hillsbrad Foothills", {
       logCount = 17, x = 62.6, y = 20.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Crown of Will #3. Low XP for the travel time.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 38, x = 62.6, y = 20.7,
     },

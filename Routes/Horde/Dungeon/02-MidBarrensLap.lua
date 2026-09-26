@@ -84,7 +84,7 @@ Part(2, {
     },
     { type = "accept", questName = "Lakota'mani", zone = "The Barrens", location = "Bramblescar", logCount = 18 },
     {
-      type = "note", name = "Skip: Weapons of Choice",
+      type = "note", optional = true, name = "Skip: Weapons of Choice",
       note = "Do not pick up Weapons of Choice yet - the route comes back for it.",
       zone = "The Barrens", location = "Camp Taurajo",
     },
@@ -115,7 +115,7 @@ Part(2, {
       location = "Northwatch Hold", logCount = 18,
     },
     {
-      type = "note", name = "Skip: Free From the Hold",
+      type = "note", optional = true, name = "Skip: Free From the Hold",
       note = "The route deliberately skips Free From the Hold. Super low xppm, dont do it you clown.",
       zone = "The Barrens", location = "Northwatch Hold",
     },
@@ -128,7 +128,7 @@ Part(2, {
       ambiguous = true, zone = "The Barrens", location = "Ratchet", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Chen's Empty Keg (part 3)",
+      type = "note", optional = true, name = "Skip: Chen's Empty Keg (part 3)",
       note = "The route deliberately skips Chen's Empty Keg (part 3).", zone = "The Barrens",
       location = "Ratchet",
     },
@@ -148,7 +148,7 @@ Part(2, {
       location = "Ratchet", logCount = 16, note = "Take the flight path.",
     },
     {
-      type = "note", name = "Skip: Report to Kadrak",
+      type = "note", optional = true, name = "Skip: Report to Kadrak",
       note = "The route deliberately skips Report to Kadrak.", zone = "The Barrens",
       location = "The Crossroads",
     },
@@ -231,7 +231,7 @@ Part(2, {
       location = "Honor's Stand", logCount = 14,
     },
     {
-      type = "note", name = "Skip: Jin'Zil's Forest Magic",
+      type = "note", optional = true, name = "Skip: Jin'Zil's Forest Magic",
       note = "The route deliberately skips Jin'Zil's Forest Magic.", zone = "Stonetalon Mts",
       location = "Malaka'Jin",
     },
@@ -240,7 +240,7 @@ Part(2, {
       location = "The Crossroads", logCount = 13,
     },
     {
-      type = "note", name = "Skip: Report to Kadrak",
+      type = "note", optional = true, name = "Skip: Report to Kadrak",
       note = "The route deliberately skips Report to Kadrak.", zone = "Stonetalon Mts",
       location = "Malaka'Jin",
     },
@@ -262,7 +262,7 @@ Part(2, {
       location = "Sishir Canyon", logCount = 15,
     },
     {
-      type = "note", name = "Skip: Elemental War",
+      type = "note", optional = true, name = "Skip: Elemental War",
       note = "Do not pick up Elemental War yet - the route comes back for it.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
@@ -275,12 +275,12 @@ Part(2, {
       location = "Sun Rock Retreat", logCount = 15,
     },
     {
-      type = "note", name = "Skip: Harpies Threaten",
+      type = "note", optional = true, name = "Skip: Harpies Threaten",
       note = "Do not pick up Harpies Threaten yet - the route comes back for it.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
     {
-      type = "note", name = "Skip: Cycle of Rebirth",
+      type = "note", optional = true, name = "Skip: Cycle of Rebirth",
       note = "Do not pick up Cycle of Rebirth yet - the route comes back for it.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
@@ -402,7 +402,7 @@ Part(2, {
       location = "Camp Taurajo", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Betrayal from Within (part 1)",
+      type = "note", optional = true, name = "Skip: Betrayal from Within (part 1)",
       note = "Do not pick up Betrayal from Within (part 1) yet - the route comes back for it.",
       zone = "The Barrens", location = "Camp Taurajo",
     },
@@ -425,12 +425,12 @@ Part(2, {
       location = "The Hunter Rise", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Steelsnap",
+      type = "note", optional = true, name = "Skip: Steelsnap",
       note = "Do not pick up Steelsnap yet - the route comes back for it.",
       zone = "Thunder Bluff", location = "The Hunter Rise",
     },
     {
-      type = "note", name = "Skip: The Sacred Flame (part 1)",
+      type = "note", optional = true, name = "Skip: The Sacred Flame (part 1)",
       note = "Do not pick up The Sacred Flame (part 1) yet - the route comes back for it.",
       zone = "Thunder Bluff",
     },
@@ -659,7 +659,7 @@ Part(2, {
       location = "Tarren Mill", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Elixir of Agony (part 1)",
+      type = "note", optional = true, name = "Skip: Elixir of Agony (part 1)",
       note = "The route deliberately skips Elixir of Agony (part 1).",
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
@@ -672,7 +672,7 @@ Part(2, {
       location = "Tarren Mill", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Battle of Hillsbrad (part 1)",
+      type = "note", optional = true, name = "Skip: Battle of Hillsbrad (part 1)",
       note = "Do not pick up Battle of Hillsbrad (part 1) yet - the route comes back for it.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
@@ -730,12 +730,12 @@ Part(2, {
       ambiguous = true, zone = "Hillsbrad Foothills", location = "Tarren Mill", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Elixir of Suffering (part 2)",
+      type = "note", optional = true, name = "Skip: Elixir of Suffering (part 2)",
       note = "Do not pick up Elixir of Suffering (part 2) yet - the route comes back for it.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: Elixir of Pain (part 2)",
+      type = "note", optional = true, name = "Skip: Elixir of Pain (part 2)",
       note = "Do not pick up Elixir of Pain (part 2) yet - the route comes back for it.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
@@ -912,7 +912,7 @@ Part(2, {
       location = "Honor's Stand", logCount = 11, note = "Use your hearthstone.",
     },
     {
-      type = "note", name = "Skip: Calling in the Reserves",
+      type = "note", optional = true, name = "Skip: Calling in the Reserves",
       note = "Do not pick up Calling in the Reserves yet - the route comes back for it.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
@@ -925,7 +925,7 @@ Part(2, {
       location = "Sun Rock Retreat", logCount = 9,
     },
     {
-      type = "note", name = "Skip: New Life",
+      type = "note", optional = true, name = "Skip: New Life",
       note = "Do not pick up New Life yet - the route comes back for it.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
@@ -965,12 +965,12 @@ Part(2, {
       location = "Zoram Strand", logCount = 12,
     },
     {
-      type = "note", name = "Skip: Amongst the Ruins",
+      type = "note", optional = true, name = "Skip: Amongst the Ruins",
       note = "Do not pick up Amongst the Ruins yet - the route comes back for it.",
       zone = "Ashenvale", location = "Zoram Strand",
     },
     {
-      type = "note", name = "Skip: The Essence of Aku'Mai",
+      type = "note", optional = true, name = "Skip: The Essence of Aku'Mai",
       note = "Do not pick up The Essence of Aku'Mai yet - the route comes back for it.",
       zone = "Ashenvale", location = "Zoram Strand",
     },

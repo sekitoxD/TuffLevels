@@ -75,7 +75,7 @@ Leg(35, "Blasted Lands", {
       location = "Booty Bay", atLevel = 50, logCount = 14, x = 26.7, y = 73.6,
     },
     {
-      type = "note", name = "Skip: F",
+      type = "note", optional = true, name = "Skip: F",
       note = "The route deliberately skips Facing Negolash. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 50, x = 26.7, y = 73.6,
     },
@@ -167,7 +167,7 @@ Leg(35, "Blasted Lands", {
       location = "Blasted Lands Border", atLevel = 50, logCount = 12, x = 34.3, y = 66.1,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Stones That Bind Us. Low XP for the travel time.",
       zone = "Swamp of Sorrows", location = "Blasted Lands Border", atLevel = 50, x = 34.3,
       y = 66.1,
@@ -265,7 +265,7 @@ Leg(35, "Blasted Lands", {
       location = "Blasted Lands Border", atLevel = 52, logCount = 12, x = 34.3, y = 66.1,
     },
     {
-      type = "note", name = "Skip: K",
+      type = "note", optional = true, name = "Skip: K",
       note = "The route deliberately skips Kirith. Low XP for the travel time.",
       zone = "Swamp of Sorrows", location = "Blasted Lands Border", atLevel = 52, x = 34.3,
       y = 66.1,
@@ -284,7 +284,7 @@ Leg(35, "Blasted Lands", {
       location = "Serpent's Coil", atLevel = 52, logCount = 12, x = 69.2, y = 30.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Cover of Darkness. Low XP for the travel time.",
       zone = "Swamp of Sorrows", location = "Blasted Lands Border", atLevel = 52, x = 69.2,
       y = 30.8,
@@ -300,7 +300,7 @@ Leg(35, "Blasted Lands", {
       location = "Blasted Lands Border", atLevel = 52, logCount = 12, x = 34.3, y = 66.1,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Demon Hunter. Low XP for the travel time.",
       zone = "Swamp of Sorrows", location = "Blasted Lands Border", atLevel = 52, x = 34.3,
       y = 66.1,

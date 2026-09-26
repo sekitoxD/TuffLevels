@@ -23,7 +23,7 @@ Part(1, {
     },
     { type = "accept", questName = "Cutting Teeth", zone = "Durotar", location = "The Den", logCount = 1 },
     {
-      type = "note", name = "Skip: Sarkoth (part 1)",
+      type = "note", optional = true, name = "Skip: Sarkoth (part 1)",
       note = "The route deliberately skips Sarkoth (part 1). Not worth trying to get the kill.",
       zone = "Durotar", location = "Valley of Trials",
     },
@@ -33,7 +33,7 @@ Part(1, {
     },
     { type = "turnin", questName = "Cutting Teeth", zone = "Durotar", location = "The Den", logCount = 0 },
     {
-      type = "note", name = "Skip: Sting of the Scorpid",
+      type = "note", optional = true, name = "Skip: Sting of the Scorpid",
       note = "The route deliberately skips Sting of the Scorpid. Not worth, trying to compete for that many kills.",
       zone = "Durotar", location = "The Den",
     },
@@ -105,12 +105,12 @@ Part(1, {
     },
     { type = "note", name = "Note", note = "**Need to be LEVEL 5 When you hit Sen'jinVIllage***" },
     {
-      type = "note", name = "Skip: Practical Prey",
+      type = "note", optional = true, name = "Skip: Practical Prey",
       note = "The route deliberately skips Practical Prey. Super shit for 5 man and to close to starting zone....",
       zone = "Durotar", location = "Sen'jin Village",
     },
     {
-      type = "note", name = "Skip: A Solvent Spirit",
+      type = "note", optional = true, name = "Skip: A Solvent Spirit",
       note = "The route deliberately skips A Solvent Spirit. Super shit for 5 man and to close to starting zone....",
       zone = "Durotar", location = "Sen'jin Village",
     },
@@ -149,7 +149,7 @@ Part(1, {
     },
     { type = "accept", questName = "Carry Your Weight", zone = "Durotar", location = "Razor Hill", logCount = 5 },
     {
-      type = "note", name = "Skip: Break a Few Eggs",
+      type = "note", optional = true, name = "Skip: Break a Few Eggs",
       note = "The route deliberately skips Break a Few Eggs. Super shit for 5 man and to close to starting zone....",
       zone = "Durotar", location = "Razor Hill",
     },
@@ -562,7 +562,7 @@ Part(1, {
       location = "Ratchet", logCount = 14,
     },
     {
-      type = "note", name = "Skip: Root Samples",
+      type = "note", optional = true, name = "Skip: Root Samples",
       note = "The route deliberately skips Root Samples.", zone = "The Barrens",
       location = "Ratchet",
     },
@@ -756,7 +756,7 @@ Part(1, {
       location = "The Crossroads", logCount = 13,
     },
     {
-      type = "note", name = "Skip: Apothecary Zamah",
+      type = "note", optional = true, name = "Skip: Apothecary Zamah",
       note = "Do not pick up Apothecary Zamah yet - the route comes back for it.",
       zone = "The Barrens", location = "The Crossroads",
     },
@@ -877,7 +877,7 @@ Part(1, {
     },
     { type = "turnin", questName = "Stolen Booty", zone = "The Barrens", location = "Ratchet", logCount = 16 },
     {
-      type = "note", name = "Skip: Trouble at the Docks",
+      type = "note", optional = true, name = "Skip: Trouble at the Docks",
       note = "Do not pick up Trouble at the Docks yet - the route comes back for it.",
       zone = "The Barrens", location = "Ratchet",
     },
@@ -920,7 +920,7 @@ Part(1, {
       location = "North Barrens", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Rilli Greasygob",
+      type = "note", optional = true, name = "Skip: Rilli Greasygob",
       note = "The route deliberately skips Rilli Greasygob.", zone = "The Barrens",
       location = "North Barrens",
     },

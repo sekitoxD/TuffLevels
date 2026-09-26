@@ -93,7 +93,7 @@ Leg(19, "Dustwallow Marsh", {
       location = "Swamplight Manor", atLevel = 37, logCount = 16, x = 55.4, y = 26.2,
     },
     {
-      type = "note", name = "Skip: J",
+      type = "note", optional = true, name = "Skip: J",
       note = "The route deliberately skips Jarl Needs a Blade. Low XP for the travel time.",
       zone = "Dustwallow Marsh", location = "Swamplight Manor", atLevel = 37, x = 55.4,
       y = 26.2,
@@ -183,7 +183,7 @@ Leg(26, "Dustwallow Marsh", {
       location = "Booty Bay", atLevel = 43, logCount = 12, x = 27.1, y = 77.2,
     },
     {
-      type = "note", name = "Skip for now: Z",
+      type = "note", optional = true, name = "Skip for now: Z",
       note = "Do not pick up yet - the route comes back for Zanzil's Mixture and a Fool's Stout on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 43, x = 27.1, y = 77.2,
     },
@@ -192,7 +192,7 @@ Leg(26, "Dustwallow Marsh", {
       location = "Booty Bay", atLevel = 43, logCount = 11, x = 27.8, y = 77.1,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Cracking Maury's Foot. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 43, x = 27.8, y = 77.1,
     },
@@ -230,7 +230,7 @@ Leg(26, "Dustwallow Marsh", {
       location = "Grom'gol Base Camp", atLevel = 43, logCount = 11, x = 32.3, y = 27.7,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Saving Yenniku. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 43, x = 32.3,
       y = 27.7,
@@ -251,7 +251,7 @@ Leg(26, "Dustwallow Marsh", {
       x = 27.1, y = 77.2,
     },
     {
-      type = "note", name = "Skip: F",
+      type = "note", optional = true, name = "Skip: F",
       note = "The route deliberately skips Fool's Stout. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 43, x = 27.1, y = 77.2,
     },
@@ -278,7 +278,7 @@ Leg(26, "Dustwallow Marsh", {
       note = "Take the flight path.",
     },
     {
-      type = "note", name = "Skip: O",
+      type = "note", optional = true, name = "Skip: O",
       note = "The route deliberately skips Overlord Mok'Morokk's Concern. Low XP for the travel time.",
       zone = "Dustwallow Marsh", location = "Brackenwall Village", atLevel = 43, x = 36.3,
       y = 31.4,
@@ -293,7 +293,7 @@ Leg(26, "Dustwallow Marsh", {
       location = "Brackenwall Village", atLevel = 43, logCount = 11, x = 37.0, y = 33.0,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips Army of the Black Dragon. Low XP for the travel time.",
       zone = "Dustwallow Marsh", location = "Brackenwall Village", atLevel = 43, x = 37.4,
       y = 31.4,
@@ -304,7 +304,7 @@ Leg(26, "Dustwallow Marsh", {
       approx = true,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips Tiara of the Deep. Low XP for the travel time.",
       zone = "Dustwallow Marsh", location = "The Quagmire", atLevel = 43, x = 46.1, y = 57.1,
     },
@@ -413,7 +413,7 @@ Leg(26, "Dustwallow Marsh", {
       location = "Brackenwall Village", atLevel = 44, logCount = 10, x = 37.0, y = 33.0,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Challenge Overlord Mok'Morokk. Low XP for the travel time.",
       zone = "Dustwallow Marsh", location = "Brackenwall Village", atLevel = 44, x = 36.3,
       y = 31.4,

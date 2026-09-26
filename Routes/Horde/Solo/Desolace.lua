@@ -28,7 +28,7 @@ Leg(16, "Desolace", {
       location = "Kormek's Hut", atLevel = 33, logCount = 10, x = 62.2, y = 38.8,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Bodyguard for Hire. Low XP for the travel time.",
       zone = "Desolace", location = "Kormek's Hut", atLevel = 33, x = 60.4, y = 38.0,
     },
@@ -37,7 +37,7 @@ Leg(16, "Desolace", {
       location = "Ghostwalker Post", atLevel = 33, logCount = 9, x = 55.4, y = 55.8,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Catch of the Day. Low XP for the travel time.",
       zone = "Desolace", location = "Ghostwalker Post", atLevel = 33, x = 55.4, y = 55.8,
     },
@@ -77,7 +77,7 @@ Leg(16, "Desolace", {
       location = "Ghostwalker Post", atLevel = 33, logCount = 11, x = 56.2, y = 59.6,
     },
     {
-      type = "note", name = "Skip: M",
+      type = "note", optional = true, name = "Skip: M",
       note = "The route deliberately skips Magram Alliance. Low XP for the travel time.",
       zone = "Desolace", location = "Ghostwalker Post", atLevel = 33, x = 56.2, y = 59.6,
     },
@@ -303,12 +303,12 @@ Leg(16, "Desolace", {
       logCount = 13, x = 52.6, y = 54.2,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Corrupter #5 on a later pass.",
       zone = "Desolace", location = "Ghostwalker Post", atLevel = 34, x = 52.6, y = 54.2,
     },
     {
-      type = "note", name = "Skip for now: G",
+      type = "note", optional = true, name = "Skip for now: G",
       note = "Do not pick up yet - the route comes back for Ghost-o-plasm Round Up on a later pass.",
       zone = "Desolace", location = "Kodo Graveyard", atLevel = 34, x = 47.8, y = 61.8,
     },
@@ -344,7 +344,7 @@ Leg(16, "Desolace", {
       location = "Shadowprey Village", atLevel = 34, logCount = 11, x = 25.8, y = 68.2,
     },
     {
-      type = "note", name = "Skip for now: P",
+      type = "note", optional = true, name = "Skip for now: P",
       note = "Do not pick up yet - the route comes back for Portals of the Legion on a later pass.",
       zone = "Desolace", location = "Shadowprey Village", atLevel = 34, x = 25.8, y = 68.2,
     },
@@ -386,7 +386,7 @@ Leg(23, "Desolace", {
       logCount = 13, x = 27.2, y = 76.8,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Sunken Treasure #5. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 27.2, y = 76.8,
     },
@@ -395,7 +395,7 @@ Leg(23, "Desolace", {
       location = "Booty Bay", atLevel = 40, logCount = 14, x = 27.0, y = 77.2,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for Tran'rek on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 27.0, y = 77.2,
     },
@@ -413,7 +413,7 @@ Leg(23, "Desolace", {
       location = "Booty Bay", atLevel = 40, logCount = 16, x = 27.0, y = 77.2,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Whiskey Slim's Lost Grog, Akiris by the Bundle on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 27.1, y = 77.5,
     },
@@ -422,12 +422,12 @@ Leg(23, "Desolace", {
       location = "Booty Bay", atLevel = 40, logCount = 17, x = 27.0, y = 77.2,
     },
     {
-      type = "note", name = "Skip for now: S",
+      type = "note", optional = true, name = "Skip for now: S",
       note = "Do not pick up yet - the route comes back for Stoley's Debt on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 27.8, y = 77.0,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Stranglethorn Fever. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 27.6, y = 76.7,
     },
@@ -441,7 +441,7 @@ Leg(23, "Desolace", {
       location = "Booty Bay", atLevel = 40, logCount = 19, x = 28.0, y = 76.2,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Captain's Chest. Low XP for the travel time.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 40, x = 26.6, y = 73.6,
     },
@@ -539,7 +539,7 @@ Leg(23, "Desolace", {
       atLevel = 41, logCount = 17, x = 36.2, y = 79.2,
     },
     {
-      type = "note", name = "Skip: K",
+      type = "note", optional = true, name = "Skip: K",
       note = "The route deliberately skips Khan Hratha. Low XP for the travel time.",
       zone = "Desolace", location = "Gelkis Village", atLevel = 41, x = 36.2, y = 79.2,
     },
@@ -601,7 +601,7 @@ Leg(23, "Desolace", {
       location = "Shimmering Flats", atLevel = 41, logCount = 16, x = 80.2, y = 76.0,
     },
     {
-      type = "note", name = "Skip: G",
+      type = "note", optional = true, name = "Skip: G",
       note = "The route deliberately skips Gahz'rilla. Low XP for the travel time.",
       zone = "Thousand Needles", location = "Shimmering Flats", atLevel = 41, x = 78.1,
       y = 77.1,
@@ -635,7 +635,7 @@ Leg(23, "Desolace", {
       location = "Shimmering Flats", atLevel = 41, logCount = 15, x = 80.2, y = 76.0,
     },
     {
-      type = "note", name = "Skip: I",
+      type = "note", optional = true, name = "Skip: I",
       note = "The route deliberately skips Indurium Ore. Low XP for the travel time.",
       zone = "Thousand Needles", location = "Shimmering Flats", atLevel = 41, x = 80.2,
       y = 76.0,

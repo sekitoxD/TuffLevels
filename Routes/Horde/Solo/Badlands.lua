@@ -31,7 +31,7 @@ Leg(22, "Badlands", {
       location = "Valley of Fangs", atLevel = 40, logCount = 14, x = 42.4, y = 52.8,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Pearl Diving, Power Stones. Low XP for the travel time.",
       zone = "Badlands", location = "Valley of Fangs", atLevel = 40, x = 42.4, y = 52.8,
     },
@@ -41,7 +41,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 15, x = 26.0, y = 44.8,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Coolant Heads Prevail, Gyro... What?. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 26.0, y = 44.8,
     },
@@ -144,7 +144,7 @@ Leg(22, "Badlands", {
       location = "Agmond's End", atLevel = 40, logCount = 18, x = 51.4, y = 76.8,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips The Lost Fragments, Solution to Doom. Low XP for the travel time.",
       zone = "Badlands", location = "Agmond's End", atLevel = 40, x = 51.4, y = 76.8,
     },
@@ -163,7 +163,7 @@ Leg(22, "Badlands", {
       location = "Agmond's End", atLevel = 40, logCount = 18, x = 51.4, y = 76.8,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Summoning the Princess. Low XP for the travel time.",
       zone = "Badlands", location = "Agmond's End", atLevel = 40, x = 51.4, y = 76.8,
     },
@@ -191,7 +191,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 17, x = 26.0, y = 44.8,
     },
     {
-      type = "note", name = "Skip: 3 quests here",
+      type = "note", optional = true, name = "Skip: 3 quests here",
       note = "The route deliberately skips This Is Going to Be Hard #1, Stone Is Better than Cloth, Liquid Stone. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 26.0, y = 44.8,
     },
@@ -207,7 +207,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 17, x = 25.8, y = 44.4,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips This Is Going to Be Hard #2. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 25.8, y = 44.4,
     },
@@ -223,7 +223,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 17, x = 26.0, y = 44.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips This Is Going to Be Hard #3. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 26.0, y = 44.8,
     },
@@ -258,7 +258,7 @@ Leg(22, "Badlands", {
       location = "Kargath", atLevel = 40, logCount = 15, x = 2.4, y = 46.1,
     },
     {
-      type = "note", name = "Skip: U",
+      type = "note", optional = true, name = "Skip: U",
       note = "The route deliberately skips Uldaman Reagent Run. Low XP for the travel time.",
       zone = "Badlands", location = "Kargath", atLevel = 40, x = 2.4, y = 46.1,
     },
@@ -268,7 +268,7 @@ Leg(22, "Badlands", {
       x = 2.9, y = 45.6,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Broken Alliances #2. Low XP for the travel time.",
       zone = "Badlands", location = "Kargath", atLevel = 40, x = 2.9, y = 45.6,
     },
@@ -313,7 +313,7 @@ Leg(22, "Badlands", {
       location = "Agmond's End", atLevel = 40, logCount = 14, x = 51.4, y = 76.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips To the Undercity for Yagyin's Digest. Low XP for the travel time.",
       zone = "Badlands", location = "Agmond's End", atLevel = 40, x = 51.4, y = 76.8,
     },

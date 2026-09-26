@@ -39,7 +39,7 @@ Leg(21, "Arathi Highlands", {
       note = "Bind your hearthstone here.",
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Real Threat. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Hammerfall", atLevel = 38, x = 74.0, y = 33.2,
     },
@@ -57,7 +57,7 @@ Leg(21, "Arathi Highlands", {
       location = "Hammerfall", atLevel = 38, logCount = 17, x = 32.3, y = 27.7,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Sigil of Strom. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Hammerfall", atLevel = 38, x = 73.8, y = 33.8,
     },
@@ -166,7 +166,7 @@ Leg(21, "Arathi Highlands", {
       location = "Circle of Inner Binding", atLevel = 38, logCount = 18, x = 36.1, y = 57.4,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Breaking the Keystone. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Circle of Inner Binding", atLevel = 38, x = 36.1,
       y = 57.4,
@@ -187,7 +187,7 @@ Leg(21, "Arathi Highlands", {
       location = "Circle of Inner Binding", atLevel = 38, logCount = 18, x = 36.2, y = 57.4,
     },
     {
-      type = "note", name = "Skip: M",
+      type = "note", optional = true, name = "Skip: M",
       note = "The route deliberately skips Myzrael's Allies. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Circle of Inner Binding", atLevel = 38, x = 36.2,
       y = 57.4,
@@ -218,7 +218,7 @@ Leg(21, "Arathi Highlands", {
       location = "Hammerfall", atLevel = 38, logCount = 18, x = 74.4, y = 35.6,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips Theldurin the Lost. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Hammerfall", atLevel = 38, x = 74.4, y = 35.6,
     },
@@ -228,7 +228,7 @@ Leg(21, "Arathi Highlands", {
       logCount = 17, x = 74.2, y = 33.8,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Call to Arms #3. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Hammerfall", atLevel = 38, x = 74.2, y = 33.8,
     },
@@ -238,7 +238,7 @@ Leg(21, "Arathi Highlands", {
       logCount = 16, x = 74.6, y = 36.4,
     },
     {
-      type = "note", name = "Skip: F",
+      type = "note", optional = true, name = "Skip: F",
       note = "The route deliberately skips Foul Magics #2. Low XP for the travel time.",
       zone = "Arathi Highlands", location = "Hammerfall", atLevel = 38, x = 74.6, y = 36.4,
     },
@@ -364,7 +364,7 @@ Leg(21, "Arathi Highlands", {
       logCount = 14, x = 62.6, y = 20.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Crown of Will #4. Low XP for the travel time.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 40, x = 62.6, y = 20.7,
     },

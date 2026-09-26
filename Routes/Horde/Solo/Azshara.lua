@@ -91,7 +91,7 @@ Leg(38, "Azshara", {
       location = "Bay of Storms", atLevel = 53, logCount = 13, x = 60.8, y = 66.4,
     },
     {
-      type = "note", name = "Skip: L",
+      type = "note", optional = true, name = "Skip: L",
       note = "The route deliberately skips Loramus. Low XP for the travel time.",
       zone = "Azshara", location = "Bay of Storms", atLevel = 53, x = 60.8, y = 66.4,
     },
@@ -105,7 +105,7 @@ Leg(38, "Azshara", {
       atLevel = 53, logCount = 13, x = 60.8, y = 66.4,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Breaking the Ward. Low XP for the travel time.",
       zone = "Azshara", location = "Bay of Storms", atLevel = 53, x = 60.8, y = 66.4,
     },
@@ -119,7 +119,7 @@ Leg(38, "Azshara", {
       location = "Bay of Storms", atLevel = 53, logCount = 13, x = 60.8, y = 66.4,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Name of the Beast #1. Low XP for the travel time.",
       zone = "Azshara", location = "Bay of Storms", atLevel = 53, x = 60.8, y = 66.4,
     },
@@ -135,7 +135,7 @@ Leg(38, "Azshara", {
       location = "Temple of Arkkoran", atLevel = 53, logCount = 13, x = 77.1, y = 42.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Name of the Beast #2. Low XP for the travel time.",
       zone = "Azshara", location = "Temple of Arkkoran", atLevel = 53, x = 77.1, y = 42.8,
     },
@@ -156,7 +156,7 @@ Leg(38, "Azshara", {
       location = "Temple of Arkkoran", atLevel = 53, logCount = 13, x = 77.1, y = 42.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Name of the Beast #3. Low XP for the travel time.",
       zone = "Azshara", location = "Temple of Arkkoran", atLevel = 53, x = 77.1, y = 42.8,
     },
@@ -176,7 +176,7 @@ Leg(38, "Azshara", {
       location = "Bay of Storms", atLevel = 53, logCount = 12, x = 60.8, y = 66.4,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips Azsharite. Low XP for the travel time.",
       zone = "Azshara", location = "Bay of Storms", atLevel = 53, x = 60.8, y = 66.4,
     },
@@ -186,7 +186,7 @@ Leg(38, "Azshara", {
       approx = true,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips A Crew Under Fire. Low XP for the travel time.",
       zone = "Azshara", location = "The Ruined Reaches", atLevel = 53, x = 53.1, y = 87.8,
     },
@@ -200,7 +200,7 @@ Leg(38, "Azshara", {
       atLevel = 53, logCount = 12, x = 60.8, y = 66.4,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Formation of Felbane. Low XP for the travel time.",
       zone = "Azshara", location = "Bay of Storms", atLevel = 53, x = 60.8, y = 66.4,
     },

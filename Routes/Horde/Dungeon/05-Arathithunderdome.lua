@@ -110,7 +110,7 @@ Part(5, {
       location = "Hammerfall", logCount = 9,
     },
     {
-      type = "note", name = "Skip: The Broken Sigil",
+      type = "note", optional = true, name = "Skip: The Broken Sigil",
       note = "The route deliberately skips The Broken Sigil.", zone = "Arathi Highlands",
       location = "Hammerfall",
     },
@@ -186,7 +186,7 @@ Part(5, {
       location = "Booty Bay", logCount = 8,
     },
     {
-      type = "note", name = "Skip: Zanzil's Secret",
+      type = "note", optional = true, name = "Skip: Zanzil's Secret",
       note = "The route deliberately skips Zanzil's Secret.", zone = "Stranglethorn Vale",
       location = "Booty Bay",
     },
@@ -405,7 +405,7 @@ Part(5, {
       location = "Booty Bay", logCount = 9,
     },
     {
-      type = "note", name = "Skip: Cortello's Riddle (part 1)",
+      type = "note", optional = true, name = "Skip: Cortello's Riddle (part 1)",
       note = "The route deliberately skips Cortello's Riddle (part 1).",
       zone = "Stranglethorn Vale", location = "Wild Shore",
     },
@@ -463,7 +463,7 @@ Part(5, {
       location = "Booty Bay", logCount = 8,
     },
     {
-      type = "note", name = "Skip: Cracking Maury's Foot",
+      type = "note", optional = true, name = "Skip: Cracking Maury's Foot",
       note = "The route deliberately skips Cracking Maury's Foot.",
       zone = "Stranglethorn Vale", location = "Booty Bay",
     },
@@ -628,7 +628,7 @@ Part(5, {
       location = "Apothecarium (front)", logCount = 8,
     },
     {
-      type = "note", name = "Skip: \"The Star, the Hand and the Heart\"",
+      type = "note", optional = true, name = "Skip: \"The Star, the Hand and the Heart\"",
       note = "The route deliberately skips \"The Star, the Hand and the Heart\".",
       zone = "Undercity", location = "Apothecarium",
     },
@@ -643,7 +643,7 @@ Part(5, {
     },
     { type = "turnin", questName = "Necklace Recovery", zone = "Orgrimmar", location = "The Drag", logCount = 8 },
     {
-      type = "note", name = "Skip: Necklace Recovery take 2",
+      type = "note", optional = true, name = "Skip: Necklace Recovery take 2",
       note = "The route deliberately skips Necklace Recovery take 2.", zone = "Orgrimmar",
       location = "The Drag",
     },

@@ -499,7 +499,7 @@ Leg(1, "Durotar", {
       location = "The Cleft of Shadow", atLevel = 10, logCount = 6, x = 47.2, y = 53.6,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Slaying the Beast. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 10, x = 49.5, y = 50.6,
     },
@@ -619,7 +619,7 @@ Leg(1, "Durotar", {
       logCount = 4, x = 31.8, y = 37.8,
     },
     {
-      type = "note", name = "Skip: H",
+      type = "note", optional = true, name = "Skip: H",
       note = "The route deliberately skips Hidden Enemies #3. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Valley of Wisdom", atLevel = 11, x = 31.8, y = 37.8,
     },

@@ -56,7 +56,7 @@ Leg(13, "Thousand Needles", {
       atLevel = 30, logCount = 7, x = 36.4, y = 30.8,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Black Shield #3 on a later pass.",
       zone = "Dustwallow Marsh", location = "Brackenwall Village", atLevel = 30, x = 36.4,
       y = 30.8,
@@ -413,7 +413,7 @@ Leg(15, "Thousand Needles", {
       location = "Mirage Raceway", atLevel = 32, logCount = 11, x = 78.0, y = 77.0,
     },
     {
-      type = "note", name = "Skip: E",
+      type = "note", optional = true, name = "Skip: E",
       note = "The route deliberately skips Encrusted Tail Fins. Low XP for the travel time.",
       zone = "Thousand Needles", location = "Mirage Raceway", atLevel = 32, x = 78.0, y = 77.0,
     },

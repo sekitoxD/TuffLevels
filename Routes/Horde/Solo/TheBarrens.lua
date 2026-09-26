@@ -167,7 +167,7 @@ Leg(4, "The Barrens", {
       location = "Ratchet", atLevel = 15, logCount = 14, x = 62.6, y = 37.5,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips Trouble at the Docks. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 15, x = 63.0, y = 37.6,
     },
@@ -403,7 +403,7 @@ Leg(4, "The Barrens", {
       location = "The Crossroads", atLevel = 16, logCount = 19, x = 51.4, y = 30.2,
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for Apothecary Zamah on a later pass.",
       zone = "The Barrens", location = "The Crossroads", atLevel = 16, x = 51.4, y = 30.2,
     },
@@ -424,7 +424,7 @@ Leg(4, "The Barrens", {
       location = "The Crossroads", atLevel = 16, logCount = 19, x = 52.2, y = 31.0,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Consumed by Hatred, Lost in Battle on a later pass.",
       zone = "The Barrens", location = "The Crossroads", atLevel = 16, x = 52.0, y = 31.6,
     },
@@ -517,7 +517,7 @@ Leg(4, "The Barrens", {
       location = "North Barrens", atLevel = 17, logCount = 17, x = 49.0, y = 11.2,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Rilli Greasygob. Low XP for the travel time.",
       zone = "The Barrens", location = "North Barrens", atLevel = 17, x = 49.0, y = 11.2,
     },
@@ -553,7 +553,7 @@ Leg(4, "The Barrens", {
       location = "The Crossroads", atLevel = 18, logCount = 17, x = 51.0, y = 29.6,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Report to Kadrak. Low XP for the travel time.",
       zone = "The Barrens", location = "The Crossroads", atLevel = 18, x = 51.4, y = 30.8,
     },
@@ -695,7 +695,7 @@ Leg(4, "The Barrens", {
       atLevel = 19,
     },
     {
-      type = "note", name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: W",
       note = "Do not pick up yet - the route comes back for Weapons of Choice on a later pass.",
       zone = "The Barrens", location = "Camp Taurajo", atLevel = 19, x = 45.0, y = 57.6,
     },
@@ -739,7 +739,7 @@ Leg(4, "The Barrens", {
       note = "Make sure you are at least 14500/21300 into level 19.", atLevel = 19,
     },
     {
-      type = "note", name = "Skip: F",
+      type = "note", optional = true, name = "Skip: F",
       note = "The route deliberately skips Free From the Hold. Low XP for the travel time.",
       zone = "The Barrens", location = "Northwatch Hold", atLevel = 19, x = 62.0, y = 55.0,
     },
@@ -767,7 +767,7 @@ Leg(4, "The Barrens", {
       atLevel = 19, logCount = 17, x = 62.4, y = 37.6,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Smart Drinks. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 19, x = 62.4, y = 37.6,
     },
@@ -844,7 +844,7 @@ Leg(4, "The Barrens", {
       location = "West of Crossroads", atLevel = 20, logCount = 13, x = 45.4, y = 28.4,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Deviate Eradication, Deviate Hides. Low XP for the travel time.",
       zone = "The Barrens", location = "Above Wailing Caverns", atLevel = 20, x = 51.9,
       y = 55.4,
@@ -887,7 +887,7 @@ Leg(4, "The Barrens", {
       location = "Malaka'Jin", atLevel = 20, logCount = 12, x = 74.4, y = 97.8,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Report to Kadrak. Low XP for the travel time.",
       zone = "Stonetalon Mts", location = "Malaka'Jin", atLevel = 20, x = 73.2, y = 94.8,
     },
@@ -911,7 +911,7 @@ Leg(4, "The Barrens", {
       note = "Several spots around here - check the whole area.",
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Trouble in the Deeps, Elemental War on a later pass.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat", atLevel = 20, x = 47.2, y = 64.2,
     },
@@ -924,7 +924,7 @@ Leg(4, "The Barrens", {
       location = "Sun Rock Retreat", atLevel = 20, logCount = 14, x = 47.2, y = 61.0,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Harpies Threaten, Cycle of Rebirth on a later pass.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat", atLevel = 20, x = 47.2, y = 61.0,
     },
@@ -1117,7 +1117,7 @@ Leg(14, "The Barrens", {
       location = "The Hunter Rise", atLevel = 31, logCount = 16, x = 61.4, y = 80.6,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips A Vengeful Fate. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "Thunder Bluff", atLevel = 31, x = 36.1, y = 59.9,
     },
@@ -1168,7 +1168,7 @@ Leg(14, "The Barrens", {
       logCount = 17, x = 75.0, y = 34.0,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Rig Wars. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Valley of Honor", atLevel = 31, x = 76.0, y = 25.4,
     },
@@ -1206,7 +1206,7 @@ Leg(14, "The Barrens", {
       logCount = 17, x = 62.2, y = 38.4,
     },
     {
-      type = "note", name = "Skip: C",
+      type = "note", optional = true, name = "Skip: C",
       note = "The route deliberately skips Chen's Empty Keg #4. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 31, x = 62.2, y = 38.4,
     },

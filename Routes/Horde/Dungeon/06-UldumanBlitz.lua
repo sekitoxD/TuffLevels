@@ -73,7 +73,7 @@ Part(6, {
     },
     { type = "turnin", questName = "Tran'rek", zone = "Tanaris", location = "Gadgetzan", logCount = 8 },
     {
-      type = "note", name = "Skip: Scarab Shells",
+      type = "note", optional = true, name = "Skip: Scarab Shells",
       note = "Do not pick up Scarab Shells yet - the route comes back for it.",
       zone = "Tanaris", location = "Gadgetzan",
     },
@@ -100,17 +100,17 @@ Part(6, {
     { type = "turnin", questName = "Into the Field", zone = "Tanaris", location = "Gadgetzan", logCount = 11 },
     { type = "accept", questName = "Slake That Thirst", zone = "Tanaris", location = "Gadgetzan", logCount = 12 },
     {
-      type = "note", name = "Skip: The Divino-matic Rod",
+      type = "note", optional = true, name = "Skip: The Divino-matic Rod",
       note = "Do not pick up The Divino-matic Rod yet - the route comes back for it.",
       zone = "Tanaris", location = "Gadgetzan",
     },
     {
-      type = "note", name = "Skip: The Thirsty Goblin",
+      type = "note", optional = true, name = "Skip: The Thirsty Goblin",
       note = "Do not pick up The Thirsty Goblin yet - the route comes back for it.",
       zone = "Tanaris", location = "Gadgetzan",
     },
     {
-      type = "note", name = "Skip: Troll Temper",
+      type = "note", optional = true, name = "Skip: Troll Temper",
       note = "Do not pick up Troll Temper yet - the route comes back for it.",
       zone = "Tanaris", location = "Gadgetzan",
     },
@@ -287,7 +287,7 @@ Part(6, {
       location = "Gadgetzan", logCount = 9,
     },
     {
-      type = "note", name = "Skip: Noxious Lair Investigation",
+      type = "note", optional = true, name = "Skip: Noxious Lair Investigation",
       note = "Do not pick up Noxious Lair Investigation yet - the route comes back for it.",
       zone = "Tanaris", location = "Gadgetzan",
     },
@@ -366,7 +366,7 @@ Part(6, {
       location = "Camp Mojache", logCount = 14,
     },
     {
-      type = "note", name = "Skip: The Mark of Quality",
+      type = "note", optional = true, name = "Skip: The Mark of Quality",
       note = "Do not pick up The Mark of Quality yet - the route comes back for it.",
       zone = "Feralas", location = "Camp Mojache",
     },
@@ -412,7 +412,7 @@ Part(6, {
       location = "Camp Mojache", logCount = 14,
     },
     {
-      type = "note", name = "Skip: Dark Ceremony",
+      type = "note", optional = true, name = "Skip: Dark Ceremony",
       note = "Do not pick up Dark Ceremony yet - the route comes back for it.",
       zone = "Feralas", location = "Camp Mojache",
     },
@@ -626,17 +626,17 @@ Part(6, {
       location = "Revantusk Village", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Lard Lost His Lunch",
+      type = "note", optional = true, name = "Skip: Lard Lost His Lunch",
       note = "Do not pick up Lard Lost His Lunch yet - the route comes back for it.",
       zone = "The Hinterlands", location = "Revantusk Village",
     },
     {
-      type = "note", name = "Skip: Snapjaws, Mon!",
+      type = "note", optional = true, name = "Skip: Snapjaws, Mon!",
       note = "Do not pick up Snapjaws, Mon! yet - the route comes back for it.",
       zone = "The Hinterlands", location = "Revantusk Village",
     },
     {
-      type = "note", name = "Skip: Gammerita, Mon!",
+      type = "note", optional = true, name = "Skip: Gammerita, Mon!",
       note = "Do not pick up Gammerita, Mon! yet - the route comes back for it.",
       zone = "The Hinterlands", location = "Revantusk Village",
     },
@@ -692,7 +692,7 @@ Part(6, {
       location = "Agol'watha", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Rescue OOX-09/HL!",
+      type = "note", optional = true, name = "Skip: Rescue OOX-09/HL!",
       note = "The route deliberately skips Rescue OOX-09/HL!.", zone = "The Hinterlands",
       location = "Agol'watha",
     },
@@ -741,7 +741,7 @@ Part(6, {
       location = "Revantusk Village", logCount = 15,
     },
     {
-      type = "note", name = "Skip: Another Message to the Wildhammer",
+      type = "note", optional = true, name = "Skip: Another Message to the Wildhammer",
       note = "The route deliberately skips Another Message to the Wildhammer.",
       zone = "The Hinterlands", location = "Revantusk Village",
     },

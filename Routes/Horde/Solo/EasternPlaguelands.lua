@@ -26,7 +26,7 @@ Leg(47, "Eastern Plaguelands", {
       location = "The Bulwark", atLevel = 57, logCount = 9, x = 83.1, y = 68.9,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips Alas, Andorhal. Low XP for the travel time.",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 57, x = 83.1, y = 68.9,
     },
@@ -109,7 +109,7 @@ Leg(47, "Eastern Plaguelands", {
       location = "Light's Hope Chapel", atLevel = 57, logCount = 16, x = 81.4, y = 59.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Archivist. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel", atLevel = 57, x = 81.4,
       y = 59.8,
@@ -135,7 +135,7 @@ Leg(47, "Eastern Plaguelands", {
       location = "Light's Hope Chapel", atLevel = 57, logCount = 17, x = 81.5, y = 59.8,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Plagued Hatchlings, The Flesh does not Lie. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel", atLevel = 57, x = 81.5,
       y = 59.7,
@@ -146,7 +146,7 @@ Leg(47, "Eastern Plaguelands", {
       logCount = 17, x = 81.6, y = 58.1, note = "Bind your hearthstone here.",
     },
     {
-      type = "note", name = "Skip: 3 quests here",
+      type = "note", optional = true, name = "Skip: 3 quests here",
       note = "The route deliberately skips Houses of the Holy, The Great Fras Siabi, That's Asking A Lot. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel", atLevel = 57, x = 81.7,
       y = 57.8,
@@ -190,7 +190,7 @@ Leg(47, "Eastern Plaguelands", {
       logCount = 16, x = 14.5, y = 33.7,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Restless Souls #2. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Terrordale", atLevel = 57, x = 14.5, y = 33.7,
     },

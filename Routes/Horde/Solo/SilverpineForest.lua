@@ -209,7 +209,7 @@ Leg(3, "Silverpine Forest", {
       location = "The Sepulcher", atLevel = 14, logCount = 16, x = 43.4, y = 40.9,
     },
     {
-      type = "note", name = "Skip for now: R",
+      type = "note", optional = true, name = "Skip for now: R",
       note = "Do not pick up yet - the route comes back for Rot Hide Ichor on a later pass.",
       zone = "Silverpine Forest", location = "The Sepulcher", atLevel = 14, x = 43.4, y = 40.9,
     },
@@ -309,7 +309,7 @@ Leg(3, "Silverpine Forest", {
       location = "The Sepulcher", atLevel = 14, logCount = 15, x = 44.0, y = 41.0,
     },
     {
-      type = "note", name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for The Weaver on a later pass.",
       zone = "Silverpine Forest", location = "The Sepulcher", atLevel = 14, x = 44.0, y = 41.0,
     },
@@ -329,7 +329,7 @@ Leg(3, "Silverpine Forest", {
       logCount = 13, x = 48.6, y = 69.4,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips A Recipe For Death #2. Low XP for the travel time.",
       zone = "Undercity", location = "The Apothecarium", atLevel = 15, x = 48.6, y = 69.4,
     },
@@ -342,7 +342,7 @@ Leg(3, "Silverpine Forest", {
       location = "The Apothecarium", atLevel = 15, logCount = 13, x = 49.8, y = 68.4,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Power to Destroy.... Low XP for the travel time.",
       zone = "Undercity", location = "The Royal Quarter", atLevel = 15, x = 56.2, y = 91.8,
     },
@@ -434,7 +434,7 @@ Leg(7, "Silverpine Forest", {
       location = "Trade Quarter", atLevel = 21, logCount = 15, x = 61.2, y = 50.8,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Book of Ur. Low XP for the travel time.",
       zone = "Undercity", location = "The Apothecarium", atLevel = 21, x = 53.7, y = 54.5,
     },
@@ -456,7 +456,7 @@ Leg(7, "Silverpine Forest", {
       location = "The Sepulcher", atLevel = 21, logCount = 14, x = 43.4, y = 40.9,
     },
     {
-      type = "note", name = "Skip: D",
+      type = "note", optional = true, name = "Skip: D",
       note = "The route deliberately skips Deathstalkers in Shadowfang. Low XP for the travel time.",
       zone = "Silverpine Forest", location = "The Sepulcher", atLevel = 21, x = 43.4, y = 40.9,
     },
@@ -474,7 +474,7 @@ Leg(7, "Silverpine Forest", {
       location = "The Sepulcher", atLevel = 21, logCount = 17, x = 44.0, y = 41.0,
     },
     {
-      type = "note", name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A",
       note = "The route deliberately skips Arugal Must Die. Low XP for the travel time.",
       zone = "Silverpine Forest", location = "The Sepulcher", atLevel = 21, x = 44.2, y = 39.8,
     },
@@ -554,7 +554,7 @@ Leg(7, "Silverpine Forest", {
       location = "Tarren Mill", atLevel = 22, logCount = 19, x = 61.4, y = 19.2,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Elixir of Agony #1, Elixir of Pain #1 on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 22, x = 61.4, y = 19.2,
     },
@@ -563,7 +563,7 @@ Leg(7, "Silverpine Forest", {
       location = "Tarren Mill", atLevel = 22, logCount = 18, x = 62.2, y = 20.2,
     },
     {
-      type = "note", name = "Skip for now: B",
+      type = "note", optional = true, name = "Skip for now: B",
       note = "Do not pick up yet - the route comes back for Battle for Hillsbrad #1 on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 22, x = 62.2, y = 20.2,
     },
@@ -657,7 +657,7 @@ Leg(7, "Silverpine Forest", {
       location = "Magic Quarter", atLevel = 23, logCount = 13, x = 84.0, y = 17.0,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips Thule Ravenclaw. Low XP for the travel time.",
       zone = "Undercity", location = "Magic Quarter", atLevel = 23, x = 84.0, y = 17.0,
     },

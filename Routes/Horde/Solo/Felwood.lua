@@ -50,7 +50,7 @@ Leg(34, "Felwood", {
       zone = "Azshara", location = "Valormok", atLevel = 49, logCount = 9, x = 22.3, y = 51.5,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Betrayed #2, Stealing Knowledge on a later pass.",
       zone = "Azshara", location = "Valormok", atLevel = 49, x = 22.3, y = 51.5,
     },
@@ -73,7 +73,7 @@ Leg(34, "Felwood", {
       location = "Emerald Sanctuary", atLevel = 49, logCount = 11, x = 51.2, y = 82.1,
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Verifying the Corruption, Cleansing Felwood on a later pass.",
       zone = "Felwood", location = "Emerald Sanctuary", atLevel = 49, x = 50.9, y = 81.6,
     },
@@ -87,7 +87,7 @@ Leg(34, "Felwood", {
       location = "Jadenaar", atLevel = 50, logCount = 11, x = 39.0, y = 58.0, approx = true,
     },
     {
-      type = "note", name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: W",
       note = "Do not pick up yet - the route comes back for Well of Corruption on a later pass.",
       zone = "Felwood", location = "Bloodvenom Post", atLevel = 50, x = 34.2, y = 52.3,
     },
@@ -286,7 +286,7 @@ Leg(46, "Felwood", {
       location = "Emerald Sanctuary", atLevel = 57, logCount = 15, x = 51.3, y = 81.5,
     },
     {
-      type = "note", name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for Aquementas on a later pass.",
       zone = "Felwood", location = "Emerald Sanctuary", atLevel = 57, x = 51.3, y = 81.5,
     },

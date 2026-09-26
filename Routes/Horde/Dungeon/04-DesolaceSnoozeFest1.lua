@@ -34,17 +34,17 @@ Part(4, {
       location = "The Crossroads", logCount = 7, note = "Take the flight path.",
     },
     {
-      type = "note", name = "Skip: Bone Collector",
+      type = "note", optional = true, name = "Skip: Bone Collector",
       note = "The route deliberately skips Bone Collector.", zone = "Desolace",
       location = "Kormek's Hut",
     },
     {
-      type = "note", name = "Skip: Bodyguard for Hire",
+      type = "note", optional = true, name = "Skip: Bodyguard for Hire",
       note = "The route deliberately skips Bodyguard for Hire.", zone = "Desolace",
       location = "Kormek's Hut",
     },
     {
-      type = "note", name = "Skip: Catch of the Day",
+      type = "note", optional = true, name = "Skip: Catch of the Day",
       note = "The route deliberately skips Catch of the Day.", zone = "Desolace",
       location = "Ghostwalker Post",
     },
@@ -131,7 +131,7 @@ Part(4, {
       location = "Shadowprey Village", logCount = 12,
     },
     {
-      type = "note", name = "Skip: Clam Bait",
+      type = "note", optional = true, name = "Skip: Clam Bait",
       note = "The route deliberately skips Clam Bait.", zone = "Desolace",
       location = "Shadowprey Village",
     },
@@ -254,12 +254,12 @@ Part(4, {
       ambiguous = true, zone = "Desolace", location = "Ghostwalker Post", logCount = 11,
     },
     {
-      type = "note", name = "Skip: The Corrupter (part 5)",
+      type = "note", optional = true, name = "Skip: The Corrupter (part 5)",
       note = "Do not pick up The Corrupter (part 5) yet - the route comes back for it.",
       zone = "Desolace", location = "Ghostwalker Post",
     },
     {
-      type = "note", name = "Skip: Ghost-o-plasm Round Up",
+      type = "note", optional = true, name = "Skip: Ghost-o-plasm Round Up",
       note = "Do not pick up Ghost-o-plasm Round Up yet - the route comes back for it.",
       zone = "Desolace", location = "Kodo Graveyard",
     },
@@ -280,7 +280,7 @@ Part(4, {
       location = "Gelkis Village", logCount = 9,
     },
     {
-      type = "note", name = "Skip: Ongeku", note = "The route deliberately skips Ongeku.",
+      type = "note", optional = true, name = "Skip: Ongeku", note = "The route deliberately skips Ongeku.",
       zone = "Desolace", location = "Gelkis Village",
     },
     {
@@ -288,7 +288,7 @@ Part(4, {
       location = "Shadowprey Village", logCount = 8,
     },
     {
-      type = "note", name = "Skip: Portals of the Legion",
+      type = "note", optional = true, name = "Skip: Portals of the Legion",
       note = "Do not pick up Portals of the Legion yet - the route comes back for it.",
       zone = "Desolace", location = "Shadowprey Village",
     },
@@ -317,12 +317,12 @@ Part(4, {
       location = "Grom'gol Base Camp", logCount = 9,
     },
     {
-      type = "note", name = "Skip: Bloody Bone Necklaces",
+      type = "note", optional = true, name = "Skip: Bloody Bone Necklaces",
       note = "The route deliberately skips Bloody Bone Necklaces.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp",
     },
     {
-      type = "note", name = "Skip: The Vile Reef",
+      type = "note", optional = true, name = "Skip: The Vile Reef",
       note = "Do not pick up The Vile Reef yet - the route comes back for it.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp",
     },
@@ -335,7 +335,7 @@ Part(4, {
       location = "Grom'gol Base Camp", logCount = 11,
     },
     {
-      type = "note", name = "Skip: Grim Message",
+      type = "note", optional = true, name = "Skip: Grim Message",
       note = "Do not pick up Grim Message yet - the route comes back for it.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp",
     },
@@ -380,7 +380,7 @@ Part(4, {
       logCount = 12,
     },
     {
-      type = "note", name = "Skip: The Green Hills of Stranglethorn",
+      type = "note", optional = true, name = "Skip: The Green Hills of Stranglethorn",
       note = "The route deliberately skips The Green Hills of Stranglethorn.",
       zone = "Stranglethorn Vale", location = "Nesingwary's Expedition",
     },

@@ -56,7 +56,7 @@ Leg(6, "Thunder Bluff", {
       location = "Camp Taurajo", atLevel = 21, logCount = 16, x = 44.6, y = 59.2,
     },
     {
-      type = "note", name = "Skip for now: B",
+      type = "note", optional = true, name = "Skip for now: B",
       note = "Do not pick up yet - the route comes back for Betrayal from Within #1 on a later pass.",
       zone = "The Barrens", location = "Camp Taurajo", atLevel = 21, x = 44.6, y = 59.2,
     },
@@ -74,7 +74,7 @@ Leg(6, "Thunder Bluff", {
       location = "Camp Taurajo", atLevel = 21, logCount = 16, note = "Take the flight path.",
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Ashenvale Hunt #1. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "Thunder Bluff", atLevel = 21,
     },
@@ -112,7 +112,7 @@ Leg(6, "Thunder Bluff", {
       location = "The Elder Rise", atLevel = 21, logCount = 16, x = 75.6, y = 31.2,
     },
     {
-      type = "note", name = "Skip: L",
+      type = "note", optional = true, name = "Skip: L",
       note = "The route deliberately skips Leaders of the Fang. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "The Elder Rise", atLevel = 21, x = 75.6, y = 31.2,
     },
@@ -129,7 +129,7 @@ Leg(6, "Thunder Bluff", {
       location = "The Spirit Rise", atLevel = 21, logCount = 14, x = 23.0, y = 21.0,
     },
     {
-      type = "note", name = "Skip: S",
+      type = "note", optional = true, name = "Skip: S",
       note = "The route deliberately skips Serpentbloom. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "The Spirit Rise", atLevel = 21, x = 23.0, y = 21.0,
     },
@@ -165,7 +165,7 @@ Leg(6, "Thunder Bluff", {
       location = "Ratchet", atLevel = 21, logCount = 15, x = 62.4, y = 37.6,
     },
     {
-      type = "note", name = "Skip: B",
+      type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Blueleaf Tubers. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 21, x = 62.4, y = 37.6,
     },

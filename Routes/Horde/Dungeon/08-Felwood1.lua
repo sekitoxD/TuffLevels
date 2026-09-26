@@ -103,7 +103,7 @@ Part(8, {
       location = "Felpaw Village", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Speak to Salfa",
+      type = "note", optional = true, name = "Skip: Speak to Salfa",
       note = "The route deliberately skips Speak to Salfa.", zone = "Felwood",
       location = "Felpaw Village",
     },
@@ -185,7 +185,7 @@ Part(8, {
       note = "Talk to the flight master and learn this flight point.",
     },
     {
-      type = "note", name = "Skip: WANTED: Overseer Maltorius",
+      type = "note", optional = true, name = "Skip: WANTED: Overseer Maltorius",
       note = "Do not pick up WANTED: Overseer Maltorius yet - the route comes back for it.",
       zone = "Searing Gorge", location = "Thorium Point",
     },
@@ -206,12 +206,12 @@ Part(8, {
       location = "Thorium Point", logCount = 19,
     },
     {
-      type = "note", name = "Skip: Incendosaurs? Whateverosaur is More Like It",
+      type = "note", optional = true, name = "Skip: Incendosaurs? Whateverosaur is More Like It",
       note = "Do not pick up Incendosaurs? Whateverosaur is More Like It yet - the route comes back for it.",
       zone = "Searing Gorge", location = "Thorium Point",
     },
     {
-      type = "note", name = "Skip: What the Flux?",
+      type = "note", optional = true, name = "Skip: What the Flux?",
       note = "Do not pick up What the Flux? yet - the route comes back for it.",
       zone = "Searing Gorge", location = "Thorium Point",
     },
@@ -381,7 +381,7 @@ Part(8, {
       location = "Grimesilt Digsite", logCount = 15,
     },
     {
-      type = "note", name = "Skip: Ledger from Tanaris",
+      type = "note", optional = true, name = "Skip: Ledger from Tanaris",
       note = "The route deliberately skips Ledger from Tanaris.", zone = "Searing Gorge",
       location = "Grimesilt Digsite",
     },
@@ -403,7 +403,7 @@ Part(8, {
       location = "Flame Crest", logCount = 13,
     },
     {
-      type = "note", name = "Skip: Ribbly Screwspigot",
+      type = "note", optional = true, name = "Skip: Ribbly Screwspigot",
       note = "Do not pick up Ribbly Screwspigot yet - the route comes back for it.",
       zone = "Burning Steppes", location = "Flame Crest",
     },
@@ -470,7 +470,7 @@ Part(8, {
       location = "Emerald Sanctuary", logCount = 10,
     },
     {
-      type = "note", name = "Skip: Salve via Disenchanting",
+      type = "note", optional = true, name = "Skip: Salve via Disenchanting",
       note = "The route deliberately skips Salve via Disenchanting.", zone = "Felwood",
       location = "Emerald Sanctuary",
     },
@@ -660,7 +660,7 @@ Part(8, {
       note = "Partial progress - work on this while you are here, then move on. Note: Low Drop rate, kill as many as you can while you wait for people @ Crystals.",
     },
     {
-      type = "note", name = "Skip: Chasing A-Me 01 (part 1)",
+      type = "note", optional = true, name = "Skip: Chasing A-Me 01 (part 1)",
       note = "Do not pick up Chasing A-Me 01 (part 1) yet - the route comes back for it.",
       zone = "Un'goro Crater", location = "Marshal's Refuge",
     },
@@ -675,17 +675,17 @@ Part(8, {
       location = "Marshal's Refuge", logCount = 11,
     },
     {
-      type = "note", name = "Skip: It's a Secret to Everybody (part 3)",
+      type = "note", optional = true, name = "Skip: It's a Secret to Everybody (part 3)",
       note = "Do not pick up It's a Secret to Everybody (part 3) yet - the route comes back for it.",
       zone = "Un'goro Crater", location = "Marshal's Refuge",
     },
     {
-      type = "note", name = "Skip: Alien Ecology",
+      type = "note", optional = true, name = "Skip: Alien Ecology",
       note = "Do not pick up Alien Ecology yet - the route comes back for it.",
       zone = "Un'goro Crater", location = "Marshal's Refuge",
     },
     {
-      type = "note", name = "Skip: Lost!",
+      type = "note", optional = true, name = "Skip: Lost!",
       note = "Do not pick up Lost! yet - the route comes back for it.",
       zone = "Un'goro Crater", location = "Marshal's Refuge",
     },
@@ -732,7 +732,7 @@ Part(8, {
       location = "Marshal's Refuge", logCount = 18,
     },
     {
-      type = "note", name = "Skip: The Western Pylon",
+      type = "note", optional = true, name = "Skip: The Western Pylon",
       note = "Do not pick up The Western Pylon yet - the route comes back for it.",
       zone = "Un'goro Crater", location = "Marshal's Refuge",
     },
@@ -868,7 +868,7 @@ Part(8, {
       ambiguous = true, zone = "Un'goro Crater", location = "Fungal Rock", logCount = 17,
     },
     {
-      type = "note", name = "Skip: Chasing A-Me 01 (part 2)",
+      type = "note", optional = true, name = "Skip: Chasing A-Me 01 (part 2)",
       note = "The route deliberately skips Chasing A-Me 01 (part 2).", zone = "Un'goro Crater",
       location = "Fungal Rock",
     },

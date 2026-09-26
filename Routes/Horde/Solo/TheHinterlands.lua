@@ -90,7 +90,7 @@ Leg(29, "The Hinterlands", {
       location = "Revantusk Village", atLevel = 45, logCount = 19, x = 79.2, y = 79.5,
     },
     {
-      type = "note", name = "Skip for now: 3 quests here",
+      type = "note", optional = true, name = "Skip for now: 3 quests here",
       note = "Do not pick up yet - the route comes back for Lard Lost His Lunch, Snapjaws, Mon!, Gammerita, Mon! on a later pass.",
       zone = "The Hinterlands", location = "Revantusk Village", atLevel = 45, x = 78.1,
       y = 81.4,
@@ -168,7 +168,7 @@ Leg(29, "The Hinterlands", {
       location = "Agol'watha", atLevel = 45, logCount = 19, x = 49.4, y = 37.7,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Rescue OOX-09/HL!. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Agol'watha", atLevel = 45, x = 49.4, y = 37.7,
     },
@@ -208,7 +208,7 @@ Leg(29, "The Hinterlands", {
       location = "Shadra'alor", atLevel = 45, logCount = 20, x = 33.8, y = 75.2,
     },
     {
-      type = "note", name = "Skip: J",
+      type = "note", optional = true, name = "Skip: J",
       note = "The route deliberately skips Jammal'an the Prophet. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Shadra'alor", atLevel = 45, x = 33.8, y = 75.2,
     },
@@ -233,7 +233,7 @@ Leg(29, "The Hinterlands", {
       location = "Revantusk Village", atLevel = 46, logCount = 18, x = 78.8, y = 78.2,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Wanted: Vile Priestess Hexx and Her Minions, Job Opening: Guard Captain of Revantusk Village. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Revantusk Village", atLevel = 46, x = 79.1,
       y = 79.0,
@@ -260,7 +260,7 @@ Leg(29, "The Hinterlands", {
       location = "Revantusk Village", atLevel = 46, logCount = 15, x = 79.2, y = 79.5,
     },
     {
-      type = "note", name = "Skip: 3 quests here",
+      type = "note", optional = true, name = "Skip: 3 quests here",
       note = "The route deliberately skips Separation Anxiety, Dark Vessels, Kidnapped Elder Torntusk!. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Revantusk Village", atLevel = 46, x = 79.2,
       y = 79.5,
@@ -422,7 +422,7 @@ Leg(33, "The Hinterlands", {
       location = "Revantusk Village", atLevel = 49, logCount = 15, x = 78.1, y = 81.4,
     },
     {
-      type = "note", name = "Skip: 3 quests here",
+      type = "note", optional = true, name = "Skip: 3 quests here",
       note = "The route deliberately skips Dark Vessels, Kidnapped Elder Torntusk!, Separation Anxiety. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Revantusk Village", atLevel = 49, x = 78.2,
       y = 81.2,
@@ -438,7 +438,7 @@ Leg(33, "The Hinterlands", {
       x = 79.4, y = 79.1,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Wanted: Vile Priestess Hexx and Her Minions, Job Opening: Guard Captain of Revantusk Village. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Revantusk Village", atLevel = 49, x = 79.1,
       y = 79.0,
@@ -492,7 +492,7 @@ Leg(33, "The Hinterlands", {
       location = "Jintha'Alor", atLevel = 49, logCount = 14, x = 59.7, y = 77.8,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Recover the Key!. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Jintha'Alor", atLevel = 49, x = 59.7, y = 77.8,
     },
@@ -515,7 +515,7 @@ Leg(33, "The Hinterlands", {
       location = "Jintha'Alor", atLevel = 49, logCount = 14, x = 59.7, y = 77.8,
     },
     {
-      type = "note", name = "Skip: R",
+      type = "note", optional = true, name = "Skip: R",
       note = "The route deliberately skips Return to Primal Torntusk. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Jintha'Alor", atLevel = 49, x = 59.7, y = 77.8,
     },

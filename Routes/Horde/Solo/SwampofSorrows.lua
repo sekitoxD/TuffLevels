@@ -73,7 +73,7 @@ Leg(18, "Swamp of Sorrows", {
       note = "Vendor stop.",
     },
     {
-      type = "note", name = "Skip for now: 2 quests here",
+      type = "note", optional = true, name = "Skip for now: 2 quests here",
       note = "Do not pick up yet - the route comes back for Fresh Meat, Lack of Surplus #1 on a later pass.",
       zone = "Swamp of Sorrows", location = "Stonard", atLevel = 36, x = 44.7, y = 57.2,
     },
@@ -91,7 +91,7 @@ Leg(18, "Swamp of Sorrows", {
       note = "Use your hearthstone.",
     },
     {
-      type = "note", name = "Skip for now: Z",
+      type = "note", optional = true, name = "Skip for now: Z",
       note = "Do not pick up yet - the route comes back for Zanzil's Secret on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 36, x = 27.0, y = 77.2,
     },
@@ -127,7 +127,7 @@ Leg(18, "Swamp of Sorrows", {
       location = "Booty Bay", atLevel = 36, logCount = 12, x = 28.2, y = 77.4,
     },
     {
-      type = "note", name = "Skip for now: E",
+      type = "note", optional = true, name = "Skip for now: E",
       note = "Do not pick up yet - the route comes back for Excelsior on a later pass.",
       zone = "Stranglethorn Vale", location = "Booty Bay", atLevel = 36, x = 28.2, y = 77.4,
     },

@@ -45,7 +45,7 @@ Leg(9, "Ashenvale", {
       location = "Zoram Strand", atLevel = 24, logCount = 15, x = 11.6, y = 34.2,
     },
     {
-      type = "note", name = "Skip: 2 quests here",
+      type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips Amongst the Ruins, The Essence of Aku'Mai. Low XP for the travel time.",
       zone = "Ashenvale", location = "Zoram Strand", atLevel = 24, x = 11.6, y = 34.2,
     },
@@ -97,7 +97,7 @@ Leg(9, "Ashenvale", {
       location = "Splintertree Outpost", atLevel = 25, logCount = 15, x = 71.2, y = 68.0,
     },
     {
-      type = "note", name = "Skip: W",
+      type = "note", optional = true, name = "Skip: W",
       note = "The route deliberately skips Warsong Supplies. Low XP for the travel time.",
       zone = "Ashenvale", location = "Splintertree Outpost", atLevel = 25, x = 71.4, y = 67.6,
     },
@@ -261,7 +261,7 @@ Leg(9, "Ashenvale", {
       location = "Zoram Strand", atLevel = 26, logCount = 12, x = 11.8, y = 34.6,
     },
     {
-      type = "note", name = "Skip: K",
+      type = "note", optional = true, name = "Skip: K",
       note = "The route deliberately skips King of the Foulweald. Low XP for the travel time.",
       zone = "Ashenvale", location = "Zoram Strand", atLevel = 26, x = 11.8, y = 34.6,
     },

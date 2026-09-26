@@ -34,7 +34,7 @@ Part(9, {
     },
     { type = "turnin", questName = "Vivian Lagrave", zone = "Badlands", location = "Kargath", logCount = 8 },
     {
-      type = "note", name = "Skip: Lost Thunderbrew Recipe",
+      type = "note", optional = true, name = "Skip: Lost Thunderbrew Recipe",
       note = "Do not pick up Lost Thunderbrew Recipe yet - the route comes back for it.",
       zone = "Badlands", location = "Kargath",
     },
@@ -268,7 +268,7 @@ Part(9, {
       location = "Itharius's Cave", logCount = 9,
     },
     {
-      type = "note", name = "Skip: In Eranikus' Own Words",
+      type = "note", optional = true, name = "Skip: In Eranikus' Own Words",
       note = "The route deliberately skips In Eranikus' Own Words.", zone = "Swamp of Sorrows",
       location = "Itharius's Cave",
     },
@@ -314,7 +314,7 @@ Part(9, {
     },
     { type = "turnin", questName = "The Cover of Darkness", zone = "Swamp of Sorrows", logCount = 8 },
     {
-      type = "note", name = "Skip: The Demon Hunter",
+      type = "note", optional = true, name = "Skip: The Demon Hunter",
       note = "The route deliberately skips The Demon Hunter.", zone = "Swamp of Sorrows",
     },
     {
@@ -606,12 +606,12 @@ Part(9, {
       location = "The Bulwark", logCount = 12,
     },
     {
-      type = "note", name = "Skip: Scholomance",
+      type = "note", optional = true, name = "Skip: Scholomance",
       note = "Do not pick up Scholomance yet - the route comes back for it.",
       zone = "Tirisfal Glades", location = "The Bulwark",
     },
     {
-      type = "note", name = "Skip: Alas, Andorhal",
+      type = "note", optional = true, name = "Skip: Alas, Andorhal",
       note = "Do not pick up Alas, Andorhal yet - the route comes back for it.",
       zone = "Tirisfal Glades", location = "The Bulwark",
     },
@@ -712,7 +712,7 @@ Part(9, {
       location = "Light's Hope Chapel", logCount = 15,
     },
     {
-      type = "note", name = "Skip: Heroes of Darrowshire",
+      type = "note", optional = true, name = "Skip: Heroes of Darrowshire",
       note = "Do not pick up Heroes of Darrowshire yet - the route comes back for it.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel",
     },
@@ -721,27 +721,27 @@ Part(9, {
       location = "Light's Hope Chapel", logCount = 16,
     },
     {
-      type = "note", name = "Skip: Plagued Hatchlings",
+      type = "note", optional = true, name = "Skip: Plagued Hatchlings",
       note = "The route deliberately skips Plagued Hatchlings.", zone = "Eastern Plaguelands",
       location = "Light's Hope Chapel",
     },
     {
-      type = "note", name = "Skip: Bolstering Our Defenses",
+      type = "note", optional = true, name = "Skip: Bolstering Our Defenses",
       note = "The route deliberately skips Bolstering Our Defenses.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel",
     },
     {
-      type = "note", name = "Skip: Houses of the Holy",
+      type = "note", optional = true, name = "Skip: Houses of the Holy",
       note = "The route deliberately skips Houses of the Holy.", zone = "Eastern Plaguelands",
       location = "Light's Hope Chapel",
     },
     {
-      type = "note", name = "Skip: The Archivist",
+      type = "note", optional = true, name = "Skip: The Archivist",
       note = "The route deliberately skips The Archivist.", zone = "Eastern Plaguelands",
       location = "Light's Hope Chapel",
     },
     {
-      type = "note", name = "Skip: That's Asking A Lot",
+      type = "note", optional = true, name = "Skip: That's Asking A Lot",
       note = "The route deliberately skips That's Asking A Lot.", zone = "Eastern Plaguelands",
       location = "Light's Hope Chapel",
     },
@@ -750,7 +750,7 @@ Part(9, {
       location = "Light's Hope Chapel", logCount = 17,
     },
     {
-      type = "note", name = "Skip: The Restless Souls (part 1)",
+      type = "note", optional = true, name = "Skip: The Restless Souls (part 1)",
       note = "Do not pick up The Restless Souls (part 1) yet - the route comes back for it.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel",
     },

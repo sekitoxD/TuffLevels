@@ -18,7 +18,7 @@ Part(3, {
       location = "Splintertree Outpost", logCount = 12,
     },
     {
-      type = "note", name = "Skip: Warsong Supplies",
+      type = "note", optional = true, name = "Skip: Warsong Supplies",
       note = "The route deliberately skips Warsong Supplies.", zone = "Ashenvale",
       location = "Splintertree Outpost",
     },
@@ -43,7 +43,7 @@ Part(3, {
       location = "Splintertree Outpost", logCount = 11,
     },
     {
-      type = "note", name = "Skip: Satyr Horns",
+      type = "note", optional = true, name = "Skip: Satyr Horns",
       note = "The route deliberately skips Satyr Horns. Note: Collection, quest low drop, not worth the time.",
       zone = "Ashenvale", location = "Splintertree Outpost",
     },
@@ -102,7 +102,7 @@ Part(3, {
       location = "Dor'Danil Barrow Den", logCount = 16,
     },
     {
-      type = "note", name = "Skip: The Lost Pages",
+      type = "note", optional = true, name = "Skip: The Lost Pages",
       note = "The route deliberately skips The Lost Pages.", zone = "Ashenvale",
       location = "Splintertree Outpost",
     },
@@ -155,7 +155,7 @@ Part(3, {
       location = "Zoram Strand", logCount = 9,
     },
     {
-      type = "note", name = "Skip: King of the Foulweald",
+      type = "note", optional = true, name = "Skip: King of the Foulweald",
       note = "The route deliberately skips King of the Foulweald.", zone = "Ashenvale",
       location = "Zoram Strand",
     },
@@ -243,12 +243,12 @@ Part(3, {
       location = "Sun Rock Retreat", logCount = 10,
     },
     {
-      type = "note", name = "Skip: Elemental War",
+      type = "note", optional = true, name = "Skip: Elemental War",
       note = "The route deliberately skips Elemental War.", zone = "Stonetalon Mts",
       location = "Sun Rock Retreat",
     },
     {
-      type = "note", name = "Skip: The Den", note = "The route deliberately skips The Den.",
+      type = "note", optional = true, name = "Skip: The Den", note = "The route deliberately skips The Den.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat",
     },
     {
@@ -433,7 +433,7 @@ Part(3, {
       location = "South Gold Road", logCount = 9,
     },
     {
-      type = "note", name = "Skip: A New Ore Sample",
+      type = "note", optional = true, name = "Skip: A New Ore Sample",
       note = "The route deliberately skips A New Ore Sample.", zone = "The Barrens",
       location = "Camp Taurajo",
     },
@@ -624,7 +624,7 @@ Part(3, {
       note = "Note: Rok'Alim the Pounder --------->>>>",
     },
     {
-      type = "note", name = "Skip: Test of Lore",
+      type = "note", optional = true, name = "Skip: Test of Lore",
       note = "The route deliberately skips Test of Lore.", zone = "Thousand Needles",
       location = "The Weathered Nook",
     },
@@ -678,7 +678,7 @@ Part(3, {
       location = "The Hunter Rise", logCount = 4,
     },
     {
-      type = "note", name = "Skip: Frostmaw", note = "The route deliberately skips Frostmaw.",
+      type = "note", optional = true, name = "Skip: Frostmaw", note = "The route deliberately skips Frostmaw.",
       zone = "Thunder Bluff", location = "The Hunter Rise",
     },
     { type = "trainer", name = "Class Trainer", zone = "Thunder Bluff", logCount = 4 },
@@ -692,7 +692,7 @@ Part(3, {
       location = "Ratchet", logCount = 3,
     },
     {
-      type = "note", name = "Skip: Parts for Kravel",
+      type = "note", optional = true, name = "Skip: Parts for Kravel",
       note = "The route deliberately skips Parts for Kravel.", zone = "The Barrens",
       location = "Ratchet",
     },
@@ -726,7 +726,7 @@ Part(3, {
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: Elixir of Agony (part 1)",
+      type = "note", optional = true, name = "Skip: Elixir of Agony (part 1)",
       note = "The route deliberately skips Elixir of Agony (part 1).",
       zone = "Hillsbrad Foothills", location = "Tarren Mill",
     },
@@ -882,27 +882,27 @@ Part(3, {
       location = "Tarren Mill", logCount = 4,
     },
     {
-      type = "note", name = "Skip: Infiltration",
+      type = "note", optional = true, name = "Skip: Infiltration",
       note = "The route deliberately skips Infiltration.", zone = "Hillsbrad Foothills",
       location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: The Hammer May Fall",
+      type = "note", optional = true, name = "Skip: The Hammer May Fall",
       note = "The route deliberately skips The Hammer May Fall.", zone = "Hillsbrad Foothills",
       location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: Prison Break In",
+      type = "note", optional = true, name = "Skip: Prison Break In",
       note = "The route deliberately skips Prison Break In.", zone = "Hillsbrad Foothills",
       location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: Stone Tokens",
+      type = "note", optional = true, name = "Skip: Stone Tokens",
       note = "The route deliberately skips Stone Tokens.", zone = "Hillsbrad Foothills",
       location = "Tarren Mill",
     },
     {
-      type = "note", name = "Skip: Hecular's Revenge",
+      type = "note", optional = true, name = "Skip: Hecular's Revenge",
       note = "The route deliberately skips Hecular's Revenge.", zone = "Hillsbrad Foothills",
       location = "Tarren Mill",
     },
@@ -1024,7 +1024,7 @@ Part(3, {
       logCount = 6,
     },
     {
-      type = "note", name = "Skip: The Black Shield (part 3)",
+      type = "note", optional = true, name = "Skip: The Black Shield (part 3)",
       note = "The route deliberately skips The Black Shield (part 3).",
       zone = "Dustwallow Marsh", location = "Brackenwall Village",
     },
@@ -1095,17 +1095,17 @@ Part(3, {
       location = "Booty Bay", logCount = 6,
     },
     {
-      type = "note", name = "Skip: Scaring Shaky",
+      type = "note", optional = true, name = "Skip: Scaring Shaky",
       note = "Do not pick up Scaring Shaky yet - the route comes back for it.",
       zone = "Stranglethorn Vale", location = "Booty Bay",
     },
     {
-      type = "note", name = "Skip: Singing Blue Shards",
+      type = "note", optional = true, name = "Skip: Singing Blue Shards",
       note = "The route deliberately skips Singing Blue Shards.", zone = "Stranglethorn Vale",
       location = "Booty Bay",
     },
     {
-      type = "note", name = "Skip: Zanzil's Secret",
+      type = "note", optional = true, name = "Skip: Zanzil's Secret",
       note = "The route deliberately skips Zanzil's Secret.", zone = "Stranglethorn Vale",
       location = "Booty Bay",
     },
@@ -1114,7 +1114,7 @@ Part(3, {
       location = "Booty Bay", logCount = 7,
     },
     {
-      type = "note", name = "Skip: Dream Dust in the Swamp",
+      type = "note", optional = true, name = "Skip: Dream Dust in the Swamp",
       note = "The route deliberately skips Dream Dust in the Swamp.",
       zone = "Stranglethorn Vale", location = "Booty Bay",
     },

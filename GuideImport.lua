@@ -116,9 +116,12 @@ function GuideImport:Parse(text)
                     table.insert(pending, { type = "complete", quest = ParseQuestID(v) })
 
                 elseif c == "QS" then
-                    -- explicit skip: record as a note so the advice survives
+                    -- explicit skip: record as a note so the advice survives.
+                    -- `optional = true` since there's nothing to actually do
+                    -- here - it's advice not to pick up a quest, not a task,
+                    -- so it shouldn't cost the player a manual Next click.
                     pending = pending or {}
-                    table.insert(pending, { type = "note",
+                    table.insert(pending, { type = "note", optional = true,
                         name = "Skip quest " .. (ParseQuestID(v) or "?") })
 
                 elseif c == "NX" then

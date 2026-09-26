@@ -311,7 +311,7 @@ Leg(8, "Stonetalon Mts", {
       note = "Use your hearthstone.",
     },
     {
-      type = "note", name = "Skip for now: C",
+      type = "note", optional = true, name = "Skip for now: C",
       note = "Do not pick up yet - the route comes back for Calling in the Reserves on a later pass.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat", atLevel = 24, x = 47.2, y = 61.0,
     },
@@ -324,7 +324,7 @@ Leg(8, "Stonetalon Mts", {
       location = "Sun Rock Retreat", atLevel = 24, logCount = 12, x = 47.4, y = 58.4,
     },
     {
-      type = "note", name = "Skip for now: N",
+      type = "note", optional = true, name = "Skip for now: N",
       note = "Do not pick up yet - the route comes back for New Life on a later pass.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat", atLevel = 24, x = 47.4, y = 58.4,
     },
@@ -355,7 +355,7 @@ Leg(10, "Stonetalon Mts", {
       location = "Sun Rock Retreat", atLevel = 26, logCount = 11, x = 46.0, y = 60.4,
     },
     {
-      type = "note", name = "Skip: T",
+      type = "note", optional = true, name = "Skip: T",
       note = "The route deliberately skips The Den. Low XP for the travel time.",
       zone = "Stonetalon Mts", location = "Sun Rock Retreat", atLevel = 26, x = 46.0, y = 60.4,
     },
