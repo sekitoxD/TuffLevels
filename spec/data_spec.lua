@@ -113,6 +113,52 @@ describe("Data:ValidateRoute", function()
     end)
 end)
 
+describe("Data:QuestExists / GetQuestName (real QuestieDB provider)", function()
+    -- QuestieDB.GetQuest is a plain function in the real addon
+    -- (`QuestieDB.GetQuest(id)` everywhere in Questie's own source, never
+    -- `QuestieDB:GetQuest(id)`), not a method. This fake mirrors that
+    -- exact shape (a plain function, not a table with a colon-call
+    -- signature) so a regression back to a colon call here fails loudly
+    -- instead of silently reporting every quest ID as missing - which is
+    -- exactly what shipped before this test existed (2026-09-26,
+    -- confirmed live via /tuff verify reporting ~100% of quest IDs in a
+    -- route as "not found in database", even well-known ones).
+    local savedQuestieDB
+
+    before_each(function()
+        savedQuestieDB = _G.QuestieDB
+    end)
+
+    after_each(function()
+        _G.QuestieDB = savedQuestieDB
+    end)
+
+    local function NewDataWithProvider()
+        _G.QuestieDB = {
+            GetQuest = function(id)
+                if id == 42 then return { name = "Test Quest" } end
+                return nil
+            end,
+        }
+        stubs.Install()
+        local ns = {}
+        stubs.LoadFile("Compat.lua", ns)
+        stubs.LoadFile("Data.lua", ns)
+        return ns.Data
+    end
+
+    it("finds a quest that exists in the database", function()
+        local Data = NewDataWithProvider()
+        assert.is_true(Data:QuestExists(42))
+        assert.equals("Test Quest", Data:GetQuestName(42))
+    end)
+
+    it("reports a quest that doesn't exist as false, not unknown", function()
+        local Data = NewDataWithProvider()
+        assert.is_false(Data:QuestExists(999))
+    end)
+end)
+
 describe("Data:IsFlightPathKnown (P2.4)", function()
     -- Compat.has.taxiMap is computed at Compat.lua LOAD time (`C_TaxiMap ~=
     -- nil`), so C_TaxiMap/Enum must be set up BEFORE the Compat.lua load,

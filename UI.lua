@@ -377,8 +377,15 @@ function UI:Refresh()
     if section then
         local band = section.levels
             and ("%d-%d "):format(section.levels[1], section.levels[2]) or ""
-        frame.sectionText:SetText(Theme.hex.text .. band ..
-            (section.name or "") .. "|r")
+        local name = section.name or ""
+        -- A section name that already starts with its own level range
+        -- (e.g. "1-6 Durotar", a convention several routes use) would
+        -- otherwise get that range prepended a second time here, showing
+        -- as "1-6 1-6 Durotar" - confirmed live in-game, 2026-09-26.
+        if band ~= "" and name:sub(1, #band) == band then
+            band = ""
+        end
+        frame.sectionText:SetText(Theme.hex.text .. band .. name .. "|r")
     else
         frame.sectionText:SetText(Theme:Dim(Core.active.name or ""))
     end
@@ -461,7 +468,13 @@ function UI:Refresh()
         end
     end
 
-    if step.note then
+    -- A `note`-type step already prints step.name as its own "NOTE: ..."
+    -- headline above (the type == "note" branch a few lines up) - when an
+    -- importer had no distinct headline text and fell back to name = note
+    -- (RXPImport.lua does this), step.note duplicates that line exactly.
+    -- Skip the second copy rather than printing the same "NOTE:" text
+    -- twice in a row - confirmed live in-game, 2026-09-26.
+    if step.note and step.note ~= step.name then
         table.insert(lines, "")
         table.insert(lines, Theme.hex.warn .. "NOTE: |r" ..
             Theme.hex.dim .. step.note .. "|r")

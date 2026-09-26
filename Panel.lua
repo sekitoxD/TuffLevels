@@ -23,8 +23,11 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.6"
+local CHANGELOG_VERSION = "1.7.7"
 local CHANGELOG = {
+    "Fixed /tuff verify reporting every quest ID as 'not found in database' even for well-known quests - Data.lua was calling QuestieDB's GetQuest with a colon (method-call syntax) when the real function takes only the quest ID, so every lookup silently received the wrong argument and failed. This affected every route, not just the new test one.",
+    "Fixed the tracker showing the same NOTE text twice in a row for certain imported steps, and a route section header sometimes doubling its own level range (e.g. '1-6 1-6 Durotar').",
+    "Deduped several exact-duplicate accept/turnin/complete steps in the new Orc/Troll test route that were silently auto-skipping (read as already done) instead of prompting - the likely cause of quests appearing to 'auto turn in' at NPCs with more than one turn-in.",
     "Added an experimental Orc/Troll test route (Routes/Horde/OrcTrollRXP.lua, pick it manually from Available Guides) parsed fresh from RXPGuides source - a separate, parallel route alongside the existing ONSLAUGHT route, which is untouched. Currently covers levels 1-6 only; more chapters land incrementally.",
     "Fixed two RXPGuides import bugs found while testing the new item/spell step types: a decorative |T texture-icon token was gluing a raw path onto step names, and nested |c color tokens (a common RXPGuides pattern) only half-stripped, leaving raw color codes in some step text (already visible in Routes/Horde/Mulgore.lua).",
 }

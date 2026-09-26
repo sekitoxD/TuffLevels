@@ -226,12 +226,40 @@ decision is explicitly deferred, not made by this section.
 - [x] 2026-09-25: `Routes/Horde/OrcTrollRXP.lua` created and registered,
       chapter 1 ("1-6 Durotar" from `Classic-Horde-01-12_Durotar.lua`)
       parsed and committed. Wired into all three `.toc` files.
+- [x] 2026-09-26: First in-game playtest pass of chapter 1 (fresh Orc/Troll
+      test character). Found and fixed four issues, three of them NOT
+      specific to this route:
+      - `Data.lua`'s `GetQuestName` called `QuestieDB.GetQuest` with a
+        colon (`h:GetQuest(id)`), but the real function is a plain
+        function (`QuestieDB.GetQuest(id)` everywhere in Questie's own
+        source) - the colon call silently passed the wrong argument, so
+        `/tuff verify` reported ~100% of quest IDs as "not found" **on
+        every route**, not just this one. Fixed, with a regression spec
+        (`spec/data_spec.lua`) that fakes a plain-function `GetQuest` so
+        this can't silently regress back to a colon call.
+      - `UI.lua`'s section header prepended the level range a second time
+        when a section's own `name` already started with it (e.g. "1-6
+        1-6 Durotar") - affects any route using the "N-M ZoneName"
+        section-naming convention, confirmed also present (unnoticed
+        until now) in all 35 of Mulgore.lua's section headers. Fixed.
+      - `UI.lua` printed a step's `note` field a second time under its own
+        "NOTE:" line even when it was identical to the step's `name`
+        (RXPImport.lua's `s.name = s.note` fallback for steps with no
+        distinct headline text does this) - fixed by skipping the second
+        line when `note == name`.
+      - `Routes/Horde/OrcTrollRXP.lua` itself had five exact-duplicate
+        accept/turnin/complete steps (same quest+NPC) that read as
+        already-done as soon as the first copy was handled, which is what
+        looked like "auto turning in quests" at multi-turn-in NPCs.
+        Deduped; see the file's header for the list.
 - [ ] Chapter 2 ("6-10 Durotar"), chapter 3 ("10-12 Durotar" / the
       "10-12 Tirisfal" branch it leads into for Undead - out of scope for
       this Orc/Troll route, skip it), then the shared
       `Classic-Horde-30-60.lua` 36 chapters (Barrens onward).
-- [ ] Manual in-game playtest of chapter 1 on a fresh Orc/Troll test
-      character via the route picker.
+- [ ] Continue the chapter-1 playtest past level ~6 to shake out any
+      further duplicate-step or directive-residue issues before starting
+      chapter 2 - the OR-condition-branch duplication root cause found
+      this round is very likely to recur in later chapters too.
 - [ ] Promote/forward-port/keep-both decision, once enough of the route is
       playable to compare meaningfully against ONSLAUGHT.
 

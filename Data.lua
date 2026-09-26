@@ -118,7 +118,14 @@ function Data:GetQuestName(questID, fallback)
     local ok, result = pcall(function()
         local h = providerHandle
         if h.GetQuest then
-            local q = h:GetQuest(questID)
+            -- QuestieDB.GetQuest is a plain function (`QuestieDB.GetQuest(id)`
+            -- everywhere in Questie's own source), not a method - a colon
+            -- call here silently passes providerHandle itself as questID
+            -- and the real ID as an ignored extra argument, so every quest
+            -- comes back "not found" (confirmed against the real
+            -- QuestieDB.lua source, 2026-09-26; this is what /tuff verify
+            -- reporting 100% of quest IDs as missing turned out to be).
+            local q = h.GetQuest(questID)
             return q and (q.name or q.Name)
         elseif h.QueryQuestSingle then
             return h.QueryQuestSingle(questID, "name")

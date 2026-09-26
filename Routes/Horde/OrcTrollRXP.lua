@@ -59,6 +59,18 @@
 --   these as not parsed into their own step types yet, so they fold into
 --   plain note text. Cosmetic only (still clickable as a manual step),
 --   not a functional bug.
+-- - FIXED (2026-09-26, in-game playtest): the raw parse contained several
+--   exact-duplicate accept/turnin/complete steps for the same quest+NPC
+--   (Galgar/4402, Foreman Thazz'ril/6394, a Vile Familiars kill/792, a
+--   Shikrik accept/1516, and a split Nartok/77586 turnin) - almost
+--   certainly the source guide's OR-condition branches (the "kept
+--   unfiltered" warnings the harness prints) both surviving for a
+--   character that matched both. Since a quest can only be turned in
+--   once, the second copy silently read as already-done and Reconcile
+--   skipped it with no visible action - this is what looked like "auto
+--   turning in quests" at an NPC with more than one turn-in. Deduped to
+--   one copy per quest+NPC. If this resurfaces on a later chapter, it's
+--   the same root cause, not a new bug.
 -- - Every quest ID here is exactly what came out of the parser -
 --   `/tuff verify` has not been run against this file yet.
 
@@ -134,14 +146,12 @@ ns.RegisterRoute("RXPGuides Orc/Troll 1-60 (TEST, parse in progress)", {
         { type = "spell", name = "Kill Scorpid Workers. Loot them for [Dyadic Icon]", note = ".collect 206381,1,77587,1 - .collect 206381,1,77585,1 - .mob Scorpid Worker", zone = "Durotar", x = 43.91, y = 59.33, spellID = 410094, class = "SHAMAN" },
         { type = "spell", note = ".equip 18,206381 >> Equip the [Dyadic Icon] - .use 206381 - .xp <3,1", spellID = 410094, itemID = 206381, count = 1, class = "SHAMAN" },
         { type = "spell", note = ".aura 408828 >>Continue to kill Scorpid Workers and obtain 10 stacks of [Building Inspiration] as they deal nature damage to you - .mob Scorpid Worker", zone = "Durotar", x = 43.91, y = 59.33, spellID = 410094, class = "SHAMAN" },
-        { type = "complete", name = "Kill Vile Familiars", note = ".mob Vile Familiar", quest = 792, objective = 1 },
         { type = "complete", name = "Kill Scorpid Workers. Loot them for Scorpid Worker Tails", note = ".mob Scorpid Worker", zone = "Durotar", x = 43.91, y = 59.33, quest = 789, objective = 1 },
         { type = "complete", name = "Use the [Foreman's Blackjack] on sleeping Lazy Peons", note = ".use 16114", zone = "Durotar", x = 38.83, y = 61.84, npc = "Lazy Peon", quest = 5441, objective = 1 },
         { type = "note", name = ".xp 4 >> Grind to level 4 - .mob Mottled Boar - .mob Scorpid Worker - .mob Vile Familiar", note = ".xp 4 >> Grind to level 4 - .mob Mottled Boar - .mob Scorpid Worker - .mob Vile Familiar" },
         { type = "turnin", name = "Talk to Galgar", note = ".isQuestComplete 4402", zone = "Durotar", x = 42.73, y = 67.23, npc = "Galgar", quest = 4402 },
         { type = "travel", name = "Talk to Duokna", note = "Buy [Rough Arrows] from her - .collect 2512,1000,6394,1 - Vendor: Vendor Trash - .money >0.1", zone = "Durotar", x = 42.59, y = 67.34, npc = "Duokna" },
         { type = "turnin", name = "Talk to Gornek", zone = "Durotar", x = 42.06, y = 68.32, npc = "Gornek", quest = 789, path = { { zone = "Durotar", x = 42.29, y = 68.39 } } },
-        { type = "accept", name = "Talk to Shikrik and Canaga", zone = "Durotar", x = 42.4, y = 69.17, npc = "Shikrik", quest = 1516, spellID = 8042, path = { { zone = "Durotar", x = 42.39, y = 69 } }, class = "SHAMAN" },
         { type = "spell", name = "Talk to Mai'ah", zone = "Durotar", x = 42.51, y = 69.04, npc = "Mai'ah", spellID = 116, class = "MAGE" },
         { type = "spell", name = "Talk to Ken'jai", note = ".money <0.011", zone = "Durotar", x = 42.36, y = 68.81, npc = "Ken'jai", spellID = 589, class = "PRIEST" },
         { type = "turnin", name = "Talk to Ken'jai", note = ".money <0.021", zone = "Durotar", x = 42.36, y = 68.81, npc = "Ken'jai", quest = 3085, spellID = 589, class = "PRIEST" },
@@ -169,8 +179,6 @@ ns.RegisterRoute("RXPGuides Orc/Troll 1-60 (TEST, parse in progress)", {
         { type = "travel", name = "Talk to Wuark", note = "Buy a [Mining Pick] from him - .collect 2901,1,784,1", zone = "Durotar", x = 51.9, y = 41.14, npc = "Wuark" },
         { type = "spell", name = "Talk to Dwukk", note = ".skill blacksmithing,1,1", zone = "Durotar", x = 52.05, y = 40.73, npc = "Dwukk", spellID = 2018 },
         { type = "hearth", name = "Hearth", note = ".use 6948", optional = true },
-        { type = "turnin", name = "Talk to Thazz'ril", zone = "Durotar", x = 44.63, y = 68.65, npc = "Foreman Thazz'ril", quest = 6394 },
-        { type = "turnin", name = "Talk to Galgar", zone = "Durotar", x = 42.73, y = 67.23, npc = "Galgar", quest = 4402 },
         { type = "travel", name = "Talk to Duokna", note = "Vendor: Vendor Trash - .money >0.03", zone = "Durotar", x = 42.59, y = 67.34, npc = "Duokna" },
         { type = "accept", name = "Talk to Zureetha", zone = "Durotar", x = 42.85, y = 69.15, npc = "Zureetha Fargaze", quest = 805 },
         { type = "spell", name = "Talk to Ken'jai", zone = "Durotar", x = 42.36, y = 68.81, npc = "Ken'jai", quest = 5649, spellID = 17, class = "PRIEST" },
@@ -185,7 +193,6 @@ ns.RegisterRoute("RXPGuides Orc/Troll 1-60 (TEST, parse in progress)", {
         { type = "spell", name = "Talk to Rwag", note = ".xp <6,1", zone = "Durotar", x = 41.27, y = 68, npc = "Rwag", spellID = 1757, class = "ROGUE" },
         { type = "travel", name = "Talk to Hraug", note = "Buy the [Grimoire of Blood Pact] from him - .collect 16321,1,817,1 - Vendor: Vendor Trash - .money <0.03", zone = "Durotar", x = 40.56, y = 68.44, npc = "Hraug", class = "WARLOCK" },
         { type = "turnin", name = "Talk to Nartok", note = ".money <0.02", zone = "Durotar", x = 40.65, y = 68.52, npc = "Nartok", quest = 77586, spellID = 1454, class = "WARLOCK" },
-        { type = "turnin", name = "Talk to Nartok", zone = "Durotar", x = 40.65, y = 68.52, npc = "Nartok", quest = 77586, spellID = 695, class = "WARLOCK" },
         { type = "item", name = "Use the [Grimoire of Blood Pact]", note = ".use 16321", spellID = 20397, itemID = 16321, count = 1, class = "WARLOCK" },
         { type = "travel", name = "Travel toward the Shaman Shrine", note = ".isOnQuest 1517", zone = "Durotar", x = 44.13, y = 76.36, path = { { zone = "Durotar", x = 43.36, y = 69.6 }, { zone = "Durotar", x = 43.18, y = 70.93 }, { zone = "Durotar", x = 41.31, y = 73.63 }, { zone = "Durotar", x = 40.82, y = 74.37 }, { zone = "Durotar", x = 42.71, y = 75.18 }, { zone = "Durotar", x = 43.57, y = 75.51 } }, class = "SHAMAN" },
         { type = "note", name = ".cast 8202 >>Use the [Earth Sapta] - .use 6635", note = ".cast 8202 >>Use the [Earth Sapta] - .use 6635", class = "SHAMAN", optional = true },
