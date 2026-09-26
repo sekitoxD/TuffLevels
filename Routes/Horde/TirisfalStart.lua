@@ -891,6 +891,10 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
           type = "note", name = "Ahead of the regular route", forever = true,
           note = "After Ruins of Lordaeron you're a few levels ahead of where the regular route expects. Its early Barrens chapters will be easy - move through them quickly. The regular route's own Ruins of Lordaeron chapter (17b) is Orc/Troll only, so you won't be sent back.",
         },
-        { type = "section", name = "From here, continue with the regular route everyone else uses. Skip the part in the route where it has you go to Silverpine for the first time as you've done all those quests." },
+        {
+          type = "section",
+          name = "From here, switch to \"ONSLAUGHT Solo Horde 1-60 (Orc/Troll)\" via /tuff route",
+          note = "Its Valley of Trials leg and first Silverpine Forest leg are race-gated to Orc/Troll and will auto-skip for you - you don't need to manually skip past them. You'll land in The Barrens with a small number of stray turn-in/complete steps for quests you never accepted (e.g. \"The Demon Seed\", \"Return to the Crossroads\") - those can't auto-complete since you never had the quest; just click Next past them like any other step that doesn't apply to you.",
+        },
     },
 })

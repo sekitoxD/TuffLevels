@@ -6,6 +6,14 @@
 --
 -- Generated from the source spreadsheet. Corrections applied during conversion
 -- are listed in plans/04-sheet-audit.md - edit them HERE, not in the sheet.
+--
+-- Leg 3 (this zeppelin-from-Durotar visit only, not the level 21-23 leg
+-- below) is gated to Orc/Troll: Undead already run this exact content -
+-- same quests (e.g. "Lost Deathstalkers", "The Dead Fields"), same zone -
+-- as part of their own starting route (Routes/Horde/TirisfalStart.lua),
+-- before joining this route at ~level 15. Without the gate, a Scourge
+-- character switching into this route would be sent back through it a
+-- second time.
 
 local ADDON, ns = ...
 local Leg = ns.SoloLeg
@@ -381,7 +389,7 @@ Leg(3, "Silverpine Forest", {
       location = "The Valley of Strength", atLevel = 15, logCount = 13, x = 45.2, y = 63.8,
       note = "Take the flight path.",
     },
-})
+}, { races = { "Orc", "Troll" } })
 
 -- Chapter 17: Silverpine #2 & Durnholde Keep
 --

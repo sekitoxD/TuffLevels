@@ -23,11 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.1"
+local CHANGELOG_VERSION = "1.7.2"
 local CHANGELOG = {
-    "Fixed the Tauren route's (Routes/Horde/Mulgore.lua) continent-level zone bug: ~34 steps tagged 'Kalimdor'/'Eastern Kingdoms' instead of a real zone had permanently dead arrows and un-completable travel steps. Re-authored to real zones (Durotar, The Barrens, Ashenvale, Moonglade, Stranglethorn Vale, Westfall, Tirisfal Glades, Badlands) with coordinates cross-checked against independent sources; a few are marked approximate pending an in-game /tuff capture pass, and the two Gnomeregan-transponder interior steps are left as an honest unconfirmed gap rather than guessed.",
-    "Fixed a quest-name mismatch in the Undead starting route (Routes/Horde/TirisfalStart.lua): the accept step said 'Delivery to Silverpine', the turn-in said 'Delivery to Silverpine Forest' - only one could ever auto-resolve. Corrected to the real quest name.",
-    "README corrected: Forever ships no built-in quest database, but a manually-installed Questie works there (confirmed 2026-09-20) - three spots still said 'none exists'/'Classic Era only'.",
+    "Fixed the Undead 1-60 continuation gap: after finishing the Tirisfal/Silverpine start (Routes/Horde/TirisfalStart.lua), switching into the shared 'ONSLAUGHT Solo Horde 1-60 (Orc/Troll)' route meant manually clicking through ~600 lines of Valley of Trials content Undead can never accept and a duplicate first Silverpine Forest leg they'd already done. Both legs are now race-gated to Orc/Troll (Routes/Horde/Solo/Init.lua's Leg() helper, Durotar.lua, SilverpineForest.lua) so Undead auto-skip past them on the switch instead.",
 }
 
 -- Fixed content (the changelog text is a load-time constant) - build once

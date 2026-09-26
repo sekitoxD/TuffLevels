@@ -14,6 +14,13 @@
 -- check the whole area" placeholder left for Rogues specifically. Unlike
 -- Routes/Alliance/*.lua, this is a normal hand-authored addition, not a
 -- bulk conversion, so it carries this file's regular MIT license.
+--
+-- Gated to Orc/Troll (see the Leg() opts below): Valley of Trials and its
+-- follow-on quests are race-locked in-game and Undead/Tauren can never
+-- accept them. Undead reach this route from Routes/Horde/TirisfalStart.lua
+-- at ~level 15 via the Undercity zeppelin, never through Durotar, so this
+-- whole leg would otherwise softlock their auto-advance on an
+-- unacceptable quest.
 
 local ADDON, ns = ...
 local Leg = ns.SoloLeg
@@ -645,5 +652,5 @@ Leg(1, "Durotar", {
       type = "accept", questName = "The Demon Seed", zone = "The Barrens",
       location = "Far Watch Post", atLevel = 12, logCount = 2, x = 62.3, y = 20.1,
     },
-})
+}, { races = { "Orc", "Troll" } })
 

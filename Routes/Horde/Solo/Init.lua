@@ -12,12 +12,24 @@
 -- Register.lua loads last, sorts by that order and concatenates. Leaving a
 -- zone file out of the .toc just yields a route with a hole in it; it never
 -- reorders what remains.
+--
+-- An optional 4th argument, opts.races, sets a default `races` filter on
+-- every step in this leg that doesn't already carry its own - used to gate
+-- out whole legs that only apply to some Horde races (e.g. the Valley of
+-- Trials leg, which Undead/Tauren characters can never accept quests in).
 
 local ADDON, ns = ...
 
 local legs = {}
 ns.SoloLegs = legs
 
-function ns.SoloLeg(order, zone, steps)
+function ns.SoloLeg(order, zone, steps, opts)
+    if opts and opts.races then
+        for _, step in ipairs(steps) do
+            if step.races == nil then
+                step.races = opts.races
+            end
+        end
+    end
     legs[#legs + 1] = { order = order, zone = zone, steps = steps }
 end
