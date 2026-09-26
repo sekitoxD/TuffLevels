@@ -54,11 +54,27 @@
 --   check on which ID (or both) actually exists for this client before
 --   trusting the higher numbers.
 -- - Several `type = "travel"`/`type = "note"` steps carry unparsed
---   directive residue in their name/note text (`.mob`, `.money`, `.xp`,
---   `.collect`, `.isOnQuest`, etc.) - RXPImport.lua's header documents
---   these as not parsed into their own step types yet, so they fold into
---   plain note text. Cosmetic only (still clickable as a manual step),
---   not a functional bug.
+--   directive residue in their name/note text (`.mob`, `.money`,
+--   `.collect`, `.isOnQuest`, a modified `.xp N+M`/`.xp <N,1`, etc.) -
+--   RXPImport.lua's header documents these as not parsed into their own
+--   step types yet, so they fold into plain note text. Cosmetic only
+--   (still clickable as a manual step), not a functional bug. A BARE
+--   `.xp N` (no modifier) now converts to a real auto-detecting `xp` step
+--   (fixed 2026-09-26, RXPImport.lua) - a modified form still can't,
+--   since converting its absolute-XP amount into TuFFlevels' 0-100
+--   xp.pct would need Classic's per-level XP table hardcoded, which
+--   wasn't attempted.
+-- - FIXED (2026-09-26, in-game playtest): two steps were missing a class
+--   filter that a sibling step for the same quest/item correctly carried
+--   - the quest 794 "complete" step lacked Warlock's quest 794 accept
+--   step's `class = "WARLOCK"` (so other classes got routed to "kill
+--   Yarrog Baneshadow" for a quest they were never able to accept,
+--   reported as a party quest-share "prerequisite" failure), and the
+--   third-tier "Buy Rough Arrows" step at Duokna lacked the `class =
+--   "HUNTER"` its two lower-tier siblings had (reported as "arrows for a
+--   class I'm not playing"). Audited the rest of the file for the same
+--   quest-ID/item-purchase-grouped class-inconsistency pattern - no
+--   further instances found in this chapter.
 -- - FIXED (2026-09-26, in-game playtest): the raw parse contained several
 --   exact-duplicate accept/turnin/complete steps for the same quest+NPC
 --   (Galgar/4402, Foreman Thazz'ril/6394, a Vile Familiars kill/792, a
@@ -148,9 +164,9 @@ ns.RegisterRoute("RXPGuides Orc/Troll 1-60 (TEST, parse in progress)", {
         { type = "spell", note = ".aura 408828 >>Continue to kill Scorpid Workers and obtain 10 stacks of [Building Inspiration] as they deal nature damage to you - .mob Scorpid Worker", zone = "Durotar", x = 43.91, y = 59.33, spellID = 410094, class = "SHAMAN" },
         { type = "complete", name = "Kill Scorpid Workers. Loot them for Scorpid Worker Tails", note = ".mob Scorpid Worker", zone = "Durotar", x = 43.91, y = 59.33, quest = 789, objective = 1 },
         { type = "complete", name = "Use the [Foreman's Blackjack] on sleeping Lazy Peons", note = ".use 16114", zone = "Durotar", x = 38.83, y = 61.84, npc = "Lazy Peon", quest = 5441, objective = 1 },
-        { type = "note", name = ".xp 4 >> Grind to level 4 - .mob Mottled Boar - .mob Scorpid Worker - .mob Vile Familiar", note = ".xp 4 >> Grind to level 4 - .mob Mottled Boar - .mob Scorpid Worker - .mob Vile Familiar" },
+        { type = "xp", name = "Grind to level 4", xp = { level = 4, pct = 0 }, note = ".mob Mottled Boar - .mob Scorpid Worker - .mob Vile Familiar" },
         { type = "turnin", name = "Talk to Galgar", note = ".isQuestComplete 4402", zone = "Durotar", x = 42.73, y = 67.23, npc = "Galgar", quest = 4402 },
-        { type = "travel", name = "Talk to Duokna", note = "Buy [Rough Arrows] from her - .collect 2512,1000,6394,1 - Vendor: Vendor Trash - .money >0.1", zone = "Durotar", x = 42.59, y = 67.34, npc = "Duokna" },
+        { type = "travel", name = "Talk to Duokna", note = "Buy [Rough Arrows] from her - .collect 2512,1000,6394,1 - Vendor: Vendor Trash - .money >0.1", zone = "Durotar", x = 42.59, y = 67.34, npc = "Duokna", class = "HUNTER" },
         { type = "turnin", name = "Talk to Gornek", zone = "Durotar", x = 42.06, y = 68.32, npc = "Gornek", quest = 789, path = { { zone = "Durotar", x = 42.29, y = 68.39 } } },
         { type = "spell", name = "Talk to Mai'ah", zone = "Durotar", x = 42.51, y = 69.04, npc = "Mai'ah", spellID = 116, class = "MAGE" },
         { type = "spell", name = "Talk to Ken'jai", note = ".money <0.011", zone = "Durotar", x = 42.36, y = 68.81, npc = "Ken'jai", spellID = 589, class = "PRIEST" },
@@ -166,7 +182,7 @@ ns.RegisterRoute("RXPGuides Orc/Troll 1-60 (TEST, parse in progress)", {
         { type = "travel", name = "Travel toward Thazz'ril's Pick", note = ".isOnQuest 6394", zone = "Durotar", x = 43.72, y = 53.79, path = { { zone = "Durotar", x = 45.37, y = 55.39 }, { zone = "Durotar", x = 44.43, y = 54.51 } } },
         { type = "complete", name = "Kill Felstalkers. Loot them for Felstalker Hooves", note = ".mob Felstalker", quest = 1516, class = "SHAMAN", objective = 1 },
         { type = "complete", name = "Loot Thazz'ril's Pick against the wall", zone = "Durotar", x = 43.72, y = 53.79, quest = 6394, objective = 1 },
-        { type = "complete", name = "Kill Yarrog Baneshadow. Loot him for the Burning Blade Medallion", note = ".mob Yarrog Baneshadow", zone = "Durotar", x = 42.7, y = 52.99, quest = 794, objective = 1 },
+        { type = "complete", name = "Kill Yarrog Baneshadow. Loot him for the Burning Blade Medallion", note = ".mob Yarrog Baneshadow", zone = "Durotar", x = 42.7, y = 52.99, quest = 794, class = "WARLOCK", objective = 1 },
         { type = "complete", name = "Kill Felstalkers. Loot them for Felstalker Hooves", note = ".mob Felstalker", zone = "Durotar", x = 43.27, y = 53.82, quest = 1516, class = "SHAMAN", objective = 1 },
         { type = "note", name = ".xp 5+690 >> Grind to 690+/2800xp - .isQuestTurnedIn 4402", note = ".xp 5+690 >> Grind to 690+/2800xp - .isQuestTurnedIn 4402" },
         { type = "travel", name = "Perform a Logout Skip by positioning your character on the edge of the rock until it looks like they're floating, then logging out and back in", note = "CLICK HERE for an example (https://www.youtube.com/watch?v=7vmnvdjbUnM)", zone = "Durotar", x = 53.55, y = 44.68, optional = true },

@@ -252,14 +252,45 @@ decision is explicitly deferred, not made by this section.
         already-done as soon as the first copy was handled, which is what
         looked like "auto turning in quests" at multi-turn-in NPCs.
         Deduped; see the file's header for the list.
+- [x] 2026-09-26: Second in-game playtest pass (played to level 5, stopped
+      early - enough issues to report before continuing). Found and fixed
+      three more issues:
+      - Two steps were missing a `class` filter that a sibling step for
+        the same quest/item correctly had: quest 794's "complete" step
+        (its own "accept" step was Warlock-only, but the complete step
+        wasn't, so other classes got routed to a quest they could never
+        have accepted - showed up as a party quest-share "prerequisite"
+        failure) and the third "Buy Rough Arrows" tier at Duokna (its two
+        lower tiers were correctly Hunter-only, this one wasn't - a Mage
+        got told to buy Hunter ammo). Audited the rest of the chapter for
+        the same quest-ID/item-purchase class-inconsistency pattern by
+        script; no further instances found.
+      - RXPImport.lua now converts a bare `.xp N` directive (no +/-/.
+        modifier) into a real auto-detecting `xp` step instead of a dead
+        `note` step - previously it always needed a manual Next click
+        even when the player was already well past the target level,
+        which is what "telling me to grind when I'm already on the xp"
+        was. A modified form (`.xp N+M`, `.xp <N,1`) still can't convert
+        safely without hardcoding Classic's per-level XP table, so those
+        still fall through to a note as before.
+      - Confirmed NOT a bug: the reported "quest tracker doesn't get
+        following quest" was the player having picked up a real Durotar
+        quest ("Wayward Weapons") that this chapter's parse never
+        captured at all - the route correctly only tracks what's actually
+        in it (per this addon's step-engine design, not a route
+        generator), so a quest missing from the source guide's path (or
+        dropped during parsing) just won't appear. A genuine content gap,
+        not a code defect - no fix applied, noted for chapter review.
 - [ ] Chapter 2 ("6-10 Durotar"), chapter 3 ("10-12 Durotar" / the
       "10-12 Tirisfal" branch it leads into for Undead - out of scope for
       this Orc/Troll route, skip it), then the shared
       `Classic-Horde-30-60.lua` 36 chapters (Barrens onward).
-- [ ] Continue the chapter-1 playtest past level ~6 to shake out any
-      further duplicate-step or directive-residue issues before starting
-      chapter 2 - the OR-condition-branch duplication root cause found
-      this round is very likely to recur in later chapters too.
+- [ ] Continue the chapter-1 playtest past level 5 - two playtest rounds in
+      a row have each found a handful of real issues, so a third full pass
+      before declaring chapter 1 done is worth it. Recommend a class-
+      filter consistency audit (like the two scripted checks used this
+      round) as a standard step before/after each future chapter parse,
+      not just a reactive one-off.
 - [ ] Promote/forward-port/keep-both decision, once enough of the route is
       playable to compare meaningfully against ONSLAUGHT.
 

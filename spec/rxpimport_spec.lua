@@ -84,4 +84,41 @@ step
 ]])
         assert.equals(27, route.steps[1].skipIfLevel)
     end)
+
+    it("parses a bare '.xp N' into a real auto-detecting xp step", function()
+        local route = RXPImport:Parse([[
+step
+    .xp 4 >> Grind to level 4
+    .mob Mottled Boar
+]])
+        assert.equals("xp", route.steps[1].type)
+        assert.equals(4, route.steps[1].xp.level)
+        assert.equals(0, route.steps[1].xp.pct)
+        assert.equals("Grind to level 4", route.steps[1].name)
+        -- The sibling .mob line (an unrecognized dot-command) still folds
+        -- into note text as before - only step.type/step.xp changed.
+        assert.equals(".mob Mottled Boar", route.steps[1].note)
+    end)
+
+    it("leaves a modified '.xp N+M' form as plain note text, not an xp step", function()
+        -- Converting an absolute-XP modifier into TuFFlevels' 0-100 xp.pct
+        -- would need Classic's per-level XP table, which isn't hardcoded
+        -- here - confirm this form is left alone rather than guessed at.
+        local route = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .xp 3+325 >> Grind to 325+/1400xp
+]])
+        assert.equals("travel", route.steps[1].type)
+        assert.is_nil(route.steps[1].xp)
+    end)
+
+    it("leaves a '.xp <N,1' gate form as plain note text, not an xp step", function()
+        local route = RXPImport:Parse([[
+step
+    .xp <4,1
+]])
+        assert.equals("note", route.steps[1].type)
+        assert.is_nil(route.steps[1].xp)
+    end)
 end)

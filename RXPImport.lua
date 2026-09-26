@@ -383,6 +383,31 @@ function RXPImport:Parse(text)
                             local lvl = tonumber(argText:match("^(%d+)"))
                             if lvl then step.skipIfLevel = lvl end
 
+                        elseif cmd == "xp" and argText:match("^%d+$") then
+                            -- A bare ".xp N" (no operator, no +/-/. partial-XP
+                            -- modifier, no comma-separated gate arg - just a
+                            -- plain level number) means "grind to level N"
+                            -- with no partial-XP target, which maps directly
+                            -- onto TuFFlevels' xp step (pct = 0 is satisfied
+                            -- the instant the player reaches that level - see
+                            -- Core.lua's IsStepDone for type "xp"). A modified
+                            -- form like ".xp 3+325" (325 raw XP into level 3)
+                            -- or ".xp <4,1" (a gate on another step, not a
+                            -- step of its own) would need Classic's per-level
+                            -- XP table to convert an absolute XP amount into
+                            -- TuFFlevels' 0-100 xp.pct - not attempted here,
+                            -- so those still fall through to the plain-note
+                            -- branch below exactly as before (confirmed live,
+                            -- 2026-09-26: a bare ".xp N" step never auto-
+                            -- advanced even after the player was already past
+                            -- level N, since a plain `note` step has no
+                            -- detectable condition and always needs a manual
+                            -- Next click).
+                            local lvl = tonumber(argText)
+                            step.type = "xp"
+                            step.xp = { level = lvl, pct = 0 }
+                            step.name = step.name or annotation or ("Grind to level " .. lvl)
+
                         elseif cmd == "trainer" then
                             step.type = "trainer"
                             step.name = step.name or annotation or "Visit trainer"
