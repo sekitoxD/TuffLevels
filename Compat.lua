@@ -340,6 +340,34 @@ function Compat:GetOpenQuestTitle()
     return self:Guard(_G.GetTitleText)
 end
 
+-- GetItemCount itself (not the GetItemInfo tooltip-cache family CLAUDE.md
+-- warns about) is a plain bag-scan call that has stayed a stable global
+-- across every client this addon targets - no C_Item indirection needed,
+-- but still routed through Guard since it's new call surface for `item`
+-- steps and a throw here shouldn't take Reconcile down with it.
+function Compat:GetItemCount(itemID)
+    if not itemID then return 0 end
+    return self:Guard(_G.GetItemCount, itemID) or 0
+end
+
+-- UNVERIFIED on Forever (no live confirmation yet, unlike GetItemSellPrice/
+-- GetSpellBookName above which record a confirmed date) - mirrors the same
+-- C_SpellBook-first, legacy-global-fallback shape those two already use
+-- since Retail moved spellbook-adjacent queries into that namespace, but
+-- IsSpellKnown itself hasn't been checked against a live Forever client.
+-- If `spell` steps never auto-complete there, check this first.
+function Compat:IsSpellKnown(spellID)
+    if not spellID then return false end
+    if C_SpellBook and C_SpellBook.IsSpellKnown then
+        local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID)
+        if ok then return known end
+    end
+    if _G.IsSpellKnown then
+        return self:Guard(_G.IsSpellKnown, spellID) or false
+    end
+    return false
+end
+
 --------------------------------------------------------------------------
 -- Gossip quest lists
 --------------------------------------------------------------------------

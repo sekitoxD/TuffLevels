@@ -43,11 +43,15 @@
 -- travel coordinates; multiple `.goto`s in one step become a waypoint
 -- path, the last one is the final target. `.accept`/`.turnin`/`.complete`
 -- (quest ID [,objective]) map directly to TuFFlevels' own step types.
--- `.trainer`/`.hs`/`.deathskip` map to trainer/hearth/death. `.target`,
--- `.vendor`, `.link`, and bare `>>`/`+` text lines carry no TuFFlevels
--- step type of their own and are folded into the step's `npc` field or
--- `note` text instead. `--comment` is stripped everywhere, exactly as
--- RXPGuides' own loader strips it before parsing anything else.
+-- `.trainer`/`.hs`/`.deathskip` map to trainer/hearth/death.
+-- `.itemcount id,n` maps to an `item` step (done once you hold n+ of that
+-- item), `.train spellID` maps to a `spell` step (done once known), and
+-- `.maxlevel X` sets `skipIfLevel` on the current step rather than a type
+-- of its own. `.target`, `.vendor`, `.link`, and bare `>>`/`+` text lines
+-- carry no TuFFlevels step type of their own and are folded into the
+-- step's `npc` field or `note` text instead. `--comment` is stripped
+-- everywhere, exactly as RXPGuides' own loader strips it before parsing
+-- anything else.
 --
 -- WHAT THIS PARSER DELIBERATELY SIMPLIFIES (bounded scope, not full
 -- fidelity - see anything it can't confidently map, it keeps the step and
@@ -66,6 +70,13 @@
 -- - `.vendor`/`.link`/`.target`/bare `>>`/`+` lines have no direct
 --   TuFFlevels step-type equivalent, so they're folded into `note`/`npc`
 --   text on the step they belong to rather than becoming their own step.
+-- - `.collect` (item-count OR quest-accepted), `.fp`/`.fly` (flightpath),
+--   `.skill` (profession/skill rank), `.zone`/`.zoneskip`, and the
+--   `.isQuestComplete`/`.isQuestTurnedIn`/`.isOnQuest`/`.isQuestAvailable`
+--   quest-state modifiers are NOT parsed yet - their exact attachment
+--   rules (several are modifiers on the line above them, not standalone
+--   steps) need a real guide sample to get right rather than guessed, so
+--   they still fall through to the generic dot-command note below.
 
 local ADDON, ns = ...
 
@@ -330,6 +341,28 @@ function RXPImport:Parse(text)
                                 if id < 0 then step.optional = true end
                                 step.name = step.name or annotation
                             end
+
+                        elseif cmd == "itemcount" then
+                            local id, n = argText:match("^(%d+)%s*,%s*(%d+)")
+                            id = tonumber(id)
+                            if id then
+                                step.type = "item"
+                                step.itemID = id
+                                step.count = tonumber(n) or 1
+                                step.name = step.name or annotation
+                            end
+
+                        elseif cmd == "train" then
+                            local id = tonumber(argText:match("^(%d+)"))
+                            if id then
+                                step.type = "spell"
+                                step.spellID = id
+                                step.name = step.name or annotation
+                            end
+
+                        elseif cmd == "maxlevel" then
+                            local lvl = tonumber(argText:match("^(%d+)"))
+                            if lvl then step.skipIfLevel = lvl end
 
                         elseif cmd == "trainer" then
                             step.type = "trainer"

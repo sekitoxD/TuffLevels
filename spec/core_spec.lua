@@ -39,10 +39,10 @@ local function SampleRoute()
 end
 
 describe("IsStepDone", function()
-    local _, Core, Data
+    local ns, Core, Data
 
     before_each(function()
-        _, Core, Data = NewCore()
+        ns, Core, Data = NewCore()
     end)
 
     it("accept is done once the quest is in the log", function()
@@ -111,6 +111,26 @@ describe("IsStepDone", function()
         local step = { type = "flightpath", mapID = 1, node = 5 }
         assert.is_false(Core.IsStepDone(step))
         Data.flightPathsKnown["1|5"] = true
+        assert.is_true(Core.IsStepDone(step))
+    end)
+
+    it("item is done once the player holds count (default 1) or more", function()
+        local step = { type = "item", itemID = 42 }
+        assert.is_false(Core.IsStepDone(step))
+        ns.Compat.itemCounts[42] = 1
+        assert.is_true(Core.IsStepDone(step))
+
+        local stepN = { type = "item", itemID = 42, count = 5 }
+        ns.Compat.itemCounts[42] = 4
+        assert.is_false(Core.IsStepDone(stepN))
+        ns.Compat.itemCounts[42] = 5
+        assert.is_true(Core.IsStepDone(stepN))
+    end)
+
+    it("spell is done once Compat:IsSpellKnown says so", function()
+        local step = { type = "spell", spellID = 7 }
+        assert.is_false(Core.IsStepDone(step))
+        ns.Compat.spellsKnown[7] = true
         assert.is_true(Core.IsStepDone(step))
     end)
 

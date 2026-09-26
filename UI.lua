@@ -28,6 +28,8 @@ local VERB = {
     trainer  = "Train",
     death    = "Die",
     manual   = "Do",
+    item     = "Get",
+    spell    = "Learn",
     note     = "NOTE",
     section  = "",
 }
@@ -46,6 +48,8 @@ local VERB_COLOR_KEY = {
     hearth   = "accent",
     trainer  = "warn",
     death    = "ember",
+    item     = "done",
+    spell    = "accent",
     note     = "warn",
 }
 

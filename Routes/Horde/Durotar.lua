@@ -17,7 +17,7 @@
 -- STEP FORMAT
 --   type      "accept" | "turnin" | "complete" | "grind" | "level" | "xp"
 --             | "section" | "trainer" | "death" | "manual" | "travel"
---             | "hearth" | "flightpath" | "note"
+--             | "hearth" | "flightpath" | "item" | "spell" | "note"
 --   quest     numeric quest ID (accept/turnin/complete)
 --   name      fallback display name if no database is installed
 --   npc       NPC to talk to - puts a marker over their head
@@ -28,8 +28,9 @@
 --   changing), travel (within ~15 real yards of the step's coordinates, or
 --   just the right map on a client where real-distance APIs aren't
 --   available), flightpath (mapID + node/name already known on this
---   character). flightpath needs mapID (uiMapID) plus node (numeric
---   nodeID) or name.
+--   character), item (itemID + count already in bags), spell (spellID
+--   already known/trained). flightpath needs mapID (uiMapID) plus node
+--   (numeric nodeID) or name.
 --
 --   objective  on a "complete" step: 1-based index into the quest's own
 --              objective list - done when that one objective finishes,
@@ -37,6 +38,11 @@
 --   xp         on an "xp" step: { level = n, pct = n }. Done once the
 --              player reaches that level, or is already past it - pct is
 --              how far into that level's XP bar (0-100), default 0.
+--   itemID     on an "item" step: numeric item ID. Done once the player
+--              holds `count` (default 1) or more of it.
+--   spellID    on a "spell" step: numeric spell ID. Done once the player
+--              knows it (trained or otherwise). Compat:IsSpellKnown is
+--              unverified on Forever - see its comment in Compat.lua.
 --   optional   true: shown dimmed in the Progress list, never blocks
 --              auto-advance whether it's done or not - a take-it-or-leave
 --              -it extra, not a gate.

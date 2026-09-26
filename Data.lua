@@ -221,6 +221,19 @@ function Data:ValidateRoute(route)
             table.insert(problems, label .. ": flightpath step needs mapID and node or name")
         end
 
+        if step.type == "item" then
+            if type(step.itemID) ~= "number" then
+                table.insert(problems, label .. ": item step needs numeric itemID")
+            end
+            if step.count ~= nil and type(step.count) ~= "number" then
+                table.insert(problems, label .. ": item step's count should be a number")
+            end
+        end
+
+        if step.type == "spell" and type(step.spellID) ~= "number" then
+            table.insert(problems, label .. ": spell step needs numeric spellID")
+        end
+
         if step.type == "complete" and step.objective ~= nil and type(step.objective) ~= "number" then
             table.insert(problems, label .. ": objective should be a number")
         end

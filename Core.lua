@@ -153,6 +153,12 @@ local function StepOwnConditionDone(step)
     elseif t == "flightpath" then
         return Data:IsFlightPathKnown(step)
 
+    elseif t == "item" then
+        return Compat:GetItemCount(step.itemID) >= (step.count or 1)
+
+    elseif t == "spell" then
+        return Compat:IsSpellKnown(step.spellID)
+
     elseif t == "manual" or t == "note" then
         -- No detectable condition. User clicks to advance.
         return false

@@ -19,6 +19,8 @@ function FakeCompat.new()
     self.restricted = false
     self.lastError = nil
     self.nameCache = {}
+    self.itemCounts = {}
+    self.spellsKnown = {}
     return self
 end
 
@@ -77,5 +79,7 @@ function FakeCompat:NumQuestLogEntries() return 0 end
 function FakeCompat:GetQuestLogInfo(index) return nil end
 function FakeCompat:ErrorCount() return 0 end
 function FakeCompat:ModuleErrorCounts() return {} end
+function FakeCompat:GetItemCount(itemID) return self.itemCounts[itemID] or 0 end
+function FakeCompat:IsSpellKnown(spellID) return self.spellsKnown[spellID] or false end
 
 return FakeCompat
