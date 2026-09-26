@@ -191,8 +191,11 @@ was, and worked.
 - **R-d: the data is beta and provisional.**
   - Givers with no known location: Captain Truman, Tabitha Heartweaver,
     Earthseer Farsen.
-  - Turn-in NPCs are unknown for A Frightened Request, Abominable Creatures and
-    all four Hall of Thanes quests.
+  - Turn-in NPCs are unknown for Abominable Creatures and all four Hall of
+    Thanes quests. (A Frightened Request's giver/turn-in location was
+    corrected to Undercity, Tabitha Heartweaver, from a second source —
+    see `plans/11-wowhead-dungeon-quest-crosscheck.md` — still unverified
+    in-game.)
   - The Unending Torment chain is unknown.
   - Phase 1's capture replaces these notes with real data.
 - **R-e: Pace personal bests.** New section headers change which steps each section
