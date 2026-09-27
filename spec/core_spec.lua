@@ -205,6 +205,13 @@ describe("StepApplies", function()
         assert.is_false(Core.StepApplies({ class = "MAGE" }))
     end)
 
+    it("filters by classes (an OR list, for a real 'ClassA/ClassB' guide condition)", function()
+        -- wow_stubs' UnitClass stub returns ROGUE
+        assert.is_true(Core.StepApplies({ classes = { "ROGUE", "MAGE" } }))
+        assert.is_true(Core.StepApplies({ classes = { "MAGE", "ROGUE" } }))
+        assert.is_false(Core.StepApplies({ classes = { "MAGE", "WARRIOR" } }))
+    end)
+
     it("hides a step below minLevel", function()
         local step = { minLevel = 10 }
         Data.level = 5

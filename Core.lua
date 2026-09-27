@@ -206,6 +206,15 @@ local function StepApplies(step)
         if step.class ~= classFile then return false end
     end
 
+    if step.classes then
+        local _, classFile = UnitClass("player")
+        local match = false
+        for _, c in ipairs(step.classes) do
+            if c == classFile then match = true break end
+        end
+        if not match then return false end
+    end
+
     if step.classExclude then
         local _, classFile = UnitClass("player")
         for _, ex in ipairs(step.classExclude) do

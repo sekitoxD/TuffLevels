@@ -50,9 +50,9 @@ end
 -- pairs()'s unspecified order) purely for readability/diffability.
 local FIELD_ORDER = {
     "type", "name", "note", "zone", "x", "y", "npc", "quest", "questName",
-    "objective", "spellID", "itemID", "count", "path", "class",
+    "objective", "spellID", "itemID", "count", "path", "class", "classes",
     "classExclude", "races", "minLevel", "skipIfLevel", "optional",
-    "requires", "approx",
+    "requires", "approx", "xp",
 }
 
 local function DumpScalar(v)
@@ -77,9 +77,11 @@ local function DumpStep(step)
             seen[key] = true
             if key == "path" then
                 table.insert(parts, "path = " .. DumpPath(v))
-            elseif key == "races" or key == "classExclude" then
-                -- Both are lists of quoted strings (races/classExclude, the
-                -- latter added 2026-09-26 for "<< !Class" gates) - without
+            elseif key == "races" or key == "classExclude" or key == "classes" then
+                -- All three are lists of quoted strings (races/classExclude,
+                -- added 2026-09-26 for "<< !Class" gates, and classes,
+                -- added 2026-09-27 for a real "<< ClassA/ClassB" OR) -
+                -- without
                 -- this branch the fallback loop below would dump a bare
                 -- table's identity (e.g. "table: 00E74940") instead of Lua
                 -- syntax, which would be a hard syntax error if pasted
@@ -88,6 +90,13 @@ local function DumpStep(step)
                 local names = {}
                 for _, r in ipairs(v) do table.insert(names, string.format("%q", r)) end
                 table.insert(parts, key .. " = { " .. table.concat(names, ", ") .. " }")
+            elseif key == "xp" then
+                -- An `xp` step's xp field is itself a table ({ level, pct },
+                -- set by RXPImport.lua's bare `.xp N` conversion) - without
+                -- this branch the fallback loop below would dump the table's
+                -- bare identity (e.g. "table: 00E74940") instead of Lua
+                -- syntax, a hard syntax error if pasted into a route file.
+                table.insert(parts, key .. " = { level = " .. DumpScalar(v.level) .. ", pct = " .. DumpScalar(v.pct) .. " }")
             else
                 table.insert(parts, key .. " = " .. DumpScalar(v))
             end

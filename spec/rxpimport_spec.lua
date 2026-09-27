@@ -270,6 +270,167 @@ step
         assert.equals("WARRIOR", route.steps[2].class)
     end)
 
+    it("resolves a block-level class-OR condition to a real 'classes' filter", function()
+        -- Confirmed live (2026-09-27): "step << Hunter/Rogue" used to be
+        -- reported unhandled and shipped completely unfiltered - previously
+        -- the only way to keep the step reachable, but far too broad (every
+        -- OTHER class saw it too).
+        local route = RXPImport:Parse([[
+step << Hunter/Rogue
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        assert.is_nil(route.steps[1].class)
+        assert.same({ "HUNTER", "ROGUE" }, route.steps[1].classes)
+    end)
+
+    it("drops an out-of-scope (SoD) branch from a class-OR before resolving the rest", function()
+        -- Confirmed live: "step << Hunter/Warrior/Priest/Sod Rogue" (the
+        -- Night Elf "Train Staves" block) - the Rogue branch is SoD-gated
+        -- and out of scope, so it must not survive into the classes list
+        -- (Classic Rogues can never learn Staves, so a Rogue stuck with
+        -- this filter could never complete the step).
+        local route = RXPImport:Parse([[
+step << Hunter/Warrior/Priest/Sod Rogue
+    .goto Durotar,1,1
+    .train 227
+]])
+        assert.equals(1, #route.steps)
+        assert.is_nil(route.steps[1].class)
+        assert.same({ "HUNTER", "WARRIOR", "PRIEST" }, route.steps[1].classes)
+    end)
+
+    it("collapses a class-OR down to exactly one class into the plain 'class' field, not a one-element 'classes'", function()
+        -- Confirmed live (2026-09-27, round-2 code review): leaving this as
+        -- classes = { "HUNTER" } instead of class = "HUNTER" let a LATER
+        -- line's own plain "<< Hunter" condition resolve to `class` (not
+        -- `classes`) for the exact same class - StepForAction's same-step
+        -- check compares `class` and `classes` independently, so it read
+        -- that as a DIFFERENT filter and split into a spurious duplicate
+        -- step for what should have been one step.
+        local route = RXPImport:Parse([[
+step << Hunter/Sod Rogue
+    .goto Durotar,1,1
+    .complete 5,1
+    .complete 5,1 << Hunter
+]])
+        assert.equals(1, #route.steps)
+        assert.equals("HUNTER", route.steps[1].class)
+        assert.is_nil(route.steps[1].classes)
+    end)
+
+    it("doesn't leave a stale block-level 'classes' sitting alongside a line-narrowed 'class' on the FIRST action of a block", function()
+        -- Confirmed live (2026-09-27, round-3 code review): the block-start
+        -- assignment (`step << Hunter/Warrior` sets curStep.classes =
+        -- {H,W}) and the first action line's own narrower condition
+        -- (`.accept 10 << Hunter`, resolving to class="HUNTER",
+        -- classes=nil) both write to the SAME step object (no split has
+        -- happened yet) - an `if effClasses then` guard on the classes
+        -- assignment would leave the stale {H,W} in place instead of
+        -- clearing it, which then made an identical later directive with
+        -- the same line condition compare unequal (nil vs {H,W}) and split
+        -- into a spurious duplicate step.
+        local route = RXPImport:Parse([[
+step << Hunter/Warrior
+    .goto Durotar,1,1
+    .accept 10 << Hunter
+    .accept 11 << Warrior
+]])
+        assert.equals(2, #route.steps)
+        assert.equals("HUNTER", route.steps[1].class)
+        assert.is_nil(route.steps[1].classes)
+        assert.equals("WARRIOR", route.steps[2].class)
+        assert.is_nil(route.steps[2].classes)
+    end)
+
+    it("carries a block-level classes-OR onto a split step created AFTER the block condition was read", function()
+        local route = RXPImport:Parse([[
+step << Hunter/Warrior
+    .goto Durotar,1,1
+    .accept 1
+    .accept 2 << Hunter
+    .accept 3
+]])
+        assert.equals(3, #route.steps)
+        assert.same({ "HUNTER", "WARRIOR" }, route.steps[1].classes)
+        assert.equals("HUNTER", route.steps[2].class)
+        assert.same({ "HUNTER", "WARRIOR" }, route.steps[3].classes)
+    end)
+
+    it("does not collapse adjacent OR-branch copies with DIFFERENT 'classes' into one, losing a class's copy", function()
+        -- Same bug shape the dedup key already guards against for `races`
+        -- (see StepKey's own comment) - `classes` needed the identical fix.
+        local route = RXPImport:Parse([[
+step << Hunter/Warrior
+    .goto Durotar,1,1
+    .accept 5 >> Accept Foo
+step << Druid/Priest
+    .goto Durotar,1,1
+    .accept 5 >> Accept Foo
+]])
+        assert.equals(2, #route.steps)
+        assert.same({ "HUNTER", "WARRIOR" }, route.steps[1].classes)
+        assert.same({ "DRUID", "PRIEST" }, route.steps[2].classes)
+    end)
+
+    it("intersects a block-level class-OR with a narrower line-level class-OR", function()
+        -- The exact real shape that stranded Night Elf Rogues: a block-level
+        -- OR narrowed further by a line's own OR condition.
+        local route = RXPImport:Parse([[
+step << Hunter/Warrior/Priest/Sod Rogue
+    .goto Durotar,1,1
+    .train 227 << Hunter/Warrior/Priest
+]])
+        assert.equals(1, #route.steps)
+        assert.same({ "HUNTER", "WARRIOR", "PRIEST" }, route.steps[1].classes)
+    end)
+
+    it("does not guess at a mixed race+class OR - still kept unfiltered, still warns", function()
+        local route, _, warnings = RXPImport:Parse([[
+step << Human/Warrior
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        assert.is_nil(route.steps[1].class)
+        assert.is_nil(route.steps[1].classes)
+        assert.is_nil(route.steps[1].races)
+        local found = false
+        for _, w in ipairs(warnings) do
+            if w:find("OR/complex", 1, true) then found = true end
+        end
+        assert.is_true(found)
+    end)
+
+    it("warns on a LINE-level (not just block-level) OR/complex condition it can't filter on", function()
+        -- Previously silently discarded (the return value was thrown away
+        -- with `_`) - confirmed live: this is what let a First Aid training
+        -- step ship forced onto every class instead of the intended subset.
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .accept 100 << Human/Warrior
+]])
+        assert.equals(1, #route.steps)
+        local found = false
+        for _, w in ipairs(warnings) do
+            if w:find("Line condition", 1, true) then found = true end
+        end
+        assert.is_true(found)
+    end)
+
+    it("keeps '<< era'/'<< Druid era' as a no-op in-scope marker, same as CLASSIC, not unhandled", function()
+        local route, _, warnings = RXPImport:Parse([[
+step << Druid era
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        assert.equals("DRUID", route.steps[1].class)
+        assert.equals(0, #warnings)
+    end)
+
     it("keeps a step gated by '#season N << Class' unfiltered (can't apply per-class at parse time) and warns", function()
         local route, _, warnings = RXPImport:Parse([[
 step << Warlock/Hunter/Rogue/Priest/Warrior
@@ -454,6 +615,33 @@ step
         assert.is_true(route.steps[1].optional)
     end)
 
+    it("folds a '.itemcount' trailing a '.turnin' into a note instead of splitting an unsatisfiable item step", function()
+        local route = RXPImport:Parse([[
+step
+    .goto Teldrassil,60.4,56.4
+    .target Zenn Foulhoof
+    .turnin 489
+    .itemcount 3418,3
+]])
+        assert.equals(1, #route.steps)
+        assert.equals("turnin", route.steps[1].type)
+        assert.equals(489, route.steps[1].quest)
+        assert.is_true(route.steps[1].note ~= nil and route.steps[1].note:find("3418", 1, true) ~= nil)
+    end)
+
+    it("still splits a '.itemcount' trailing a '.complete' into its own item step (a real, satisfiable objective)", function()
+        local route = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .complete 375,2
+    .itemcount 2876,5
+]])
+        assert.equals(2, #route.steps)
+        assert.equals("complete", route.steps[1].type)
+        assert.equals("item", route.steps[2].type)
+        assert.equals(2876, route.steps[2].itemID)
+    end)
+
     it("propagates '#optional' to a split step created AFTER the tag, not just steps that already existed", function()
         -- Confirmed live: real guides almost always put `#optional` FIRST
         -- in the block - ApplyToBlock alone only reaches steps that exist
@@ -525,6 +713,45 @@ step
         assert.equals(5, route.steps[2].x)
     end)
 
+    it("drops (not misreads) a '.goto mapID/floor,x,y,flag' raw pixel-coordinate form", function()
+        local route = RXPImport:Parse([[
+step
+    .goto 1438/1,854.400,9952.500,6
+    .complete 489,1
+    .isOnQuest 489
+]])
+        assert.equals(1, #route.steps)
+        assert.is_nil(route.steps[1].zone)
+        assert.is_nil(route.steps[1].x)
+        assert.is_nil(route.steps[1].y)
+    end)
+
+    it("doesn't let a dropped mapID/floor annotation steal the step's name from its real task text", function()
+        -- Confirmed live (2026-09-27): the annotation on a dropped
+        -- mapID/floor line describes the waypoint that was just dropped
+        -- (e.g. "Next to a small tree"), not the step's actual task - if it
+        -- claims step.name first, the real ">>" task line that follows gets
+        -- pushed into a note instead.
+        local route = RXPImport:Parse([[
+step
+    .goto 1438/1,854.400,9952.500,6 >>Next to a small tree
+    >>Loot the 3 Fel Cones from the locations marked on your map.
+    .complete 489,1
+]])
+        assert.equals("Loot the 3 Fel Cones from the locations marked on your map.", route.steps[1].name)
+    end)
+
+    it("still parses a normal '.goto zone,x,y' after a mapID/floor line in the same block", function()
+        local route = RXPImport:Parse([[
+step
+    .goto 1438/1,854.400,9952.500,6
+    .goto Teldrassil,60.4,56.4
+    .complete 489,1
+]])
+        assert.equals("Teldrassil", route.steps[1].zone)
+        assert.equals(60.4, route.steps[1].x)
+    end)
+
     it("applies a trailing '#completewith next' (_infoOnly) to every split step in the block", function()
         local route = RXPImport:Parse([[
 step
@@ -536,6 +763,173 @@ step
         assert.equals(2, #route.steps)
         assert.is_true(route.steps[1].optional)
         assert.is_true(route.steps[2].optional)
+    end)
+
+    it("applies a labelled '#completewith <label>' (not just 'next') as optional too", function()
+        -- RXPGuides' own GuideWindow.lua sets step.sticky = true whenever
+        -- step.completewith is set and it isn't a "tip", for ANY label, not
+        -- just the special "next" value - confirmed directly against that
+        -- source. Previously only "#completewith next" was recognized, so a
+        -- labelled form shipped as a blocking, non-optional step.
+        local route = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .complete 100,1
+    #completewith darn
+]])
+        assert.is_true(route.steps[1].optional)
+    end)
+
+    it("does NOT apply a lone '#completewith <label> << Cond' block-wide when Cond only covers PART of the block", function()
+        -- A single conditioned tag with no complementing tag in the same
+        -- block only covers the classes/races it names (Hunter here) - the
+        -- rest of the block's own filter (unrestricted, i.e. every class)
+        -- isn't covered, so this parser can't safely mark the whole block
+        -- optional - warn and leave it mandatory rather than guess. Same
+        -- "can't apply a per-class condition at parse time" situation
+        -- '#season N << Cond' already handles.
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .complete 100,1
+    #completewith darn << Hunter
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        local found = false
+        for _, w in ipairs(warnings) do
+            if w:find("can't apply per-class", 1, true) then found = true end
+        end
+        assert.is_true(found)
+    end)
+
+    it("applies a PAIR of '#completewith << Cond' tags whose conditions together cover every class", function()
+        -- Confirmed live (2026-09-27, round-3 code review): the real,
+        -- common form pairs two (or more) conditioned tags on one block
+        -- whose conditions are each other's complement - e.g.
+        -- Classic-Alliance-1-13_Human.lua's "Westfall Deed" rare-drop step:
+        -- "#completewith Level9Grind << Warlock/Warrior/Rogue" +
+        -- "#completewith PrincessC << !Warlock !Warrior !Rogue". Neither
+        -- tag alone covers everyone, but together they cover every class,
+        -- so the step should be optional for everyone with no warning -
+        -- round 2's fix (warn on the first conditioned tag it saw,
+        -- ignoring a later complementing one) got this wrong.
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .accept 184
+    #completewith Level9Grind << Warlock/Warrior/Rogue
+    #completewith PrincessC << !Warlock !Warrior !Rogue
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("applies a conditioned '#completewith << Cond' when Cond only repeats the block's own class filter", function()
+        -- e.g. "step << Hunter" + "#completewith prospector << Hunter" -
+        -- the tag's condition covers 100% of the classes this BLOCK itself
+        -- applies to (just Hunter), so there's no real gap to warn about.
+        local route, _, warnings = RXPImport:Parse([[
+step << Hunter
+    .goto Durotar,1,1
+    .accept 5
+    #completewith prospector << Hunter
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("does not let an AND condition (positive class + classExclude in one group) wrongly cover an unrelated class", function()
+        -- Confirmed live (2026-09-27, round-4 code review): "<< Warrior
+        -- !Hunter" means "Warrior AND NOT Hunter" (one token group), not
+        -- "Warrior OR (everyone but Hunter)" - accumulating both the
+        -- positive class AND the classExclude's complement as coverage
+        -- would wrongly mark a Rogue-only block optional, since the tag's
+        -- real condition can never match a Rogue at all.
+        local route, _, warnings = RXPImport:Parse([[
+step << Rogue
+    .goto Durotar,1,1
+    .accept 1
+    #completewith X << Warrior !Hunter
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("does not let two DIFFERENT positive class tokens in one AND group resolve to just the last one", function()
+        -- Confirmed live (2026-09-27, round-5 code review): "<< Warrior
+        -- Rogue" means "Warrior AND Rogue" (one token group, AND
+        -- semantics) - a condition no real character can ever satisfy, not
+        -- "just Rogue" (the previous last-token-wins behavior). Silently
+        -- reading it as "Rogue" would wrongly mark a Rogue-only block
+        -- optional via a condition that can never actually match a Rogue.
+        local route, _, warnings = RXPImport:Parse([[
+step << Rogue
+    .goto Durotar,1,1
+    .accept 1
+    #completewith X << Warrior Rogue
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("applies when coverage completes despite an unrelated tag this parser can't resolve", function()
+        -- Confirmed live (2026-09-27, round-4 code review): RXPGuides ORs
+        -- every completewith/sticky tag on a step (matching ANY one is
+        -- enough) - a tag this parser gives up on can only ADD potential
+        -- optionality, never take away coverage two OTHER tags already
+        -- established between them.
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith A << Warlock/Warrior/Rogue
+    #completewith B << !Warlock !Warrior !Rogue
+    #completewith C << NightElf
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("checks coverage against the block's own classExclude, not always all 9 classes", function()
+        -- e.g. "step << !Hunter" + "#completewith X << !Hunter" - the tag's
+        -- condition covers 100% of what the BLOCK itself applies to
+        -- (everyone but Hunter), so there's no real gap to warn about.
+        local route, _, warnings = RXPImport:Parse([[
+step << !Hunter
+    .goto Durotar,1,1
+    .accept 1
+    #completewith X << !Hunter
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("applies '#completewith <label> << era' normally (a pure no-op scope marker, not a real restriction)", function()
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .complete 100,1
+    #completewith darn << era
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("silently skips '#completewith <label> << sod' (out of scope for this addon's target ruleset), no warning", function()
+        -- Confirmed live: real guide text pairs "#completewith darn << era"
+        -- with "#completewith darnSoD << sod" on the SAME step - one
+        -- companion label for each ruleset. The "sod" one is irrelevant to
+        -- a non-SoD client, same as any other SoD-gated content, so it
+        -- should neither apply nor warn - the "era" sibling (or an earlier
+        -- unconditioned tag) is what actually determines optionality here.
+        local route, _, warnings = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .complete 100,1
+    #completewith darnSoD << sod
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(0, #warnings)
     end)
 
     it("splits two '.complete' directives for the same quest with different objectives", function()

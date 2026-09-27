@@ -69,6 +69,13 @@
 --   note      one line of guidance shown under the step
 --   races     optional filter, e.g. { "Orc", "Troll" }
 --   class     optional filter, e.g. "ROGUE"
+--   classes   optional list filter (OR semantics, same shape as races),
+--             e.g. { "HUNTER", "WARRIOR", "PRIEST" } - shown to any ONE of
+--             the classes listed (RXPImport.lua produces this from a
+--             guide's "<< ClassA/ClassB/ClassC" OR condition when every
+--             branch resolves to a single plain class; hand-authored steps
+--             can use it too. Prefer the singular `class` field when only
+--             one class ever applies - this is only for a genuine OR)
 --   classExclude  optional list filter, e.g. { "HUNTER", "WARRIOR" } -
 --             shown to every class EXCEPT the ones listed (RXPImport.lua
 --             produces this from a guide's "<< !ClassName" condition;
