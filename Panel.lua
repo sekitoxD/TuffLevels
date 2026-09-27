@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.10"
+local CHANGELOG_VERSION = "1.7.11"
 local CHANGELOG = {
+    "Audited every plan doc in plans/ against the actual code and git history: confirmed Plans 1, 3, and 6 are fully done (added a status note to Plan 3, which had none), and closed out two long-deferred parser gaps this pass turned up fixable - CompactGuide guide syntax can now escape a literal quote inside a quoted value (name=\"say \\\"hi\\\" first\"), and SheetImport no longer fabricates 'Levels 1-1' for a spreadsheet import with no level column at all (now reports 'Levels unknown' instead).",
     "Fixed the custom color palette (Menu > Display settings > Colors) silently claiming 'Custom colors applied' when you typed a key it didn't recognize - it now rejects an unknown key the same way it already rejected a bad hex value, instead of quietly doing nothing. Also added six new class-matched presets (Azure/Verdant/Amber/Umber/Rose/Silver) that a Mage, Hunter, Druid, Warrior, Paladin, or Priest gets automatically the first time they log in, unless you've already picked your own palette - Rogues and any other class keep the addon's own default red/purple look.",
     "Code review caught two issues in yesterday's fixes before they could ship further: the /tuff verify quest-lookup fix would have started replacing route-authored step instructions with generic QuestieDB quest titles on the tracker (now only used when a step has no text of its own); and a bare '.xp N' grind step could have silently overwritten a real accept/turnin/complete step's type if a guide listed both on the same step (now guarded).",
     "Fixed two steps in the Orc/Troll test route missing a class filter that a sibling step for the same quest/item correctly had - one routed non-Warlocks to a quest they could never accept (reported as a party quest-share 'prerequisite' failure), the other told non-Hunters to buy Hunter-only ammo.",

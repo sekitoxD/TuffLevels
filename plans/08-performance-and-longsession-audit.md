@@ -498,24 +498,39 @@ touches the same file, rather than a dedicated pass.
   enough (a few hundred KB worst case) not to force the issue.
 - ~~`Rogue.lua` registers `CHAT_MSG_SYSTEM` with no handler branch...~~
   Fixed in batch 11 (dropped the dead registration).
-- **Deferred, not fixed:** `SheetImport.lua:302` — `levels = {1, 1}`
-  written into exported routes when no source row carried a level. No
-  Phase 1/2 batch touched `SheetImport.lua` at all in this plan.
-- **Deferred, not fixed:** `CompactGuide.lua:138` — quoted-value parser
-  can't represent an embedded `"`. No Phase 1/2 batch touched
-  `CompactGuide.lua` at all in this plan.
+- ~~**Deferred, not fixed:** `SheetImport.lua:302` — `levels = {1, 1}`
+  written into exported routes when no source row carried a level.~~ **Fixed
+  (2026-09-26 optimization pass).** `route.levels` is now left `nil` when no
+  row carried a level, matching the nil-safe `route.levels and ... or "?"`
+  convention already used by every other reader (`Panel.lua`, `Core.lua`);
+  the two direct-index call sites in `SheetImport.lua` (the import-result
+  message and the generated route file's `levels = {...}` line) were updated
+  to guard on that.
+- ~~**Deferred, not fixed:** `CompactGuide.lua:138` — quoted-value parser
+  can't represent an embedded `"`.~~ **Fixed (2026-09-26 optimization
+  pass).** `Tokenize`'s closing-quote search now skips `\"` instead of
+  stopping at it (`FindClosingQuote`), and `ClassifyTokens` unescapes `\"`
+  back to `"` in the captured value/note. Verified with a real Lua 5.1
+  interpreter (`lua.exe`, see plan 12's tooling) against
+  `accept 1 name="Say \"hi\" first" ... "A bare note with \"quotes\" too"` —
+  both unescape correctly. Isolated to `CompactGuide.lua`; no other module
+  touches its tokenizer.
 - ~~Marker: stale marker possible if `GetNamePlateForUnit` returns nil...~~
   Fixed in batch 7 (`active` keyed by unit token).
 
-**Impact:** scattered one-line fixes, no cross-module risk. 6 of 10 got
-folded into a Phase 1/2 batch that happened to touch the same file; the
-remaining 4 (Arrow/Data double-compute's other half, Pace's AFK counting,
-questNames eviction, SheetImport/CompactGuide's two parser gaps) are
-explicitly deferred, not silently dropped - none of them are correctness
-bugs, just missed-optimization/cosmetic-quality items.
+**Impact:** scattered one-line fixes, no cross-module risk. 8 of 10 are now
+fixed (6 folded into a Phase 1/2 batch that happened to touch the same file;
+SheetImport's `levels`/`{1,1}` gap and CompactGuide's quoted-value parser
+fixed directly in a 2026-09-26 optimization pass, see above); the remaining 3
+(Arrow/Data double-compute's other half, Pace's AFK counting, questNames
+eviction) stay explicitly deferred, not silently dropped - `questNames`
+eviction in particular was checked in that same pass and is still judged not
+worth forcing (a few hundred KB worst case, per its own note above) rather
+than left deferred by oversight. None of the 3 are correctness bugs, just
+missed-optimization/cosmetic-quality items.
 **Performance:** negligible individually.
 **Dev time:** ~1 hour if bundled in, otherwise skip without much lost - the
-remaining 4 are small enough to fold into whichever future plan next
+remaining 3 are small enough to fold into whichever future plan next
 touches Arrow/Data, Pace, SheetImport, or CompactGuide.
 
 ---

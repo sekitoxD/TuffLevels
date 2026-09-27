@@ -299,7 +299,14 @@ function SheetImport:Parse(text, routeName)
         end
     end
 
-    route.levels = { minLevel <= maxLevel and minLevel or 1, maxLevel }
+    -- Leave route.levels unset rather than fabricating { 1, 1 } when no row
+    -- in the sheet carried a level at all - every reader of route.levels
+    -- (Panel.lua, Core.lua) already treats a missing table as "unknown" and
+    -- falls back to "?", so a real level-1 route and a no-data sheet stay
+    -- distinguishable instead of both claiming to be "Levels 1-1".
+    if maxLevel >= minLevel then
+        route.levels = { minLevel, maxLevel }
+    end
     route.name = routeName
 
     if #route.steps == 0 then
@@ -434,7 +441,9 @@ function SheetImport:DoImport(text, name, alsoExport)
     local msg = {
         Theme:Bright(("Imported %d steps, %d sections, %d quest steps.")
             :format(#route.steps, sections, quests)),
-        Theme:Dim(("Levels %d-%d"):format(route.levels[1], route.levels[2])),
+        Theme:Dim(route.levels
+            and ("Levels %d-%d"):format(route.levels[1], route.levels[2])
+            or "Levels unknown (no level column data in the sheet)"),
     }
     for _, w in ipairs(warnings) do table.insert(msg, Theme:Dim(w)) end
 
@@ -473,7 +482,9 @@ function SheetImport:BuildRouteFile(route, name)
     add(('ns.RegisterRoute("%s", {'):format(Esc(name)))
     add('    faction = "Horde",')
     add('    races   = { "Orc", "Troll" },')
-    add(("    levels  = { %d, %d },"):format(route.levels[1], route.levels[2]))
+    if route.levels then
+        add(("    levels  = { %d, %d },"):format(route.levels[1], route.levels[2]))
+    end
     add("")
     add("    steps = {")
 

@@ -39,6 +39,7 @@
 --
 --   A value with spaces needs quotes: name="Your Place In The World".
 --   A bare "quoted string" with no key= is shorthand for note=.
+--   An embedded quote inside one needs \" : note="say \"hi\" first".
 --
 -- EXAMPLE
 --   #name Valley of Trials
@@ -59,6 +60,25 @@ ns.CompactGuide = CompactGuide
 -- Tokenizer
 --------------------------------------------------------------------------
 
+-- Finds the first unescaped '"' at or after `from`, treating \" as a
+-- literal quote to skip over rather than the closing delimiter - without
+-- this, a quoted value could never contain a literal " (Phase 3 deferred
+-- item from plans/08-performance-and-longsession-audit.md).
+local function FindClosingQuote(line, from)
+    local i, n = from, #line
+    while i <= n do
+        local c = line:sub(i, i)
+        if c == "\\" and line:sub(i + 1, i + 1) == '"' then
+            i = i + 2
+        elseif c == '"' then
+            return i
+        else
+            i = i + 1
+        end
+    end
+    return nil
+end
+
 -- Splits a line into tokens on whitespace, except a key="quoted value" or
 -- a bare "quoted value" stays one token (quotes and all) so spaces inside
 -- it survive. Quotes are stripped when each token is interpreted below.
@@ -76,11 +96,11 @@ local function Tokenize(line)
 
         local eq = line:find("=", start, true)
         if eq and eq <= plainEnd and line:sub(eq + 1, eq + 1) == '"' then
-            local close = line:find('"', eq + 2, true) or n
+            local close = FindClosingQuote(line, eq + 2) or n
             table.insert(tokens, line:sub(start, close))
             i = close + 1
         elseif line:sub(start, start) == '"' then
-            local close = line:find('"', start + 1, true) or n
+            local close = FindClosingQuote(line, start + 1) or n
             table.insert(tokens, line:sub(start, close))
             i = close + 1
         else
@@ -137,7 +157,7 @@ local function ClassifyTokens(tokens)
 
         local key, qval = token:match('^(%a[%w]*)="(.-)"$')
         if key then
-            kv[key] = qval
+            kv[key] = qval:gsub('\\"', '"')
         else
             local key2, val2 = token:match("^(%a[%w]*)=(.+)$")
             if key2 then
@@ -145,7 +165,7 @@ local function ClassifyTokens(tokens)
             else
                 local bare = token:match('^"(.-)"$')
                 if bare then
-                    kv.note = kv.note or bare
+                    kv.note = kv.note or bare:gsub('\\"', '"')
                 elseif token == "optional" then
                     kv.optional = "true"
                 else

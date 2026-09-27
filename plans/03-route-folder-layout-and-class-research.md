@@ -1,5 +1,19 @@
 # Plan 3: Route folder layout for faction/class expansion, and an external research workflow
 
+**Status (2026-09-26 audit): Phases 1 and 2 done.** `Routes/Horde/` and
+`Routes/Alliance/` both exist and are populated (confirmed against the current
+tree), so the migration in "Migration steps for the two existing files" and
+Phase 2's "first Alliance route" trigger have both already happened.
+`research/classes/rogue.md` exists per Phase 1's scaffolding request;
+`research/quests/` and `research/factions/` don't exist yet because no
+findings have needed recording there yet, which is expected under "Ongoing"
+Phase 4, not a gap. Phase 3 (the `step.faction` filter) is correctly still
+unimplemented — no `Routes/Contested/` route exists yet to need it, matching
+this plan's own "do not add this speculatively" rule (confirmed no
+`step.faction` reference anywhere in `Core.lua`). Nothing here is stale; the
+folder layout and workflow this plan proposed are exactly what's in place
+today.
+
 Depends on: nothing structurally. Safe to do independently of Plans 1 and 2.
 
 ## What this plan is and is not
