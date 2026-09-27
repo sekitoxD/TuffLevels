@@ -50,8 +50,9 @@ end
 -- pairs()'s unspecified order) purely for readability/diffability.
 local FIELD_ORDER = {
     "type", "name", "note", "zone", "x", "y", "npc", "quest", "questName",
-    "spellID", "itemID", "count", "path", "class", "races", "minLevel",
-    "skipIfLevel", "optional", "requires", "approx",
+    "objective", "spellID", "itemID", "count", "path", "class",
+    "classExclude", "races", "minLevel", "skipIfLevel", "optional",
+    "requires", "approx",
 }
 
 local function DumpScalar(v)
@@ -76,10 +77,17 @@ local function DumpStep(step)
             seen[key] = true
             if key == "path" then
                 table.insert(parts, "path = " .. DumpPath(v))
-            elseif key == "races" then
+            elseif key == "races" or key == "classExclude" then
+                -- Both are lists of quoted strings (races/classExclude, the
+                -- latter added 2026-09-26 for "<< !Class" gates) - without
+                -- this branch the fallback loop below would dump a bare
+                -- table's identity (e.g. "table: 00E74940") instead of Lua
+                -- syntax, which would be a hard syntax error if pasted
+                -- straight into a route file the way this harness's output
+                -- is meant to be used.
                 local names = {}
                 for _, r in ipairs(v) do table.insert(names, string.format("%q", r)) end
-                table.insert(parts, "races = { " .. table.concat(names, ", ") .. " }")
+                table.insert(parts, key .. " = { " .. table.concat(names, ", ") .. " }")
             else
                 table.insert(parts, key .. " = " .. DumpScalar(v))
             end

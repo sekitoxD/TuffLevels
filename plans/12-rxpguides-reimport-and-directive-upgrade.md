@@ -407,3 +407,233 @@ decision is explicitly deferred, not made by this section.
    produce a written list of every tracked correction it documents, so
    the replace-vs-forward-port-gaps-only decision can be made with that
    list in hand rather than from memory.
+
+## 2026-09-26 continuation: parser bug fixes landed, source layout re-confirmed against a newer RXPGuides copy
+
+User request this session: audit and finish the four `sample = true` routes
+(`Routes/Alliance/Human.lua`, `Routes/Alliance/DwarfGnome.lua`,
+`Routes/Alliance/NightElf.lua`, `Routes/Horde/Mulgore.lua`) into shipped,
+non-sample routes, extend Undead (`Routes/Horde/TirisfalStart.lua`, currently
+1-14 only) to 1-60, and continue researching the RXPGuides folder for
+anything else worth adding — all using RXPGuides itself as the trusted
+source (no in-game verification required for route *content*; manual
+testing reserved for actual bugs). Source this time is a different, newer
+local copy than the one Phase 1's original session used:
+`C:\Users\lilja\Downloads\RestedXP Guides v4.11.5\RXPGuides\` (vs. the
+`_anniversary_` realm install referenced above) - **file layout differs
+between the two copies**, recorded here so a future session doesn't have to
+re-derive it:
+
+- `Guides\Classic-Horde-01-14_Undead.lua` (9870 lines) is the direct
+  equivalent of the old `Classic-Horde-01-14_Undead.lua` reference above and
+  covers 1-14 (chapters: 1-6/6-11 Tirisfal, 12-14 Silverpine) - not needed
+  for content (TirisfalStart.lua's own 1-14 is spreadsheet-sourced and
+  already hand-verified) but useful as a cross-check.
+- The old monolithic `Classic-Horde-30-60.lua` (36 chapters) **does not
+  exist by that name in v4.11.5**. Its content is folded into
+  `Guides\Era.lua`, a 157-`RegisterGuide` mega-file mixing every class/zone
+  chapter RXPGuides ships (ADV AoE Mage routes, Season of Discovery
+  alternate chapters, etc.) grouped by `#group RestedXP <Faction> <range>`
+  tags. Confirmed present: `RestedXP Horde 22-30`, `30-40`, `40-50`, `50-60`
+  and `RestedXP Alliance 20-30`, `30-40`, `40-50`, `50-60` - i.e. the full
+  22-60 (Horde) / 20-60 (Alliance) shared continuation both Mulgore.lua and
+  the three Alliance routes need exists, just in one huge file instead of
+  one-file-per-range. Many chapters have an SoD-flavored sibling (e.g. `22-24
+  Wetlands SoD` next to `22-24 Wetlands`) - same "a human picks the right
+  chapter" step the harness workflow already requires, unrelated to this
+  session's `<< SOD` step-level fix below (that fixes steps *inside* an
+  otherwise-normal chapter, not chapter selection itself).
+- Bridging 14-22 for Horde: `Guides\Classic-Horde-12-22_Barrens.lua` (13364
+  lines, `Classic-`-prefixed, preferred per `RXPImport.lua`'s own header
+  over the shorter non-`Classic-` `RestedXP Horde 13-23 Barrens.lua`
+  alternate that also exists in this copy).
+- Alliance sources for the sample routes' 1-1x starting zones are unchanged
+  in shape: `Classic-Alliance-1-13_Human.lua` (6362 lines),
+  `Classic-Alliance-1-14_DwarfGnome.lua` (8927 lines),
+  `Classic-Alliance-1-10_NightElf.lua` (2007 lines, smallest - Night Elf
+  should be the cheapest of the three to re-verify/finish). `Classic-
+  Alliance-11-20.lua` (11427 lines) bridges into the shared 20-60 content in
+  `Era.lua` the same way Barrens does for Horde.
+
+### RXPImport.lua parser bug fixes (landed this session, all covered by
+### automated specs - no in-game testing needed per this session's
+### relaxed verification bar)
+
+Fixed four of the "known open issues" flagged in §5b's chapter-2 code
+review entry above, all of which affect every RXP-derived route (past and
+future), not just OrcTrollRXP:
+
+1. **Multi-quest-per-step data loss.** A step naming more than one distinct
+   quest/item/spell via consecutive `.accept`/`.turnin`/`.complete`/
+   `.itemcount`/`.train` directives used to overwrite the same step's
+   fields each time, keeping only the last one. Now splits into a new step
+   that carries the shared `class`/`races`/`classExclude`/`zone`/`x`/`y`/
+   `npc` context forward (`StepForAction` helper in `RXPImport.lua`).
+2. **`<< !ClassName` dropped instead of gating.** Added a `classExclude`
+   step field (checked in `Core.lua`'s `StepApplies`, mirroring the
+   existing `class` check) so "everyone except Hunter"-style steps survive
+   for their intended classes instead of being discarded as if they were
+   RXPGuides UI-navigation chrome. Other negated tokens (e.g. `!Human`) are
+   left dropped as before - no confirmed bug there, not touched.
+3. **`<< SOD` steps used to survive unconditionally** (treated as an
+   "explicit in-scope marker" alongside `<< CLASSIC`) - this is why
+   `Mulgore.lua` shipped ~20 unreachable Season-of-Discovery rune-training
+   steps. Now `SOD`/`HARDCORE` mark the step out-of-scope (dropped);
+   `SOFTCORE` is kept (explicit no-op, matching `CLASSIC`'s treatment).
+4. **Exact-duplicate steps** (from OR-condition branches the parser can't
+   fully model) now get collapsed automatically by a post-parse dedup pass
+   keyed on `type|quest|itemID|spellID|class|classExclude|name|zone|x|y` -
+   previously this needed a manual per-chapter pass (see §5/§5b above).
+
+Also promoted `spec/run.lua`, a minimal busted-compatible shim + runner
+(`describe`/`it`/`before_each`/`after_each`/`assert.equals`/`same`/
+`is_true`/`is_false`/`is_nil`) so the whole `spec/*_spec.lua` suite can run
+headlessly via `"/c/Program Files (x86)/Lua/5.1/lua.exe" spec/run.lua`
+without a working `busted`/LuaRocks install (recommended but left as scratch
+tooling in the original Phase 1 session - see "Tooling already built"
+above). All 105 assertions pass, including new regression specs for the
+four fixes above.
+
+**Not attempted, left as documented limitations** (per this plan's own
+precedent of disclosing rather than guessing): OR-group conditions
+(`Cond1/Cond2`) still can't be expressed and stay unfiltered+flagged;
+`.collect`/`.skill`/`.zone`/`.zoneskip`/`.isQuestComplete`/etc. still fall
+through to a generic note; a `travel`-typed step that's really "grind here
+until level X" still completes on arrival rather than after the grind
+(RXPGuides has no explicit kill-count directive to detect this from -
+authoring a heuristic risks false positives, not attempted).
+
+### Audit (impact / performance / dev time, per the standing rule)
+
+- **Impact:** `RXPImport.lua` (parser) and `Core.lua` (`StepApplies`, one
+  new optional field check) - both are additive; no existing route's
+  behavior changes since no shipped step currently sets `classExclude` and
+  the dedup/split/SOD-drop logic only changes output for *future*
+  re-parses, not any already-shipped `Routes/*.lua` file (those are static
+  data, unaffected by an importer-code change). `spec/run.lua` is new,
+  dev-only tooling with zero in-game footprint.
+- **Performance:** none at runtime - `RXPImport.lua` only runs when a
+  developer pastes guide text through its UI or the offline harness; it is
+  never invoked during normal addon operation. `Core.lua`'s new
+  `classExclude` check is one extra conditional `UnitClass` call per step,
+  only for steps that set the field (none yet) - same cost model as the
+  existing `class` check it sits beside.
+- **Dev time:** ~2 hours (parser changes + Core.lua change + regression
+  specs + promoting spec/run.lua + verifying all 105 assertions pass).
+
+### Five rounds of independent code review found real bugs in the above - this is the corrected, final state
+
+The "Impact"/"Dev time" audit above was written after the FIRST pass at these
+fixes, before independent review. Per this session's own "always audit
+plans" AND "always review before commits" standing rules, every fix below
+went through a `code-reviewer` agent pass BEFORE being trusted, and each of
+the first four passes found real, sometimes severe bugs - re-running
+`spec/rxp_harness.lua` against the real RXPGuides source
+(`Classic-Horde-01-12_Durotar.lua`, `Classic-Alliance-1-10_NightElf.lua`,
+both from the `_anniversary_` realm install) is what caught every one of
+these; the synthetic specs alone missed all of them on their own first
+pass. This is the tracked history so a future session doesn't have to
+re-derive why the code looks the way it does:
+
+- **Round 1** found: the SOD/HARDCORE fix targeted the wrong syntax
+  entirely (real guides use a standalone `#season N`/`#hardcore` line, not
+  a `<< SOD` token); line-level class conditions were never actually
+  applied to a split step (the "Innkeeper Grosk" bug - 5 `.train X <<
+  Class` lines all losing their filter); the dedup pass was chapter-wide
+  with a key missing `races`/`optional`/`objective`/`count`/`skipIfLevel`/
+  `path`/`note`, causing real false-positive merges (an Orc-only and a
+  Troll-only copy of the same step collapsing into one, losing the Troll
+  copy); `classExclude` held only one class, silently dropping all but the
+  last from a real `!Warrior !Rogue` condition; a stray `nul` file (Windows
+  redirect artifact) was about to get committed.
+- **Round 2** (after round 1's fixes) found a worse regression: RXPGuides'
+  common same-quest reward-choice pair (`.turnin 788,2 << Shaman` /
+  `.turnin 788 << !Shaman`) was landing BOTH conditions on one step
+  (`class="SHAMAN", classExclude={"SHAMAN"}`), which `Core.lua`'s
+  `StepApplies` rejects for every class - silently losing the Cutting
+  Teeth/Sting of the Scorpid/Sarkoth turn-ins for everyone. Also: line-level
+  RACE filters were dropped entirely; `npc` carried across a split and
+  blocked a later `.target` from ever overwriting it (three different
+  quest-givers all showing as "Master Gadrin"); `#season N << Cond` dropped
+  the step for every class in the block instead of just the conditioned
+  one; `.trainer`/`.hs`/`.deathskip` after a real action silently replaced
+  it instead of getting their own step.
+- **Round 3** (after a substantial redesign separating block-level from
+  line-level conditions) confirmed all of round 2's regressions fixed, and
+  found: 40-55% of accept/turnin steps had lost their `npc` entirely
+  (correct fix for round 2's bug, but too conservative - the dominant real
+  shape is a SINGLE trailing `.target` for a whole multi-action block);
+  `.train id,flags` with the flags argument ignored, so a `textOnly` gate
+  (RXPGuides' own "skip if already known" condition) shipped as a blocking,
+  nameless `spell` step; `#optional` wasn't recognized, so "Equip X"-style
+  item gates shipped non-optional and could block Reconcile forever;
+  `<< skip` (RXPGuides' own disabled-step marker) fell through as
+  "unhandled" instead of being dropped; negated race tokens (`<< !Undead`)
+  were dropped entirely, losing real content for every OTHER race.
+- **Round 4** confirmed those fixed, and found: `#optional`/`.maxlevel`
+  only reached steps that already existed when the tag was read, not a
+  split created later in the same block (since real guides put the tag
+  FIRST); the fix for negated races kept them fully unfiltered-by-race
+  instead of resolving to the complement race list within the guide's own
+  already-parsed faction, so RXPGuides' own "wrong guide" warning
+  (`<< !Orc !Troll` in the Orc/Troll guide) now shipped to exactly the
+  races it's meant to exclude; the `.train` odd-flags note wording didn't
+  account for RXPGuides' second "reverse" flag bit.
+- **Round 5** confirmed those fixed, and found one more real, pre-existing
+  bug that the negated-race fix made worse: `RACE_TOKENS` mapped
+  Undead/Scourge to the human-readable `"Undead"`, but `Data:PlayerRace()`
+  returns WoW's own raceFile (`"Scourge"`) and `Core.lua`'s `StepApplies`
+  does an exact string compare - every already-shipped route filtering on
+  this race already (correctly) uses `"Scourge"` (e.g.
+  `Routes/Horde/Mulgore.lua`), so this would have silently hidden content
+  from Undead players on the next import. Fixed by changing `RACE_TOKENS`
+  and the new `FACTION_RACES` table to use `"Scourge"`.
+
+**Final shape of the fix** (RXPImport.lua): `blockClass`/`blockClassExclude`/
+`blockRaces`/`blockInfoOnly`/`blockSkipIfLevel` capture the "step << Cond"
+block's own condition/flags once, kept separate from what any individual
+line's own condition resolves a specific split step to (`ResolveLineFilter`
+combines the two, dropping a line only on a genuine contradiction).
+`StepForAction` splits on a resolved-filter mismatch as well as a
+type/id/objective mismatch (catching same-quest reward-choice pairs), and
+its `carry` table forwards the BLOCK's own filters/flags (not whatever the
+current step happens to hold) to both existing and future splits.
+`FACTION_RACES` + `route.faction` resolve a negated race to the faction's
+complement race list. `npc` is intentionally NOT carried across a split or
+backfilled per-line (that caused real misattribution); instead `FinishBlock`
+fills it once, at block-end, only when the whole block named exactly one
+distinct NPC. `#season`/`#hardcore`/`#optional` are read as real standalone
+`#`-tag lines (the syntax real guides actually use), not `<<` tokens.
+`.train id,flags` distinguishes a real training action from a silent
+`textOnly` condition (RXPGuides' own `functions.lua` semantics, verified
+directly against that source, not guessed). A post-parse dedup pass
+collapses only ADJACENT exact-duplicate steps, never `hearth`/`death`/
+`trainer` types.
+
+**Not attempted, left as documented limitations** (per round 5's own
+findings, explicitly triaged as low-severity/no real-guide occurrence found
+rather than skipped by oversight): a positive race and a negated race in
+the same AND-group combine as an OR instead of an AND (zero occurrences
+found across the Classic guides); `.maxlevel N << Cond` is last-directive-
+wins rather than taking the max across differently-conditioned lines
+(low-impact ordering quirk, not content loss); the pre-existing "genuinely
+required item, no accept/turnin action, still non-optional" pattern (rare
+drop-item quests) can still block a player who never gets the drop.
+
+### Audit (impact / performance / dev time, per the standing rule) - rounds 2-5
+
+- **Impact:** still contained to `RXPImport.lua` (parser), `Core.lua`
+  (`StepApplies`, `classExclude` now a list), `Routes/Horde/Durotar.lua`
+  (schema-header doc comment), and dev-only `spec/`/`plans/` files. No
+  shipped `Routes/*.lua` file was touched - these fixes only change output
+  for *future* re-parses, exactly as scoped in round 1's audit.
+- **Performance:** still none at runtime - same reasoning as round 1's
+  audit; nothing here changes when or how often any WoW API is called
+  in-game.
+- **Dev time:** roughly 6-8 hours across five review rounds (each a
+  `code-reviewer` agent pass that re-ran the real-guide harness itself,
+  plus this session's own fix-and-reverify cycle after each). Far more than
+  the original ~2 hour estimate, but each round found genuine bugs a
+  synthetic-spec-only pass would have shipped - directly validates why this
+  repo's standing rule is "always review before commits," not "review
+  once."

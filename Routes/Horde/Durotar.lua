@@ -69,6 +69,10 @@
 --   note      one line of guidance shown under the step
 --   races     optional filter, e.g. { "Orc", "Troll" }
 --   class     optional filter, e.g. "ROGUE"
+--   classExclude  optional list filter, e.g. { "HUNTER", "WARRIOR" } -
+--             shown to every class EXCEPT the ones listed (RXPImport.lua
+--             produces this from a guide's "<< !ClassName" condition;
+--             hand-authored steps can use it too)
 --   minLevel  don't show this step below this level
 --   targetLevel  for grind/level steps
 --   path      optional ordered list of intermediate waypoints for a

@@ -206,6 +206,13 @@ local function StepApplies(step)
         if step.class ~= classFile then return false end
     end
 
+    if step.classExclude then
+        local _, classFile = UnitClass("player")
+        for _, ex in ipairs(step.classExclude) do
+            if ex == classFile then return false end
+        end
+    end
+
     if step.minLevel and Data:PlayerLevel() < step.minLevel then
         return false
     end

@@ -220,6 +220,13 @@ describe("StepApplies", function()
         Data.level = 10
         assert.is_false(Core.StepApplies(step))
     end)
+
+    it("filters by classExclude (a list, since a single condition can exclude several classes)", function()
+        -- wow_stubs' UnitClass stub returns ROGUE
+        assert.is_false(Core.StepApplies({ classExclude = { "ROGUE" } }))
+        assert.is_false(Core.StepApplies({ classExclude = { "WARRIOR", "ROGUE" } }))
+        assert.is_true(Core.StepApplies({ classExclude = { "WARRIOR", "MAGE" } }))
+    end)
 end)
 
 describe("SetIndex", function()
