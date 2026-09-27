@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Classic Era.
 ## Author: sekitoxD
-## Version: 1.7.13
+## Version: 1.7.14
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom
