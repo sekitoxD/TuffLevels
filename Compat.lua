@@ -9,10 +9,10 @@
 -- combination breaks the usual detection idiom, so never gate on the
 -- interface number alone.
 --
--- Confirmed in-game (2026-09-20, plans/06-architecture-ideas-followup.md item 5):
--- Forever's Map button reports "waypoint set" with no TomTom installed, so
--- Data:SetWaypoint's native fallback (C_Map.SetUserWaypoint + UiMapPoint) is
--- a working API path on this client, not just a TomTom passthrough.
+-- Confirmed in-game (2026-09-20): Forever's Map button reports "waypoint
+-- set" with no TomTom installed, so Data:SetWaypoint's native fallback
+-- (C_Map.SetUserWaypoint + UiMapPoint) is a working API path on this
+-- client, not just a TomTom passthrough.
 
 local ADDON, ns = ...
 
@@ -303,13 +303,16 @@ function Compat:GetItemSellPrice(item)
     return type(sellPrice) == "number" and sellPrice or nil
 end
 
--- plans/01-bug-fixes.md V4: on Forever, pcall(SetCVar, ...) reports success
--- but a GetCVar readback right after never shows the new value - the same
--- shape of problem GetItemSellPrice above already has to work around for
--- item info. Leading hypothesis is that the global SetCVar/GetCVar pair is
--- deprecated in favor of a namespaced C_CVar.SetCVar/C_CVar.GetCVar on
--- Forever, mirroring the C_Item precedent, so prefer C_CVar.* when present
--- and fall back to the legacy globals otherwise.
+-- On Forever, pcall(SetCVar, ...) reports success but a GetCVar readback
+-- right after never shows the new value - the same shape of problem
+-- GetItemSellPrice above already has to work around for item info. The
+-- initial hypothesis was that the global SetCVar/GetCVar pair is deprecated
+-- in favor of a namespaced C_CVar.SetCVar/C_CVar.GetCVar on Forever,
+-- mirroring the C_Item precedent - live diagnostics later showed that
+-- wasn't actually the root cause (both forms work identically; the real
+-- issue was "nameplateShowFriends" not being a registered cvar on Forever
+-- at all, see Marker.lua's EnableFriendlyPlates), but preferring C_CVar.*
+-- when present is still correct hardening in its own right, so it stayed.
 --
 -- SetCVar/C_CVar.SetCVar return nothing on success, so Guard's own return
 -- value can't tell "threw" apart from "succeeded and returned nothing" -

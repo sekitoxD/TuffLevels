@@ -429,9 +429,9 @@ end
 
 -- Friendly NPC nameplates are off by default for most people, which would
 -- make the whole feature invisible. Offer it rather than forcing it.
--- plans/01-bug-fixes.md V4: confirmed live that the readback failure isn't
--- a global-vs-C_CVar API problem (both work identically - both returned "1"
--- for a known-good cvar) - "nameplateShowFriends" simply isn't a registered
+-- Confirmed live that the readback failure isn't a global-vs-C_CVar API
+-- problem (both work identically - both returned "1" for a known-good
+-- cvar) - "nameplateShowFriends" simply isn't a registered
 -- cvar on Forever at all (C_CVar.GetCVarDefault returns nothing for it
 -- there), while "nameplateShowFriendlyNPCs" is (default "0"). This feature
 -- only ever marks NPCs (quest givers/objective mobs), never other players,

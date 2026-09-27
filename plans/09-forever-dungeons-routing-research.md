@@ -232,3 +232,11 @@ verified data.
 | In-game verification (R3) | None until done | n/a | ~30-45 min at level 23 with a group |
 
 Continued in `plans/10-forever-dungeons-implementation.md`: the dungeon is now mandatory, the Undead entry point and the Alliance and Hall of Thanes blocks are added, and there is an audited plan for trimming later grind.
+
+**Closed to further research (2026-09-26):** this file and
+`plans/11-wowhead-dungeon-quest-crosscheck.md` were two secondary-source
+research passes on the same two dungeons; a third was ruled out by plan
+10's "Research moratorium" section, which also consolidates every open
+question from this file into one in-game checklist. Any further work on
+Ruins of Lordaeron or Hall of Thanes happens there, in-game, not by
+reading another website.

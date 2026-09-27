@@ -107,10 +107,10 @@ function Panel:FirstRunSetup()
     db.setupDone = true
 
     -- NPC markers attach to nameplates, which are off by default. Goes
-    -- through Compat:SetCVarSafe (plans/01-bug-fixes.md V4), same as
-    -- Marker:EnableFriendlyPlates and the Panel nameplates button below -
-    -- a raw Guard(SetCVar, ...) here can't detect or work around
-    -- "nameplateShowFriends" not existing as a cvar on Forever.
+    -- through Compat:SetCVarSafe, same as Marker:EnableFriendlyPlates and
+    -- the Panel nameplates button below - a raw Guard(SetCVar, ...) here
+    -- can't detect or work around "nameplateShowFriends" not existing as a
+    -- cvar on Forever.
     Compat:SetCVarSafe("nameplateShowFriends", 1)
     Compat:SetCVarSafe("nameplateShowFriendlyNPCs", 1)
 
@@ -518,12 +518,11 @@ function Panel:ShowDisplayMenu()
             f.mobBtn:SetText(ns.Marker.markMobs and "Objective mobs: on" or "Objective mobs: off")
         end)
 
-        -- plans/01-bug-fixes.md V4: "nameplateShowFriends" isn't a registered
-        -- cvar on Forever at all - read the same "nameplateShowFriendlyNPCs"
-        -- cvar Marker:EnableFriendlyPlates/DisableFriendlyPlates confirm
-        -- success against, via the same C_CVar-preferring Compat wrapper, or
-        -- this button's label and on/off click logic silently invert on
-        -- Forever.
+        -- "nameplateShowFriends" isn't a registered cvar on Forever at all -
+        -- read the same "nameplateShowFriendlyNPCs" cvar
+        -- Marker:EnableFriendlyPlates/DisableFriendlyPlates confirm success
+        -- against, via the same C_CVar-preferring Compat wrapper, or this
+        -- button's label and on/off click logic silently invert on Forever.
         f.platesBtn = MakeButton(f, "Nameplates", -68, function()
             local cur = Compat:GetCVarSafe("nameplateShowFriendlyNPCs")
             if cur == "1" then ns.Marker:DisableFriendlyPlates()

@@ -297,9 +297,9 @@ describe("Compat:RegisterUnitEvents", function()
 end)
 
 describe("Compat:SetCVarSafe / GetCVarSafe", function()
-    -- plans/01-bug-fixes.md V4: prefer C_CVar.* when present, fall back to
-    -- the legacy globals otherwise; success/failure must not depend on the
-    -- setter's return value, since both forms return nothing on success.
+    -- Prefer C_CVar.* when present, fall back to the legacy globals
+    -- otherwise; success/failure must not depend on the setter's return
+    -- value, since both forms return nothing on success.
     --
     -- Several tests below overwrite _G.SetCVar/_G.GetCVar directly (some
     -- with throwing stubs, to prove C_CVar.* took priority over them) -

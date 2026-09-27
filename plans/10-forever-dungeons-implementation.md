@@ -25,6 +25,62 @@ added.
 
 ---
 
+## Research moratorium (2026-09-26): no more secondary-source passes on these two dungeons
+
+Three plans in a row (`plans/09-forever-dungeons-routing-research.md`,
+this plan, `plans/11-wowhead-dungeon-quest-crosscheck.md`) have each
+cross-checked Ruins of Lordaeron and Hall of Thanes against a different
+beta-content website (foreverchanges.pro, then a Wowhead community guide).
+Each pass found real value the first time (foreverchanges.pro gave the
+quest list; the Wowhead guide added coordinates and caught two real
+conflicts), but the return has been shrinking, and both sources carry the
+same disclaimer: this is beta data, self-described as incomplete, and
+neither one is a substitute for this repo's own `/tuff capture` workflow.
+A fourth pass reading a third website would be spending research effort on
+data that only becomes trustworthy once captured live anyway — see
+`CLAUDE.md`/`README.md`'s existing rule that a route's own coordinates are
+always the source of truth, external sources are enrichment only.
+
+**Decision: no further web research on Ruins of Lordaeron or Hall of
+Thanes.** The only way any of the open items below get resolved from here
+is the in-game capture session Phase 1 already calls for. If a genuinely
+new primary source shows up (e.g. official patch notes at GA, not another
+fan-run guide site), that's a judgment call for whoever's holding this
+plan then, not a standing invitation to keep cross-referencing fan wikis
+in the meantime.
+
+**Consolidated in-game checklist** — every open question from plans 09, 10,
+and 11 that secondary sources could not resolve, gathered in one place so
+a single play session (see Phase 1 below) closes all of them instead of
+being spread across three documents:
+
+| # | Quest / step | Open question | Source of the gap |
+|---|---|---|---|
+| 1 | Old Ironforge Incursion (Hall of Thanes) | Giver location (Earthseer Farsen, Dun Morogh) — currently a note only, on no route's path | Plan 09 §6, plan 10 R-d |
+| 2 | Captain Truman | Location unknown | Plan 10 R-d |
+| 3 | All 4 Hall of Thanes quests | Turn-in NPC/location unknown | Plan 10 R-d |
+| 4 | Abominable Creatures (Ruins of Lordaeron) | Turn-in NPC/location unknown | Plan 10 R-d |
+| 5 | Unending Torment | Follow-up chain length/content unknown | Plan 10 R-d |
+| 6 | The Wrath of Rath'mael | XP value not listed anywhere; coordinate is `approx = true`, borrowed from an unrelated step | Plan 10 R-d |
+| 7 | A Frightened Request | Moved to Undercity/Tabitha Heartweaver on a second-source guide's say-so (plan 11 R2) — never confirmed against the live client | Plan 11 R2 |
+| 8 | Crest of Lordaeron | Unresolved conflict: is it a pre-dungeon NPC accept (current: Oran Snakewrithe, Undercity) or picked up inside the dungeon with no accept step at all? | Plan 11 R2 |
+| 9 | Light's Justice, The New Plague | Coordinates added from the Wowhead guide (plan 11 R1), never confirmed the arrow actually lands there | Plan 11 R1 |
+| 10 | All 10 Ruins of Lordaeron quests + 4 Hall of Thanes quests | No numeric `quest` ID yet — everything resolves by name only | Plan 10 Phase 1 item 3 |
+| 11 | First-clear bonus, Forever's XP scale | Not documented on either source site; has to be measured live | Plan 10, "What we don't know" |
+
+Phase 1 below already covers items 10-11 and the capture mechanics for
+1-9; this table just makes sure none of the 9 quest-specific loose threads
+gets silently dropped once the session actually happens.
+
+- **Impact:** none — this section only redirects future effort, no code or
+  route data changes.
+- **Performance:** n/a.
+- **Dev time:** ~0 to adopt; it saves time by preventing a fourth research
+  pass (each of the first three ran 30-90+ min of source-reading) that
+  would resolve nothing beyond what a live capture session settles anyway.
+
+---
+
 ## What we don't know, and why it gates everything after phase 0
 
 - **The first-clear bonus isn't documented anywhere.** foreverchanges.pro's
@@ -98,7 +154,10 @@ So the default course is **no route cuts**. The lead pays off automatically.
    - `Data:IsQuestComplete(id)` then works across reloads.
    - **The 17b race filter can then go.** 17b becomes a fallback that
      auto-skips for anyone who already ran the dungeon, whatever their race.
-   - Capture giver and turn-in coordinates in the same pass.
+   - Capture giver and turn-in coordinates in the same pass, and work through
+     the "Consolidated in-game checklist" table in the moratorium section
+     above — it's the complete list of what secondary sources couldn't
+     settle, so this session is the one place all of it gets resolved.
 4. **Record the level at each Solo chapter header** from 18 to 39. The tracker
    already prints it against `atLevel`. That baseline is the sheet's Classic
    pace, not a measured no-dungeon Forever run, so compare the two before

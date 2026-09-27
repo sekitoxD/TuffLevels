@@ -190,3 +190,13 @@ verification checklist.
 **R4 (2026-09-24): deferred by user decision, left for later work.** Not
 sized or started this pass — still just the estimate in section 3 (~2.5-4
 hours for all 15 remaining dungeons) if picked up later.
+
+**Closed to further research on Ruins of Lordaeron / Hall of Thanes
+(2026-09-26):** this was the second of two secondary-source passes on
+those two dungeons (after `plans/09-forever-dungeons-routing-research.md`);
+`plans/10-forever-dungeons-implementation.md`'s "Research moratorium"
+section rules out a third and folds this file's two unresolved conflicts
+(A Frightened Request's location, Crest of Lordaeron's accept step) into
+its consolidated in-game checklist. R4, if ever picked up, is a different
+scope (the other 15 Classic dungeons) and isn't another pass on these two,
+so it isn't affected by the moratorium.
