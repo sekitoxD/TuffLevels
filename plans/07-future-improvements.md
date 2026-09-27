@@ -344,6 +344,115 @@ triage and the in-game playtest of all four routes are still open. Treat
 this as the mechanical/data half of A1 done for one of four files, not the
 whole item closed.
 
+**A1 follow-up (2026-09-26): the three Alliance files had the same bug in a
+different field.** A literal `"Kalimdor"`/`"Eastern Kingdoms"` string grep
+against `Human.lua`, `DwarfGnome.lua`, and `NightElf.lua` (as the previous
+pass ran) came back clean in all three - but these files also carry a
+numeric `map` field (uiMapID) as an alternate to `zone`, and each one had
+52/54/50 step lines (149/152/146 total `map = 1414/1415` occurrences,
+counting `path` sub-points) using Classic Era's Kalimdor/Eastern Kingdoms
+**continent** IDs, the identical dead-arrow defect invisible to a string
+grep since `Data:StepMap` returns `step.map` raw with no validation.
+
+Two attempts were needed, both caught by code review before shipping:
+
+1. **First attempt:** relabeled every affected step's `zone` without
+   converting its coordinate, since continent-map and zone-map coordinates
+   use unrelated scales. The arrow would have gone from "dead" to
+   "confidently wrong," which is worse - discarded entirely.
+2. **Second attempt:** scoped down to only the 6 dungeon groups with a
+   genuine, already-verified same-repo anchor (table below), 39 lines (91
+   `map =` occurrences) fixed per file - but giving these steps a
+   resolvable coordinate also switched ON `Core.lua`'s travel-ticker
+   auto-complete for them (it was never triggering before, since a
+   continent map ID can never equal the player's actual zone map). Five of
+   the fixed lines were real in-place tasks ("kill this," "use this item")
+   authored as `type = "travel"` steps, not movement - with every step in a
+   group now sharing one anchor point, they would have silently
+   auto-skipped within 15 yards of each other, dropping real objectives.
+   Reverted those 5 back to their original `map = 141x` (never-resolves)
+   state. Net change is 34 lines (75 occurrences) fixed per file: 13 are
+   `type = "travel"` steps that now correctly auto-complete on arrival
+   (real "walk here" steps - spot-checked all 13 across all three files,
+   none share the reverted steps' "task, not movement" problem), and the
+   other 21 are `complete`/`accept`/`turnin` steps that finish from quest
+   state regardless, where this pass only fixes the arrow.
+
+| Dungeon | Anchor used | Source of the anchor |
+|---|---|---|
+| Deadmines | Westfall, 42.56/71.71 | This same file's own already-correct "Travel to The Deadmines"/escort steps |
+| Wailing Caverns | The Barrens, 46.0/36.3 | `Routes/Horde/Mulgore.lua`'s own plan-07-A1-confirmed anchor |
+| Gnomeregan | Dun Morogh, 24.2/39.1 | This same file's own "Start Looking for a Gnomeregan group" steps |
+| Scarlet Monastery | Tirisfal Glades, 82.32/35.24 | `Routes/Horde/Mulgore.lua`'s own real (non-buggy) "Head to the Scarlet Monastery" coordinate |
+| Uldaman | Badlands, 42.6/12.2 | `Routes/Horde/Mulgore.lua`'s own plan-07-A1-confirmed anchor |
+| Maraudon | Desolace, 29.89/62.44 | The step's own already-authored `path` waypoint - no cross-file borrow needed |
+
+Reverted (kept at `map = 141x`, no anchor, so they stay manual-advance):
+"Kill Troggs and Gnomes... [White Punch Card]" and "Use the [White Punch
+Card] at the Matrix Punchograph 3005-A" (Gnomeregan), and "Use the [Amulet
+of Spirits] on the Spirit of Gelk/Kolk/Magra" (Maraudon, all three).
+
+Applied identically across all three files (their RXPGuides source text
+for these shared zones is byte-identical, confirmed before editing). Each
+group's primary "Travel to X"/"Enter X" step also carries a note citing
+the anchor, matching Mulgore's own convention - `approx = true` itself has
+no engine effect (nothing reads it outside `Arrow.lua`'s unrelated local
+variable of the same name), it is metadata only.
+
+Left deliberately untouched, with no anchor available and disclosed rather
+than guessed: Razorfen Kraul, Razorfen Downs, Sunken Temple, Blackrock
+Mountain (Franclorn/Brazier/Lothos - these NPCs are inside Blackrock
+Mountain's own separate map, so even relabeling to "Burning Steppes" would
+be wrong regardless of coordinate), the Dun Morogh->Wetlands deathskip jump
+(one copy in Human.lua, two in DwarfGnome.lua, none in NightElf.lua - each
+paired with a `type = "death"` step, which is event-driven and unaffected
+either way), and the swim-to-Westfall fallback paths (~19 waypoints each,
+two per file in all three files, not NightElf-only) - all still
+`map = 1414`/`1415`, an honest known gap pending real in-game capture, same
+status as before this pass.
+
+**Also found, not fixed here (out of this pass's scope):**
+`Routes/Horde/Mulgore.lua`'s own original A1 fix (commit `1446770`) is
+itself incomplete on two counts:
+- It still has unfixed `map = 1414`/`1415` steps today: Razorfen Kraul
+  (~line 2033), Razorfen Downs (~line 2669), the whole Maraudon group
+  (~lines 4057-4067, not just the orange-side entrance), Sunken Temple
+  (~lines 4687-4689), and Blackrock Mountain (~lines 5100-5156) - the exact
+  same gap class as the Alliance files' remaining untouched groups above.
+- Its "Enter Gnomeregan"/"Exit Gnomeregan" steps (~lines 2049, 4262) and its
+  own "Enter Scarlet Monastery" step (~line 2730, `x = 47.76, y = 19.49` -
+  the same continent numbers relabeled as a zone, already marked
+  "unverified") still carry this bug - the original bug class A1 was
+  supposed to eliminate, missed by the original pass's own grep. (Gated
+  behind the rarely-used Gnomeregan-transponder chain and an already-noted
+  unverified coordinate respectively, so the practical exposure is low -
+  but the file shouldn't be cited as "the fixed reference" without this
+  caveat.)
+
+Fixing Mulgore.lua's own residual gaps would be a natural next slice of
+this same work, using the identical technique, but is left for a separate
+pass rather than folded in here.
+
+**Impact:** 3 route files (`Human.lua`, `DwarfGnome.lua`, `NightElf.lua`),
+additive-only in the sense that no `type`/`quest`/`class`/`races`/`npc`
+field was touched - only `zone`/`map`/`x`/`y`/`approx`/`note`, and a
+behavioral effect on 13 of the 34 fixed lines per file (enables intended
+travel-ticker auto-complete for real "walk here" steps that previously
+needed a manual Next).
+**Performance:** none - data-only, same runtime cost model as any other
+step.
+**Dev time:** ~3 hours across investigation, a discarded first attempt,
+three code-review rounds, and the corrected pass. No WebFetch/WebSearch
+access was available during investigation (raw `curl` against
+Wowhead/Wowpedia/Warcraft Tavern returned HTTP 403 from all three), so this
+pass relied entirely on cross-referencing already-verified anchors already
+committed in this repo rather than fresh external lookups. Code review
+independently traced each of the 6 anchors to its in-repo source, caught
+the auto-advance regression on the second pass, and confirmed on a third
+pass that the revert was complete and no other travel step shared the same
+problem - it did not, and could
+not, independently check them against an external source either.
+
 **A3 — mostly resolved already, discovered during this pass (2026-09-25).**
 The "more concerning" half of A3 — `Rogue:ScanSpellbook` re-stamping
 already-known abilities with the wrong level on every Forever login — turns
