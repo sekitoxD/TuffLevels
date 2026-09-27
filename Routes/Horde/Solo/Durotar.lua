@@ -549,6 +549,20 @@ Leg(1, "Durotar", {
       zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 10, x = 49.5, y = 50.6,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Slaying the Beast (just skipped above) and Hidden Enemies #3
+      -- (skipped later this chapter) are both part of the Ragefire Chasm bundle -
+      -- the dungeon sits directly beneath Orgrimmar. If a group is available, the
+      -- full run (Testing an Enemy's Strength, Searching for the Lost Satchel,
+      -- Returning the Lost Satchel, Slaying the Beast, The Power to Destroy...,
+      -- Hidden Enemies' final leg - ~7,130 XP, 6 quests, level 9-18) is worth doing
+      -- instead of skipping just these two. Added 2026-09-26 per plans/13; NOT YET
+      -- IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Ragefire Chasm bundle",
+      zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 10,
+      note = "~7,130 XP across 6 quests (Testing an Enemy's Strength, Searching for the Lost Satchel, Returning the Lost Satchel, Slaying the Beast, The Power to Destroy..., Hidden Enemies' final leg), right beneath Orgrimmar, if you have a group. See plans/13.",
+    },
+    {
       type = "death", name = "Ragefire Chasm to Jaggedswine Farm", zone = "Durotar",
       location = "Jaggedswine Farm", atLevel = 10, logCount = 6, x = 52.8, y = 49.0,
       note = "Intentional death. Release and run back, or rez at the graveyard named here.",

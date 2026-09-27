@@ -298,6 +298,21 @@ Leg(8, "Stonetalon Mts", {
       atLevel = 24, logCount = 16, x = 71.2, y = 94.8,
     },
     {
+      -- Warlock class chain continuation (plans/quests/notable_horde_quests.md,
+      -- "TOP", min level 20): Ken'zigla's Draught is the Malaka'jin/Stonetalon leg
+      -- of the Succubus chain started at Camp Taurajo (TheBarrens.lua Chapter 13,
+      -- "Devourer of Souls"). That chain's own prerequisites (Blind Cazul, News of
+      -- Dogran x2) aren't in this route either, so Ken'zigla may have nothing to
+      -- offer yet when a Warlock reaches this point - `optional` so it can never
+      -- stall Reconcile()'s auto-advance if the quest isn't actually up. Continues
+      -- with Love's Gift and ends in The Binding (summon fight) - no confirmed
+      -- pickup location for those two yet, so they aren't inserted here. Added
+      -- 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", optional = true, questName = "Ken'zigla's Draught", zone = "Stonetalon Mts",
+      location = "Malaka'Jin", atLevel = 24, x = 71.2, y = 94.8, class = "WARLOCK",
+      note = "Warlock Succubus chain, Stonetalon leg (started in TheBarrens.lua Chapter 13) - continues with Love's Gift and The Binding (summon fight), neither placed yet (no confirmed pickup location). Optional: its own prereqs (Blind Cazul, News of Dogran) aren't in this route, so it may not be offered yet. Unverified - see plans/13.",
+    },
+    {
       type = "turnin", questName = "Jin'Zil's Forest Magic", zone = "Stonetalon Mts",
       location = "Malaka'Jin", atLevel = 24, logCount = 15, x = 74.4, y = 97.8,
     },

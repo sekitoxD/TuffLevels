@@ -49,6 +49,22 @@ Leg(41, "Western Plaguelands", {
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54, x = 83.1, y = 71.6,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Barov Family Fortune (just skipped above) is part of the larger
+      -- Key to Scholomance + Scholomance bundle. This route already carries Scarlet
+      -- Diversions, All Along the Watchtowers and Skeletal Fragments (picked up just
+      -- above and later in this leg) - part of the key chain, but not all of it.
+      -- Mold Rhymes With..., Fire Plume Forged, Araj's Scarab and The Key to
+      -- Scholomance itself are NOT anywhere in this route and would need to be added
+      -- separately before the key is actually complete. If a group is available,
+      -- finishing the key and running the dungeon (Krastinov quests, Kirtonos, The
+      -- Lich, Barov Family Fortune) is worth it instead of skipping the last quest.
+      -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Scholomance bundle",
+      zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54,
+      note = "This route already has part of the key chain (Scarlet Diversions, All Along the Watchtowers, Skeletal Fragments) but is missing Mold Rhymes With..., Fire Plume Forged, Araj's Scarab and The Key to Scholomance itself - those aren't in this route yet. The dungeon (Krastinov quests, Kirtonos, The Lich, Barov Family Fortune) needs a group. See plans/13.",
+    },
+    {
       type = "note", optional = true, name = "Skip for now: A",
       note = "Do not pick up yet - the route comes back for A Plague Upon Thee #1 on a later pass.",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54, x = 83.3, y = 72.3,

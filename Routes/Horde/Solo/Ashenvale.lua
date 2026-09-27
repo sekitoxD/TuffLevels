@@ -50,6 +50,19 @@ Leg(9, "Ashenvale", {
       zone = "Ashenvale", location = "Zoram Strand", atLevel = 24, x = 11.6, y = 34.2,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Amongst the Ruins and The Essence of Aku'Mai (just skipped above)
+      -- are part of the larger Blackfathom Deeps bundle (Trouble in the Deeps, the
+      -- prereq, was already turned in above). If a group is available, the full
+      -- bundle (The Essence of Aku'Mai, Allegiance to the Old Gods, Amongst the
+      -- Ruins, Baron Aquanis, Blackfathom Villainy - ~13,500 XP excluding the
+      -- prereq, 5 quests, level 24-30) is worth running instead of skipping. Added
+      -- 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Blackfathom Deeps bundle",
+      zone = "Ashenvale", location = "Zoram Strand", atLevel = 24,
+      note = "~13,500 XP across 5 quests (The Essence of Aku'Mai, Allegiance to the Old Gods, Amongst the Ruins, Baron Aquanis, Blackfathom Villainy), excluding the Trouble in the Deeps prereq (already turned in above), if you have a group. See plans/13.",
+    },
+    {
       type = "complete", questName = "Vorsha the Lasher", zone = "Ashenvale",
       location = "Zoram Strand", atLevel = 24, logCount = 15, x = 9.6, y = 27.6,
     },

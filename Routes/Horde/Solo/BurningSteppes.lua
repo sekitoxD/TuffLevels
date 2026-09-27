@@ -20,6 +20,35 @@ Leg(36, "Burning Steppes", {
       zone = "Badlands", location = "Kargath", atLevel = 52, x = 5.0, y = 47.6,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Dishamony of Flame (just skipped above, likely the source
+      -- spreadsheet's own spelling of the BRD quest Disharmony of Fire) is part of
+      -- the larger Blackrock Depths bundle. If a group is available, the full run
+      -- (Dark Iron Legacy, A Taste of Flame, Incendius!, Disharmony of Fire, The
+      -- Princess Saved?, Operation: Death to Angerforge, Attunement to the Core -
+      -- level 52-60) is worth doing instead of skipping. Added 2026-09-26 per
+      -- plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Blackrock Depths bundle",
+      zone = "Badlands", location = "Kargath", atLevel = 52,
+      note = "7 quests (Dark Iron Legacy, A Taste of Flame, Incendius!, Disharmony of Fire, The Princess Saved?, Operation: Death to Angerforge, Attunement to the Core), level 52-60, if you have a group. See plans/13.",
+    },
+    {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): no existing skip note in this file names an LBRS/UBRS quest
+      -- directly, but both spires share the same Blackrock Mountain entrance this
+      -- leg already passes (Flame Crest, this leg's flight point, reached later in
+      -- this same chapter). Placed here beside the Blackrock Depths bundle note
+      -- above rather than at Flame Crest itself, since no LBRS/UBRS quest name to
+      -- anchor on appears anywhere in this file (fallback: nearest existing step in
+      -- the zone's own chapter). If a group is available, Warlord's Command (starts
+      -- the Onyxia attunement), Seal of Ascension, Kibler's Exotic Pets, Urok
+      -- Doomhowl, and UBRS: For The Horde! (level 55-60) are worth a detour. Added
+      -- 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: LBRS/UBRS bundle",
+      zone = "Burning Steppes", location = "Flame Crest", atLevel = 52,
+      note = "5 quests (Warlord's Command, Seal of Ascension, Kibler's Exotic Pets, Urok Doomhowl, UBRS: For The Horde!), level 55-60, if you have a group. Warlord's Command starts the Onyxia attunement. See plans/13.",
+    },
+    {
       type = "accept", questName = "Dreadmaul Rock", zone = "Badlands", location = "Kargath",
       atLevel = 52, logCount = 13,
       note = "This NPC patrols. Look along the road, not at one point.",

@@ -377,9 +377,34 @@ Leg(20, "Hillsbrad Foothills", {
       zone = "Undercity", location = "Magic Quarter", atLevel = 37, x = 74.0, y = 33.3,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Bring the End (just skipped above) is part of the Razorfen Downs
+      -- bundle. If a group is available, the full run (Bring the End, Extinguishing
+      -- the Idol, An Unholy Alliance - level 37-42, no XP sum sourced yet) is worth
+      -- doing instead of skipping. Added 2026-09-26 per plans/13; NOT YET IN-GAME
+      -- VERIFIED.
+      type = "note", optional = true, name = "If grouped: Razorfen Downs bundle",
+      zone = "Undercity", location = "Magic Quarter", atLevel = 37,
+      note = "3 quests (Bring the End, Extinguishing the Idol, An Unholy Alliance), level 37-42, no XP sum sourced yet, if you have a group. See plans/13.",
+    },
+    {
       type = "note", optional = true, name = "Skip: 2 quests here",
       note = "The route deliberately skips The Crown of Will #1, Into The Scarlet Monastery. Low XP for the travel time.",
       zone = "Undercity", location = "Royal Quarter", atLevel = 37, x = 57.7, y = 93.8,
+    },
+    {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles" and "Scarlet Monastery (Horde)"): Into The Scarlet Monastery (just
+      -- skipped above) starts at Varimathras here in Undercity and needs Loksey
+      -- (Library), Herod (Armory), and Mograine/Whitemane (Cathedral) - 5,150 XP on
+      -- its own. Side quests Hearts of Zeal, Vorrel's Revenge, Compendium of the
+      -- Fallen, Test of Lore add more. The Library run is also where the Mage's
+      -- Wand chain's Rituals of Power is picked up (see the Mage-only note in
+      -- TheBarrens.lua/ThousandNeedles.lua) - same group-content tie-in, not a
+      -- separate step. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Scarlet Monastery bundle",
+      zone = "Undercity", location = "Royal Quarter", atLevel = 37,
+      note = "Into The Scarlet Monastery (5,150 XP; needs Loksey/Library, Herod/Armory, Mograine+Whitemane/Cathedral) plus side quests Hearts of Zeal, Vorrel's Revenge, Compendium of the Fallen, Test of Lore, level 33-45, if you have a group. The Library run also covers the Mage chain's Rituals of Power. See plans/13.",
     },
     {
       type = "travel", name = "Undercity to Tarren Mill", zone = "Undercity",

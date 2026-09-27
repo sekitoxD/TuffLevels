@@ -320,6 +320,11 @@ points, for example) and add an `optional = true` bundle note beside it. Also no
 the Stonetalon leg of the Succubus chain (Ken'zigla's Draught at Malaka'jin) and the SM
 Library leg of the Mage's Wand chain, both flagged in their respective notes above.
 
+**Update (2026-09-26, follow-up session):** all of the above except Stratholme is now
+done - see the new implementation log entry immediately below. Only the Stratholme
+bundle (of the 12 items originally listed as not-done) remains unplaced, for lack of any
+existing skip note naming one of its own quests anywhere in `Routes/Horde/Solo/`.
+
 ### Audit (impact / performance / dev time, per the standing rule)
 
 - **Impact:** 7 files touched (`Durotar.lua`, `TheBarrens.lua`, `ThousandNeedles.lua`,
@@ -348,6 +353,67 @@ verify`. Until that happens, treat this exactly like `plans/09`'s Ruins of Lorda
 addition was treated - merged, additive, zero risk to the existing mandatory path (every
 new step is either `class`-gated to a different class than whoever's testing, or
 `optional`), but not yet confirmed correct.
+
+## 5b. Implementation log, follow-up pass (2026-09-26)
+
+Same pattern as §5's R3 additions: each new step is `optional = true` (or `class =
+"WARLOCK"` for the one class-chain leg), anchored beside an *existing* skip note in the
+same file whose own note text names one of that dungeon's quests (found by grepping each
+target quest name across `Routes/Horde/Solo/`, not by assumption), and commented with the
+`plans/13` citation and a "NOT YET IN-GAME VERIFIED" flag, matching commit 98d479f's style
+exactly. No existing step was edited, reordered, or removed.
+
+| Bundle / chain leg | File | Anchored to existing skip / step |
+|---|---|---|
+| Ragefire Chasm (~7,130 XP, 6 quests, L9-18) | `Durotar.lua` | "Skip: S" (Slaying the Beast) |
+| Blackfathom Deeps (~13,500 XP, 5 quests, L24-30) | `Ashenvale.lua` | "Skip: 2 quests here" (Amongst the Ruins, The Essence of Aku'Mai) |
+| Razorfen Downs (3 quests, L37-42, no XP sum sourced) | `HillsbradFoothills.lua` | "Skip: B" (Bring the End) |
+| Scarlet Monastery, Horde (5,150 XP entry + 4 side quests, L33-45) | `HillsbradFoothills.lua` | "Skip: 2 quests here" (Into The Scarlet Monastery) - also folds in the Mage's Wand chain's SM Library/Rituals of Power tie-in per C.2, rather than a separate Mage-only step |
+| Maraudon (7 quests, L39-52) | `Feralas.lua` | "Skip: S" (Shadowshard Fragments) - not Desolace as originally guessed; Shadowshard Fragments is actually skipped during the Feralas leg, not Desolace |
+| Sunken Temple (~7,100 XP entry chain, L46-55) | `SearingGorge.lua` | "Skip: T" (The Temple of Atal'Hakkar) - not Swamp of Sorrows as originally guessed; that file's Sunken Temple quests are all mandatory accept/turnin steps, not skips, so it had no matching anchor |
+| Blackrock Depths (7 quests, L52-60) | `BurningSteppes.lua` | "Skip: 4 quests here" (its "Dishamony of Flame" is almost certainly the source spreadsheet's own spelling of the BRD quest "Disharmony of Fire") |
+| LBRS/UBRS (5 quests, L55-60) | `BurningSteppes.lua` | No quest-name match exists in this file; placed beside the BRD bundle note above, since both dungeons share the same Blackrock Mountain entrance this leg already passes (fallback rule: nearest existing step in the zone's own chapter) |
+| Key to Scholomance + Scholomance (L54-60) | `WesternPlaguelands.lua` | "Skip: B" (Barov Family Fortune, one of the dungeon's own quests) - note text corrected 2026-09-26 (code review) to not claim the full key chain is already in this route; only Scarlet Diversions, All Along the Watchtowers and Skeletal Fragments are, the rest (Mold Rhymes With..., Fire Plume Forged, Araj's Scarab, The Key to Scholomance itself) are not |
+| Stratholme (4 quests, L57-60) | *(not placed)* | No existing skip note anywhere in `Routes/Horde/Solo/` names Above and Beyond, Aurius' Reckoning, The Active Agent, or Ramstein - grepped the whole directory, zero matches, so nothing was added rather than inventing a spot |
+| Succubus chain, Stonetalon leg (Ken'zigla's Draught, `class = "WARLOCK"`) | `StonetalonMts.lua` | Placed beside the existing "Unidentified turn-in at Malaka'Jin" note (Chapter 18, atLevel 24), reusing its coordinates; Love's Gift and The Binding still have no confirmed pickup location and were **not** added, per the same "don't invent a spot" rule. Also made `optional = true` (code review, 2026-09-26): Ken'zigla's own prerequisites (Blind Cazul, News of Dogran x2) aren't in this route, so the quest may not be offered yet when a Warlock reaches this step - without `optional` it could stall `Reconcile()`'s auto-advance |
+
+### Audit (impact / performance / dev time, per the standing rule)
+
+- **Impact:** 8 files touched (`Durotar.lua`, `Ashenvale.lua`, `HillsbradFoothills.lua`,
+  `Feralas.lua`, `SearingGorge.lua`, `BurningSteppes.lua`, `WesternPlaguelands.lua`,
+  `StonetalonMts.lua`), all under `Routes/Horde/Solo/`. Every change is additive - no
+  existing step was edited, removed, or reordered; the new steps are either
+  `optional = true` notes or one `class = "WARLOCK"`, `optional = true` step, so
+  `Reconcile()`'s auto-advance walk is unaffected for every other class and for solo play
+  with no group.
+- **Performance:** none beyond the existing per-step cost model - one more authored step
+  per file evaluated by `IsStepDone()`/`Reconcile()` exactly like every other step already
+  there. No new per-tick or per-event work, no engine change.
+- **Dev time:** this pass (10 new step tables across 8 files, all research/anchor-finding
+  already sourced from `plans/quests/notable_horde_quests.md` and this plan's own §2B/§B
+  quest lists) took roughly the low end of R3's original "~1-1.5 hours per dungeon"
+  estimate per bundle, since no new external research was needed - the only work was
+  grepping each file for a matching existing skip note and copying the established
+  comment/step style. Stratholme's anchor search (grepping the whole directory, finding
+  nothing) cost a few minutes and ended in "don't add it," consistent with this plan's
+  standing rule to report a missing anchor rather than guess one.
+
+### What still has to happen before this is trustworthy
+
+Same caveat as §5's original pass: every new step here is flagged `NOT YET IN-GAME
+VERIFIED` in its comment/note. None of the new dungeon-bundle notes carries its own `x`/`y`
+- they only borrow `zone`/`location`/`atLevel` from the adjacent existing step, same as the
+three dungeon bundles §5 already added; the one class-chain step (Ken'zigla's Draught)
+does borrow real `x`/`y` from the note beside it. All of it needs a real `/tuff capture` +
+`/tuff verify` pass the next time a character reaches each flagged chapter with a group
+(for the bundles) or a Warlock (for the Stonetalon Succubus leg) available to test with.
+
+A code-review pass (2026-09-26) caught and fixed two defects before this was committed:
+the Ken'zigla's Draught step was originally non-optional and could have stalled
+`Reconcile()` for every Warlock (fixed by adding `optional = true`), and the Scholomance
+bundle note originally overstated which key-chain quests this route already carries
+(fixed to name only the three that are actually present). Both fixes are reflected in the
+table above and in the route files themselves.
 
 ---
 

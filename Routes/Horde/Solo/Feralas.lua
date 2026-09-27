@@ -69,6 +69,18 @@ Leg(28, "Feralas", {
       zone = "Orgrimmar", location = "The Valley of Spirits", atLevel = 44, x = 39.2, y = 86.3,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Shadowshard Fragments (just skipped above) is part of the larger
+      -- Maraudon bundle. If a group is available, the full run (The Pariah's
+      -- Instructions/Mark of the Chosen, Corruption of Earth and Seed, Vyletongue
+      -- Corruption, Twisted Evils, Shadowshard Fragments, Legends of Maraudon, The
+      -- Scepter of Celebras - level 39-52) is worth doing instead of skipping just
+      -- this one quest. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "If grouped: Maraudon bundle",
+      zone = "Orgrimmar", location = "The Valley of Spirits", atLevel = 44,
+      note = "7 quests (The Pariah's Instructions/Mark of the Chosen, Corruption of Earth and Seed, Vyletongue Corruption, Twisted Evils, Shadowshard Fragments, Legends of Maraudon, The Scepter of Celebras), level 39-52, if you have a group. See plans/13.",
+    },
+    {
       type = "accept", questName = "Horde Trauma", zone = "Orgrimmar",
       location = "The Valley of Spirits", atLevel = 44, logCount = 12, x = 34.2, y = 84.6,
     },

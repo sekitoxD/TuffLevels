@@ -306,6 +306,18 @@ Leg(30, "Searing Gorge", {
       zone = "Swamp of Sorrows", location = "Stonard", atLevel = 47, x = 47.9, y = 54.8,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): The Temple of Atal'Hakkar (just skipped above) is the final leg
+      -- of the Sunken Temple Horde entry chain. If a group is available, the full
+      -- entry chain (Pool of Tears, The Atal'ai Exile, Return to Fel'Zerul, The
+      -- Temple of Atal'Hakkar - ~7,100 XP, level 46-55) is worth finishing instead
+      -- of skipping the last leg. Added 2026-09-26 per plans/13; NOT YET IN-GAME
+      -- VERIFIED.
+      type = "note", optional = true, name = "If grouped: Sunken Temple bundle",
+      zone = "Swamp of Sorrows", location = "Stonard", atLevel = 47,
+      note = "~7,100 XP across the Horde entry chain (Pool of Tears, The Atal'ai Exile, Return to Fel'Zerul, The Temple of Atal'Hakkar), level 46-55, if you have a group. See plans/13.",
+    },
+    {
       type = "travel", name = "Stonard to Booty Bay", zone = "Swamp of Sorrows",
       location = "Stonard", atLevel = 47, logCount = 10, x = 46.1, y = 54.8,
       note = "Take the flight path.",
