@@ -786,7 +786,11 @@ end)
 
 f:SetScript("OnEvent", Compat:Wrap("Core", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
-        if ns.Theme then ns.Theme:LoadSaved() end
+        if ns.Theme then
+            ns.Theme:LoadSaved()
+            local _, playerClass = UnitClass("player")
+            ns.Theme:ApplyClassDefault(playerClass)
+        end
         Data:DetectProvider()
         Compat:LoadNameCache()
         Core:Load()

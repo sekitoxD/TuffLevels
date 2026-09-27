@@ -23,8 +23,9 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.9"
+local CHANGELOG_VERSION = "1.7.10"
 local CHANGELOG = {
+    "Fixed the custom color palette (Menu > Display settings > Colors) silently claiming 'Custom colors applied' when you typed a key it didn't recognize - it now rejects an unknown key the same way it already rejected a bad hex value, instead of quietly doing nothing. Also added six new class-matched presets (Azure/Verdant/Amber/Umber/Rose/Silver) that a Mage, Hunter, Druid, Warrior, Paladin, or Priest gets automatically the first time they log in, unless you've already picked your own palette - Rogues and any other class keep the addon's own default red/purple look.",
     "Code review caught two issues in yesterday's fixes before they could ship further: the /tuff verify quest-lookup fix would have started replacing route-authored step instructions with generic QuestieDB quest titles on the tracker (now only used when a step has no text of its own); and a bare '.xp N' grind step could have silently overwritten a real accept/turnin/complete step's type if a guide listed both on the same step (now guarded).",
     "Fixed two steps in the Orc/Troll test route missing a class filter that a sibling step for the same quest/item correctly had - one routed non-Warlocks to a quest they could never accept (reported as a party quest-share 'prerequisite' failure), the other told non-Hunters to buy Hunter-only ammo.",
     "RXPGuides import now converts a bare '.xp N' grind directive (no partial-XP modifier) into a real auto-detecting step instead of a dead note that always needed a manual Next click, even once you were already past the target level.",
@@ -1055,7 +1056,7 @@ function Panel:ShowColorPicker()
     hint:SetText("You can create your own custom color palette: paste comma-separated\n" ..
         "key=RRGGBB pairs below (e.g. orchid=3399ff,text=ffffff).\n" ..
         "Keys: void, bg, panel, raised, blood, ember, violet, orchid, lilac,\n" ..
-        "text, dim, faint, done, warn")
+        "text, dim, faint, done, warn, accent, bright")
 
     local eb = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
     eb:SetSize(280, 24)
@@ -1066,10 +1067,16 @@ function Panel:ShowColorPicker()
         box:ClearFocus()
         if text == "" then return end
 
+        -- Bug fix: a key not in Theme.validKeys used to be silently dropped
+        -- here - ApplyPalette no-ops on any key it doesn't recognize, so the
+        -- dialog would still print "Custom colors applied" even though
+        -- nothing visibly changed. Validate the key against the same
+        -- whitelist ApplyPalette actually understands, so an unrecognized
+        -- key is rejected up front exactly like a malformed hex value is.
         local updates, bad = {}, {}
         for pair in text:gmatch("[^,]+") do
             local key, hex = pair:match("^%s*(%a+)%s*=%s*(%x%x%x%x%x%x)%s*$")
-            if key then
+            if key and ns.Theme.validKeys[key:lower()] then
                 updates[key:lower()] = hex:lower()
             else
                 table.insert(bad, pair)

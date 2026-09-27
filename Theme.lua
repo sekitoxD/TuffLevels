@@ -129,6 +129,64 @@ Theme.presets = {
         text = "241a33", dim = "6b5f7a", faint = "a696b8",
         done = "1f8c4a", warn = "a3701f",
     },
+    -- Warrior's default (brown/tan leather, distinct from Amber's more
+    -- golden orange, which Druid uses instead - see Theme.classPresets).
+    Umber = {
+        void = "0a0704", bg = "120d08", panel = "1c130c", raised = "271a10",
+        blood = "5c4020", ember = "8c6030",
+        violet = "a3805c", orchid = "c7a683", lilac = "e6ccb0",
+        text = "fff9f2", dim = "a08f73", faint = "594e47",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    -- Paladin's default (pink).
+    Rose = {
+        void = "0a0308", bg = "140510", panel = "20081a", raised = "2b0d24",
+        blood = "731749", ember = "a31f68",
+        violet = "c73d94", orchid = "f26bb8", lilac = "ffaad9",
+        text = "fff7fb", dim = "a0738f", faint = "59474f",
+        done = "73cc8c", warn = "f2bf59",
+    },
+    -- Priest's default (white/silver) - a neutral, brighter cousin of Dark
+    -- rather than a light-background flip like Light/LightPurple, so it
+    -- still reads as "the same dark addon" with a white accent.
+    Silver = {
+        void = "08080a", bg = "101014", panel = "1a1a1f", raised = "26262c",
+        blood = "666673", ember = "999aa6",
+        violet = "b3b3c0", orchid = "d9d9e6", lilac = "f5f5fc",
+        text = "ffffff", dim = "b3b3bf", faint = "737380",
+        done = "73cc8c", warn = "f2bf59",
+    },
+}
+
+-- Which preset each class gets applied automatically on that character's
+-- first login after this feature shipped (Theme:ApplyClassDefault, called
+-- from Core.lua's PLAYER_LOGIN handler) - unless the player already picked
+-- their own custom palette, which always wins. Deliberately covers only the
+-- six classes the addon's author asked for by name; Rogue keeps the addon's
+-- own Default palette on purpose (asked for explicitly), and any class not
+-- listed here (Warlock, Shaman, Death Knight, Monk, Demon Hunter, Evoker)
+-- also falls through to Default rather than guessing a color for it.
+Theme.classPresets = {
+    MAGE    = "Azure",
+    HUNTER  = "Verdant",
+    DRUID   = "Amber",
+    WARRIOR = "Umber",
+    PALADIN = "Rose",
+    PRIEST  = "Silver",
+}
+
+-- Keys ShowColorPicker's free-text custom-palette entry accepts. Kept as an
+-- explicit whitelist (rather than trusting ApplyPalette to silently ignore
+-- anything it doesn't recognize) because that silent-ignore is exactly the
+-- bug this fixes: typing an unrecognized key used to report "Custom colors
+-- applied" even though nothing changed. accent/bright are included because
+-- ApplyPalette already special-cases them (they mirror orchid/lilac's hex
+-- form) even though the in-dialog hint text never mentioned them.
+Theme.validKeys = {
+    void = true, bg = true, panel = true, raised = true,
+    blood = true, ember = true, violet = true, orchid = true, lilac = true,
+    text = true, dim = true, faint = true, done = true, warn = true,
+    accent = true, bright = true,
 }
 
 local function hexToRGB(hex)
@@ -178,6 +236,27 @@ function Theme:LoadSaved()
     if db.customTheme then
         self:ApplyPalette(db.customTheme)
     end
+end
+
+-- Applies this character's class default preset (Theme.classPresets) the
+-- first time they log in after this feature shipped. Runs once per
+-- character (db.classDefaultApplied), and never overwrites a palette the
+-- player already chose for themselves - LoadSaved above always wins if
+-- db.customTheme is already set, whether that came from a preset button, a
+-- typed-in custom palette, or an earlier run of this same function.
+function Theme:ApplyClassDefault(classToken)
+    local Compat = ns.Compat
+    if not Compat then return end
+    local db = Compat:InitSavedVar("TuFFlevelsDB")
+    if db.customTheme or db.classDefaultApplied then return end
+    db.classDefaultApplied = true
+
+    local presetName = classToken and self.classPresets[classToken]
+    if not presetName then return end
+
+    db.customTheme = self.presets[presetName]
+    self:ApplyPalette(db.customTheme)
+    self:ReapplyAll()
 end
 
 -- The window-bottom fade's dark stop tracks the palette's own darkest
