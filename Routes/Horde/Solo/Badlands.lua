@@ -23,6 +23,20 @@ Leg(22, "Badlands", {
       atLevel = 40, logCount = 14, x = 42.4, y = 52.6,
     },
     {
+      -- Warlock class chain (plans/quests/notable_horde_quests.md, "TOP", min level
+      -- 40): Summon Felsteed at Strahad's tower over Ratchet - free mount plus
+      -- Apprentice Riding, "the biggest single speed gain of the class" per the
+      -- research. FLAGGED OPTIONAL, not inserted into the mandatory path: the route
+      -- last visited Ratchet/the Barrens at level 31 (TheBarrens.lua Chapter 26) and
+      -- doesn't return, so picking this up at 40 means a real dedicated trip back,
+      -- not a detour along the existing path. Worth it for the mount alone, but it's
+      -- the player's call whether the travel cost is worth it here vs. buying a mount
+      -- normally. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "Detour: Summon Felsteed (Warlock)",
+      zone = "Badlands", atLevel = 40, class = "WARLOCK",
+      note = "Strahad Farsan's tower over Ratchet (Barrens) - a dedicated trip from here, not a passing detour, since the route hasn't been back to the Barrens since level 31. Free mount + Apprentice Riding if you make the trip. See plans/13.",
+    },
+    {
       type = "accept", questName = "Barbecued Buzzard Wings", zone = "Badlands",
       location = "Valley of Fangs", atLevel = 40, logCount = 15, x = 42.4, y = 52.8,
     },

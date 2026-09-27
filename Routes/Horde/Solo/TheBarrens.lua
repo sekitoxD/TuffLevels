@@ -113,6 +113,11 @@ Leg(2, "The Barrens", {
       note = "Class Trainer might be less travel time at Brill or Undercity depending on class.",
       atLevel = 12,
     },
+    {
+      type = "note", optional = true, name = "Alt: Call of Fire (Shaman)", zone = "The Barrens",
+      atLevel = 12, class = "SHAMAN",
+      note = "If the Durotar Call of Fire pickup (Telf Joolam, Chapter 4) was missed, Kranal Fiss here in the Barrens is the alternate starter for the same chain. See plans/13.",
+    },
 })
 
 -- Chapter 10: Eastern Barrens | Chapter 11: Northern Barrens Lap #1 | Chapter 12: Northern Barrens Lap #2 | Chapter 13: Mid Barrens Lap | Chapter 14: Into Stonetalon Mountains
@@ -708,6 +713,18 @@ Leg(4, "The Barrens", {
       location = "Camp Taurajo", atLevel = 19, logCount = 19, x = 44.6, y = 59.2,
     },
     {
+      -- Warlock class chain (plans/quests/notable_horde_quests.md, "TOP", min level
+      -- 20): Succubus, "by far the best companion for leveling" per WT/WH. Devourer of
+      -- Souls starts it; Dogran's Captivity is the quilboar camp just north of here at
+      -- Camp Taurajo. Ken'zigla's Draught (the Malaka'jin/Stonetalon leg of this chain)
+      -- picks up later when the route reaches Stonetalon Mts (Chapter 15/18) - not
+      -- inserted there yet, flagged so it isn't forgotten. Ends in a summon fight.
+      -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", questName = "Devourer of Souls", zone = "The Barrens",
+      location = "Camp Taurajo", atLevel = 20, class = "WARLOCK",
+      note = "Warlock Succubus chain, part 1 - continues with Blind Cazul, News of Dogran x2, Dogran's Captivity (quilboar camp north of Taurajo), then Ken'zigla's Draught at Malaka'jin (Stonetalon, pick up when passing through) and Love's Gift, ending in The Binding (summon fight). Unverified - see plans/13.",
+    },
+    {
       type = "travel", name = "Omusa Thunderhorn <Wind Rider Master>", zone = "The Barrens",
       location = "Camp Taurajo", atLevel = 19, logCount = 19, x = 44.4, y = 59.2,
       note = "Talk to the flight master and learn this flight point.",
@@ -787,6 +804,18 @@ Leg(4, "The Barrens", {
     {
       type = "trainer", name = "Class Trainer", zone = "Orgrimmar", atLevel = 20,
       logCount = 15, note = "Several spots around here - check the whole area.",
+    },
+    {
+      -- Rogue class chain (plans/quests/notable_horde_quests.md, "WORTH IT", quest
+      -- 2460, min level 20): Shenthul in the Cleft of Shadow starts the poison chain.
+      -- FLAGGED OPTIONAL: the chain's third quest is a solo-unfriendly elite kill
+      -- (Grand Foreman Puzik Gallywix, "likely need group assistance" per WT), and
+      -- sources disagree on the Lockpicking requirement (70/75/80+). Not worth
+      -- blocking the mandatory path on. Added 2026-09-26 per plans/13; NOT YET
+      -- IN-GAME VERIFIED.
+      type = "note", optional = true, name = "Detour: Poison chain (Rogue)",
+      zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 20, class = "ROGUE",
+      note = "Shenthul, Cleft of Shadow: The Shattered Salute -> Deep Cover -> Mission: Possible But Not Probable (elite kill, may need help) -> Hinott's Assistance (Tarren Mill). Needs 70-85 Lockpicking depending on source. See plans/13.",
     },
     {
       type = "travel", name = "Orgrimmar to The Crossroads", zone = "Orgrimmar",
@@ -1166,6 +1195,35 @@ Leg(14, "The Barrens", {
       type = "accept", name = "The Swarm Grows (part 2)", questName = "The Swarm Grows",
       ambiguous = true, zone = "Orgrimmar", location = "The Valley of Honor", atLevel = 31,
       logCount = 17, x = 75.0, y = 34.0,
+    },
+    {
+      -- Warrior class chain (plans/quests/notable_horde_quests.md, min level 30):
+      -- The Islander (Warrior trainer, Orgrimmar) sends you to Fray Island right here
+      -- in the Barrens for The Affray, rewarding Berserker Stance and Intercept
+      -- unconditionally - worth doing regardless of what you decide about the
+      -- Whirlwind Weapon itself (sources disagree on that half; see the Alterac
+      -- Mountains leg in HillsbradFoothills.lua for the continuation). This is the
+      -- route's LAST Barrens visit, so it's now or a dedicated trip later.
+      -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", questName = "The Islander", zone = "Orgrimmar", atLevel = 31,
+      class = "WARRIOR",
+      note = "Warrior Berserker Stance chain, part 1 of 2 (class trainer). Sends you to Fray Island here in the Barrens for The Affray -> Berserker Stance + Intercept. Bring bandages/potions for the wave fight. Unverified - see plans/13.",
+    },
+    {
+      type = "accept", questName = "The Affray", zone = "The Barrens", location = "Fray Island",
+      atLevel = 31, class = "WARRIOR",
+      note = "Warrior Berserker Stance chain, part 2 of 2. Wave fight ending in Big Will (level 33 elite). Reward: Berserker Stance + Intercept. The Windwatcher (Bath'rah, Alterac) continues this chain later. Unverified - see plans/13.",
+    },
+    {
+      -- Mage class chain (plans/quests/notable_horde_quests.md, "WORTH IT", quest
+      -- 1947, min level 30): starter is Deino (Horde trainer), not Tabetha. Continues
+      -- at Shimmering Flats (Magus Tirth) when the route reaches Thousand Needles
+      -- Chapter 27, and needs a Scarlet Monastery Library run for Rituals of Power
+      -- (group content - see plans/13's R3 note on group content). Added 2026-09-26
+      -- per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", questName = "Journey to the Marsh", zone = "Orgrimmar", atLevel = 31,
+      class = "MAGE",
+      note = "Mage's Wand chain, part 1 - continues at Shimmering Flats (Thousand Needles Chapter 27). Rituals of Power needs a Scarlet Monastery Library group. Unverified - see plans/13.",
     },
     {
       type = "note", optional = true, name = "Skip: R",

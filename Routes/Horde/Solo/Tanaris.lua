@@ -24,6 +24,20 @@ Leg(27, "Tanaris", {
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.6, y = 26.8,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Scarab Shells (just skipped above) is one of the Zul'Farrak
+      -- quests - IV calls ZF "one of the best dungeons to do a quest run of" (6
+      -- sources agree). Almost every ZF quest is handed out right here in Gadgetzan.
+      -- If a group is available, the full bundle (Gahz'rilla, Divino-matic Rod, Tiara
+      -- of the Deep, The Spider God, Prophecy of Mosh'aru, Scarab Shells, Troll
+      -- Temper - several thousand XP each) is worth running instead of skipping.
+      -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED - flagged optional,
+      -- this is a decision point.
+      type = "note", optional = true, name = "If grouped: Zul'Farrak bundle",
+      zone = "Tanaris", location = "Gadgetzan", atLevel = 44,
+      note = "7 quests (Gahz'rilla, Divino-matic Rod, Tiara of the Deep, The Spider God, Prophecy of Mosh'aru, Scarab Shells, Troll Temper), most handed out right here in Gadgetzan, if you have a group. See plans/13.",
+    },
+    {
       type = "note", optional = true, name = "Skip for now: T",
       note = "Do not pick up yet - the route comes back for Thistleshrub Valley on a later pass.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.6, y = 26.8,

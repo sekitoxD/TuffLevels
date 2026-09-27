@@ -89,6 +89,17 @@ Leg(13, "Thousand Needles", {
       location = "Freewind Post", atLevel = 30, logCount = 8, x = 44.9, y = 48.9,
     },
     {
+      -- Shaman class chain (plans/quests/notable_horde_quests.md, "TOP", quest IDs
+      -- 1531-1532, min level 30): Prate Cloudseer, Freewind Post. WT: "the only thing
+      -- you need to do is talk to him" - a 10-15 min pickup, no travel cost since the
+      -- route is already at Freewind Post this chapter. Rewards Windfury and Grace of
+      -- Air totems. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", questName = "Call of Air (Shaman)", quest = 1531,
+      npc = "Prate Cloudseer", zone = "Thousand Needles", location = "Freewind Post",
+      atLevel = 30, class = "SHAMAN",
+      note = "Quick Shaman totem pickup, no detour needed. Unverified coordinates - see plans/13.",
+    },
+    {
       type = "accept", questName = "Alien Egg", zone = "Thousand Needles",
       location = "Freewind Post", atLevel = 30, logCount = 9, x = 44.6, y = 50.3,
     },
@@ -308,6 +319,12 @@ Leg(15, "Thousand Needles", {
       zone = "Thousand Needles", location = "Shimmering Flats", atLevel = 31, logCount = 14,
       x = 76.0, y = 57.0, approx = true,
       note = "Start collecting this now - it drops over the whole leg, not in one spot.",
+    },
+    {
+      type = "accept", questName = "Hidden Secrets", zone = "Thousand Needles",
+      location = "Shimmering Flats", atLevel = 31, x = 76.0, y = 57.0, approx = true,
+      class = "MAGE",
+      note = "Mage's Wand chain, part 2 (Magus Tirth). Continues with Get the Scoop (/beckon Plucky Johnson), then Rituals of Power (SM Library, group), Items of Power, Mage's Wand. Unverified - see plans/13.",
     },
     {
       type = "complete", questName = "Rocket Car Parts", zone = "Thousand Needles",

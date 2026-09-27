@@ -117,6 +117,21 @@ Leg(6, "Thunder Bluff", {
       zone = "Thunder Bluff", location = "The Elder Rise", atLevel = 21, x = 75.6, y = 31.2,
     },
     {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Wailing Caverns is skipped above for solo travel-time reasons, but
+      -- Leaders of the Fang (this exact quest) is the WC finale and the chain that led
+      -- here (Forgotten Pools -> Stagnant Oasis -> Altered Beings -> Hamuul Runetotem
+      -- -> Nara Wildmane, all already in the base route) sets it up for free. If a
+      -- group is available, the full WC bundle (Deviate Hides, Smart Drinks, Trouble
+      -- at the Docks, Serpentbloom, Deviate Eradication, The Glowing Shard, Leaders of
+      -- the Fang - about 12,900 XP total, level 17-25) is worth running instead of
+      -- skipping. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED, and this is
+      -- a decision point, not a mandatory step - it's `optional` for a reason.
+      type = "note", optional = true, name = "If grouped: Wailing Caverns bundle",
+      zone = "The Barrens", location = "Wailing Caverns", atLevel = 21,
+      note = "~12,900 XP across 7 quests (Deviate Hides, Smart Drinks, Trouble at the Docks, Serpentbloom, Deviate Eradication, The Glowing Shard, Leaders of the Fang) if you have a group. See plans/13.",
+    },
+    {
       type = "trainer", name = "Class Trainer", zone = "Thunder Bluff", atLevel = 21,
       logCount = 16, note = "Several spots around here - check the whole area.",
     },
@@ -168,6 +183,19 @@ Leg(6, "Thunder Bluff", {
       type = "note", optional = true, name = "Skip: B",
       note = "The route deliberately skips Blueleaf Tubers. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 21, x = 62.4, y = 37.6,
+    },
+    {
+      -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
+      -- bundles"): Blueleaf Tubers (just skipped above) is part of the larger Razorfen
+      -- Kraul bundle (A Vengeful Fate, An Unholy Alliance, Going Going Guano!, Blueleaf
+      -- Tubers, Willix the Importer - ~15,300 XP, level 30-40). RFK is reached from
+      -- the Barrens (Camp Cagg, north of Thousand Needles); if a group is available
+      -- when the route is back in this area at higher level, it's worth a full run
+      -- instead of skipping just this one quest. Added 2026-09-26 per plans/13; NOT
+      -- YET IN-GAME VERIFIED - flagged optional, this is a decision point.
+      type = "note", optional = true, name = "If grouped: Razorfen Kraul bundle",
+      zone = "The Barrens", location = "Razorfen Kraul", atLevel = 30,
+      note = "~15,300 XP across 5 quests (A Vengeful Fate, An Unholy Alliance, Going Going Guano!, Blueleaf Tubers, Willix the Importer) if you have a group. Going Going Guano! is also the prerequisite for the Scarlet Monastery quest Hearts of Zeal. See plans/13.",
     },
     {
       type = "complete", questName = "Ishamuhale", zone = "The Barrens",

@@ -143,6 +143,19 @@ Leg(1, "Durotar", {
       approx = true,
     },
     {
+      -- Shaman class chain (plans/quests/notable_horde_quests.md, "TOP", DB-verified
+      -- quest IDs 1516-1518, min level 4): Canaga Earthcaller in the Valley of Trials
+      -- starts Call of Earth, rewarding the Earthbind and Strength of Earth totems.
+      -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED - only the chain's
+      -- start is captured here (quest ID + NPC name from the research file, no
+      -- coordinate yet). Capture the full accept/turnin sequence and coordinates
+      -- with /tuff capture the next time a Shaman plays this leg.
+      type = "accept", name = "Call of Earth (Shaman)", quest = 1516,
+      npc = "Canaga Earthcaller", zone = "Durotar", location = "Valley of Trials",
+      atLevel = 4, class = "SHAMAN",
+      note = "3-quest totem chain (Earthbind/Strength of Earth), ~15-20 min. Unverified coordinates - see plans/13.",
+    },
+    {
       type = "complete", questName = "Galgar's Cactus Apple Surprise", zone = "Durotar",
       location = "Valley of Trials", atLevel = 4, logCount = 4, x = 42.0, y = 59.0,
       approx = true,
@@ -413,6 +426,17 @@ Leg(1, "Durotar", {
 
     { type = "section", name = "Chapter 4: Upper Durotar", levels = { 9, 10 }, zone = "Durotar" },
     {
+      -- Hunter class chain (plans/quests/notable_horde_quests.md, "TOP", quest IDs
+      -- 6065-6067/6061-6062/6082/6081/6089, min level 10): "the only Hunter class
+      -- quest every guide says to do". Thotar, the starter, is back in the Valley of
+      -- Trials, which this route left after Chapter 1 - this IS a backtrack, flagged
+      -- optional rather than forced into the main path. Added 2026-09-26 per plans/13;
+      -- NOT YET IN-GAME VERIFIED.
+      type = "note", optional = true, name = "Detour: Tame Beast (Hunter)", zone = "Durotar",
+      location = "Valley of Trials", atLevel = 10, class = "HUNTER",
+      note = "Worth a short backtrack to Thotar in the Valley of Trials for the Hunter pet-taming chain (Hunter's Path, Taming the Beast x3, Training the Beast) - every Hunter leveling guide treats this as mandatory despite the detour. Unverified coordinates - see plans/13.",
+    },
+    {
       type = "turnin", questName = "From The Wreckage...", zone = "Durotar",
       location = "Razor Hill", atLevel = 9, logCount = 5, x = 52.0, y = 43.5,
     },
@@ -483,6 +507,27 @@ Leg(1, "Durotar", {
     {
       type = "trainer", name = "Class Trainer", zone = "Orgrimmar", atLevel = 10, logCount = 5,
       note = "Several spots around here - check the whole area.",
+    },
+    {
+      -- Shaman class chain (plans/quests/notable_horde_quests.md, "TOP", quest IDs
+      -- 1522-1524, min level 10): Telf Joolam is the Durotar-side starter for Call of
+      -- Fire (Kranal Fiss in the Barrens is the alternate starter if this one is
+      -- missed - see the Chapter 6 note in TheBarrens.lua). Rewards Searing and Magma
+      -- Totem. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED - exact NPC
+      -- location in Durotar unknown, capture with /tuff capture.
+      type = "accept", name = "Call of Fire (Shaman)", quest = 1522,
+      npc = "Telf Joolam", zone = "Durotar", atLevel = 10, class = "SHAMAN",
+      note = "3-quest totem chain (Searing/Magma Totem), ~30-45 min. Unverified location - see plans/13. Kranal Fiss (Barrens) is the alternate starter if missed here.",
+    },
+    {
+      -- Warlock class chain (plans/quests/notable_horde_quests.md, "TOP", quest 1506,
+      -- min level 10): Orc/Troll Voidwalker starts with Gan'rul's Summons at the
+      -- Warlock trainer here in Orgrimmar, then Tablet of Verga (item drop at Skull
+      -- Rock, Chapter 5 below) and The Binding (beside Neeru Fireblade, also Chapter
+      -- 5). Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
+      type = "accept", questName = "Gan'rul's Summons", zone = "Orgrimmar",
+      atLevel = 10, class = "WARLOCK",
+      note = "Warlock Voidwalker chain, part 1 of 3 - continues at Skull Rock and Neeru Fireblade in Chapter 5. Unverified coordinates - see plans/13.",
     },
     {
       type = "turnin", name = "The Admiral's Orders (part 2)",
@@ -560,6 +605,11 @@ Leg(1, "Durotar", {
       atLevel = 11, logCount = 6, x = 52.0, y = 9.0, approx = true,
     },
     {
+      type = "note", name = "Voidwalker chain: Tablet of Verga", zone = "Durotar",
+      location = "Skull Rock", atLevel = 11, x = 52.0, y = 9.0, approx = true, class = "WARLOCK",
+      note = "Warlock Voidwalker chain, part 2 of 3 - pick up the Tablet of Verga while here (item pickup or quest objective, unconfirmed which). Unverified - see plans/13.",
+    },
+    {
       type = "accept", questName = "Burning Shadows", zone = "Durotar",
       location = "Skull Rock", atLevel = 11, logCount = 7, x = 52.0, y = 9.0, approx = true,
       note = "Starts from an item you loot here, not from an NPC.",
@@ -576,6 +626,11 @@ Leg(1, "Durotar", {
     {
       type = "accept", questName = "Neeru Fireblade", zone = "Durotar",
       location = "Eastern Durotar", atLevel = 11, logCount = 7, x = 56.4, y = 20.0,
+    },
+    {
+      type = "accept", questName = "The Binding", zone = "Durotar",
+      location = "Eastern Durotar", atLevel = 11, x = 56.4, y = 20.0, class = "WARLOCK",
+      note = "Warlock Voidwalker chain, part 3 of 3 (beside Neeru Fireblade). Turn in for the Voidwalker. Only one 'The Binding' step exists in this route (other Warlock pet chains that share this quest title aren't in ONSLAUGHT), so this doesn't need ambiguous resolution. Unverified - see plans/13.",
     },
     {
       type = "death", name = "Eastern Durotar to Jaggedswine Farm", zone = "Durotar",

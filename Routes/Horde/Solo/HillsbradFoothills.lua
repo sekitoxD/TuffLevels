@@ -537,6 +537,20 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Growless Cave", atLevel = 37, logCount = 20, x = 37.5, y = 66.3,
     },
     {
+      -- Warrior class chain finale (plans/quests/notable_horde_quests.md, quest IDs
+      -- 1791/1712/1713/1792, min 30/40): The Windwatcher continues from Klannoc
+      -- Macleod (Fray Island, Barrens - see TheBarrens.lua Chapter 26) to Bath'rah the
+      -- Windwatcher here in the Alterac Mountains. Cyclonian is a level 40 elite air
+      -- elemental fight - sources disagree on whether the Whirlwind Weapon itself is
+      -- worth it at this level (IV: yes at 30+; WT/WIC/WH: realistically 38-40 solo;
+      -- ZK: skip it) - flagged optional for that reason, unlike the Berserker Stance
+      -- half which was added unconditionally. Added 2026-09-26 per plans/13; NOT YET
+      -- IN-GAME VERIFIED.
+      type = "note", optional = true, name = "Detour: Whirlwind Weapon (Warrior)",
+      zone = "Alterac Mountains", atLevel = 38, class = "WARRIOR",
+      note = "If you did the Berserker Stance half in the Barrens: Bath'rah the Windwatcher is out here. Needs 8 Liferoot, 30 Bloodscalp Tusk (STV trolls), and 8 each Thundering/Burning/Cresting Charm (Arathi Highlands level 38-39 elites, or buy them) before the Cyclonian fight (level 40 elite). Sources disagree on whether it's worth the detour at this level - see plans/13.",
+    },
+    {
       type = "complete", questName = "Bracers of Binding", zone = "Alterac Mountains",
       location = "Dalaran", atLevel = 37, logCount = 20, x = 22.0, y = 64.0, approx = true,
     },
