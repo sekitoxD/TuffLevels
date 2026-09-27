@@ -904,6 +904,124 @@ step << !Hunter
         assert.equals(0, #warnings)
     end)
 
+    it("applies a PAIR of race-conditioned '#completewith << Cond' tags whose conditions together cover every race", function()
+        -- Confirmed live (2026-09-27): Classic-Alliance-1-14_DwarfGnome.lua
+        -- pairs "#completewith HonorStudents << Dwarf/Gnome" with
+        -- "#completewith ThelsaHS << !Dwarf !Gnome" on one block - the race
+        -- equivalent of the class-complement-pair case, tracked as an
+        -- independent coverage dimension from class coverage.
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith HonorStudents << Dwarf/Gnome
+    #completewith ThelsaHS << !Dwarf !Gnome
+]])
+        assert.is_true(route.steps[1].optional)
+        assert.equals(0, #warnings)
+    end)
+
+    it("does not let a single, partial race condition alone mark a step optional", function()
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith X << Dwarf
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("does not resolve a MIXED race+class OR ('<< Dwarf/Warrior') as either dimension", function()
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith X << Dwarf/Warrior
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("does not let 'Human !Dwarf' (a positive race AND a negated one) over-cover Gnome/NightElf", function()
+        -- Confirmed live (2026-09-27, round-6 code review): "Human !Dwarf"
+        -- really means just "Human" (already excludes Dwarf), not "Human"
+        -- unioned with the complement-of-Dwarf list ({Human, Gnome,
+        -- NightElf}) - the latter would wrongly let a paired "<< Dwarf" tag
+        -- complete coverage and mark the step optional for Gnome/NightElf
+        -- too, when the real conditions only ever cover Human and Dwarf.
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith A << Human !Dwarf
+    #completewith B << Dwarf
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("does not let 'Human Dwarf' (two different positive races, impossible for any character) resolve at all", function()
+        -- Same shape round 5 already guarded against for classes - a
+        -- character can't be two races at once, so silently keeping both
+        -- as an OR would wrongly satisfy this tag for a Human OR a Dwarf,
+        -- when the real (impossible) condition can never match either.
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    .goto Durotar,1,1
+    .accept 1
+    #completewith A << Human Dwarf
+    #completewith B << Gnome/NightElf
+]])
+        assert.is_true(route.steps[1].optional == nil or route.steps[1].optional == false)
+        assert.equals(1, #warnings)
+    end)
+
+    it("does not misfire the positive-race guard on an exact repeat ('<< Human Human') or a class+race pair", function()
+        -- The new "two different positive races" guard compares by value,
+        -- not by token count - an exact repeat (a harmless no-op, possibly
+        -- from a guide's own copy-paste) must still resolve cleanly, and a
+        -- class token alongside a single clean race must be unaffected.
+        local route1 = RXPImport:Parse([[
+<< Alliance
+step << Human Human
+    .goto Durotar,1,1
+    .accept 1
+]])
+        assert.same({ "Human" }, route1.steps[1].races)
+
+        local route2 = RXPImport:Parse([[
+<< Alliance
+step << Warrior Human
+    .goto Durotar,1,1
+    .accept 1
+]])
+        assert.equals("WARRIOR", route2.steps[1].class)
+        assert.same({ "Human" }, route2.steps[1].races)
+    end)
+
+    it("resolves a step-level '<< RaceA/RaceB' race-OR condition to a real 'races' filter (not just inside a #completewith tag)", function()
+        -- The race-OR resolution added to EvalCondition applies everywhere
+        -- EvalCondition is called, not just inside the #completewith
+        -- coverage check - a block condition like "step << Dwarf/Gnome"
+        -- (5 real occurrences found in Classic-Alliance-1-14_DwarfGnome.lua)
+        -- now resolves to races={"Dwarf","Gnome"} instead of shipping
+        -- completely unfiltered with a warning.
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step << Dwarf/Gnome
+    .goto Durotar,1,1
+    .accept 1
+]])
+        assert.same({ "Dwarf", "Gnome" }, route.steps[1].races)
+        assert.equals(0, #warnings)
+    end)
+
     it("applies '#completewith <label> << era' normally (a pure no-op scope marker, not a real restriction)", function()
         local route, _, warnings = RXPImport:Parse([[
 step

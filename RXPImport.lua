@@ -83,21 +83,23 @@
 --   "Human/Warrior") still can't be expressed and is kept unfiltered with
 --   a warning instead - rare enough in practice that guessing at it
 --   wasn't attempted.
--- - A `#completewith`/`#sticky`/`#optional << Cond` tag's coverage check
---   (does this tag, combined with any others on the same block, make the
---   step optional for every class/race it applies to - see FinishBlock)
---   only reasons about CLASS coverage, not race coverage. A real guide
---   pattern this misses: two tags gated on complementary RACE conditions
---   on one block (e.g. Classic-Alliance-1-14_DwarfGnome.lua's
---   "#completewith HonorStudents << Dwarf/Gnome" + "#completewith
---   ThelsaHS << !Dwarf !Gnome") - neither tag's condition resolves to a
---   class set, so both count as "can't resolve" and the step stays
---   mandatory, even though together the two race conditions actually do
---   cover every Alliance race. Safe direction (a real mandatory step
---   never gets silently skipped), just not the exact intended optional-
---   for-everyone outcome - not fixed as of 2026-09-27, worth doing before
---   re-parsing DwarfGnome.lua since it's a confirmed real occurrence
---   there, not a hypothetical.
+-- - FIXED (2026-09-27): a `#completewith`/`#sticky`/`#optional << Cond`
+--   tag's coverage check (does this tag, combined with any others on the
+--   same block, make the step optional for every class/race it applies
+--   to - see FinishBlock) used to only reason about CLASS coverage, not
+--   race coverage, missing a real guide pattern: two tags gated on
+--   complementary RACE conditions on one block (e.g.
+--   Classic-Alliance-1-14_DwarfGnome.lua's "#completewith HonorStudents
+--   << Dwarf/Gnome" + "#completewith ThelsaHS << !Dwarf !Gnome"). Now
+--   tracks class coverage and race coverage as two independent tracks
+--   (either one reaching full coverage is enough) - a pure race-OR
+--   condition (multi-group, e.g. "Dwarf/Gnome") also now resolves via
+--   EvalCondition the same way a pure class-OR already did, in parallel
+--   rather than instead of it. A MIXED race+class OR in one condition
+--   (e.g. "Dwarf/Warrior") still isn't attempted - no real occurrence
+--   found, and reasoning about a genuine 2D (class x race) coverage
+--   combination wasn't worth the complexity for a shape that's never
+--   actually appeared.
 -- - An OR condition where one branch is always-true on this addon's
 --   target ruleset (e.g. "!sod/Warrior" - the "!sod" branch alone already
 --   means "always applies here") still goes through EvalCondition's
@@ -357,8 +359,23 @@ local function ClassifyTokens(tokens, faction)
             -- split - this addon's actual target, so keep it (no-op,
             -- same as CLASSIC).
         elseif RACE_TOKENS[tok] then
-            races = races or {}
-            table.insert(races, RACE_TOKENS[tok])
+            if races and races[1] ~= RACE_TOKENS[tok] then
+                -- Two DIFFERENT positive race tokens in one AND group (e.g.
+                -- "<< Human Dwarf") is a condition no real character can
+                -- ever satisfy, the same shape round 5 guarded against for
+                -- classes - confirmed live (2026-09-27, round-6 code
+                -- review): silently accumulating BOTH races into an OR list
+                -- read "Human AND Dwarf" as "Human OR Dwarf", which could
+                -- wrongly satisfy the `#completewith` race-coverage check
+                -- for a race the real condition can never match. Zero real
+                -- occurrences found across the RXPGuides Classic guides
+                -- (every same-group multi-race condition found is
+                -- all-negated), but cheap to guard against the same way.
+                unhandled = true
+            else
+                races = races or {}
+                races[1] = RACE_TOKENS[tok]
+            end
         elseif tok == "ALLIANCE" or tok == "HORDE" then
             -- faction - handled at the route level, not per step
         elseif tok == "MALE" or tok == "FEMALE" then
@@ -369,28 +386,42 @@ local function ClassifyTokens(tokens, faction)
         end
     end
     if negatedRaces then
-        local factionRaces = faction and FACTION_RACES[faction]
-        if factionRaces then
-            local excluded = {}
-            for _, r in ipairs(negatedRaces) do excluded[r] = true end
-            local complement = {}
-            for _, r in ipairs(factionRaces) do
-                if not excluded[r] then table.insert(complement, r) end
-            end
-            if #complement > 0 then
-                races = races or {}
-                for _, r in ipairs(complement) do table.insert(races, r) end
+        if races then
+            -- A positive race token AND a negated one together in one AND
+            -- group (e.g. "<< Human !Dwarf") - the real result is just
+            -- "Human" (already excludes Dwarf), not "Human" UNIONED with
+            -- the complement-of-Dwarf list, which is what appending the
+            -- complement onto the existing positive `races` would compute.
+            -- Same "AND mixing two race concepts, don't guess" shape as
+            -- the class+classExclude AND above - confirmed live
+            -- (2026-09-27, round-6 code review): zero real occurrences
+            -- found, punting to unhandled rather than adding real
+            -- intersection logic for a shape that's never appeared.
+            unhandled = true
+        else
+            local factionRaces = faction and FACTION_RACES[faction]
+            if factionRaces then
+                local excluded = {}
+                for _, r in ipairs(negatedRaces) do excluded[r] = true end
+                local complement = {}
+                for _, r in ipairs(factionRaces) do
+                    if not excluded[r] then table.insert(complement, r) end
+                end
+                if #complement > 0 then
+                    races = complement
+                else
+                    -- Excludes every race in the faction - a contradiction
+                    -- (or a guide covering a faction FACTION_RACES doesn't
+                    -- know about), not something to guess at.
+                    unhandled = true
+                end
             else
-                -- Excludes every race in the faction - a contradiction
-                -- (or a guide covering a faction FACTION_RACES doesn't
-                -- know about), not something to guess at.
+                -- Faction not yet known (the guide never declared
+                -- "<< Horde"/"<< Alliance" before this condition) - can't
+                -- compute a safe complement, so fall back to keep-and-flag
+                -- rather than guess.
                 unhandled = true
             end
-        else
-            -- Faction not yet known (the guide never declared "<< Horde"/
-            -- "<< Alliance" before this condition) - can't compute a safe
-            -- complement, so fall back to keep-and-flag rather than guess.
-            unhandled = true
         end
     end
     return class, races, outOfScope, unhandled, classExclude
@@ -405,18 +436,23 @@ end
 -- unhandled and the step is kept unfiltered rather than dropped or guessed
 -- at - EXCEPT a pure class-OR ("Hunter/Warrior/Priest", or "Hunter/Warrior/
 -- Priest/Sod Rogue" with the SoD branch dropped as out-of-scope), which
--- resolves to a real `classes` list (OR semantics, same shape as `races`)
--- instead. Confirmed live (2026-09-27): "kept unfiltered, please review"
--- for exactly this shape shipped a Rogue-only Staves-training step with NO
--- class filter at all (source: "step << Hunter/Warrior/Priest/Sod Rogue"
--- narrowed by a trailing line condition to "Hunter/Warrior/Priest") -
--- Classic Rogues can never learn Staves, so every Night Elf Rogue got
--- stuck at that step until they clicked Next by hand. Only trusted when
--- EVERY surviving (non-out-of-scope) branch is a single, plain positive
--- class token with nothing else on it (no races/classExclude/unhandled
--- sub-tokens) - a mixed OR (e.g. "Human/Warrior") still falls through to
--- unhandled rather than guessing how to combine a race and a class in one
--- OR list.
+-- resolves to a real `classes` list (OR semantics, same shape as `races`),
+-- OR a pure race-OR ("Dwarf/Gnome", same SoD-branch-dropping rule),
+-- resolving to a real `races` list instead. Confirmed live (2026-09-27):
+-- "kept unfiltered, please review" for the class-OR shape shipped a
+-- Rogue-only Staves-training step with NO class filter at all (source:
+-- "step << Hunter/Warrior/Priest/Sod Rogue" narrowed by a trailing line
+-- condition to "Hunter/Warrior/Priest") - Classic Rogues can never learn
+-- Staves, so every Night Elf Rogue got stuck at that step until they
+-- clicked Next by hand; the race-OR shape (added the same day) is needed
+-- for Classic-Alliance-1-14_DwarfGnome.lua's "step << Dwarf/Gnome"
+-- conditions. Only trusted when EVERY surviving (non-out-of-scope) branch
+-- is a single, plain positive class token (for the class-OR path) or a
+-- single, plain positive/negated race condition (for the race-OR path)
+-- with nothing else on it (no races/classExclude/unhandled sub-tokens for
+-- the class path; no class/classExclude/unhandled for the race path) - a
+-- mixed OR (e.g. "Human/Warrior") still falls through to unhandled rather
+-- than guessing how to combine a race and a class in one OR list.
 local function EvalCondition(condText, faction)
     if not condText or condText:match("^%s*$") then
         return nil, nil, false, false, nil, nil
@@ -424,7 +460,9 @@ local function EvalCondition(condText, faction)
     local groups = {}
     for group in condText:gmatch("[^/]+") do table.insert(groups, group) end
     if #groups > 1 then
-        local classes, seen, allMergeable, anyKept = {}, {}, true, false
+        local classes, seenClasses, allMergeable = {}, {}, true
+        local races, seenRaces, allRaceMergeable, anyRace = {}, {}, true, false
+        local anyKept = false
         for _, group in ipairs(groups) do
             local tokens = {}
             for tok in group:gmatch("%S+") do table.insert(tokens, tok) end
@@ -432,12 +470,32 @@ local function EvalCondition(condText, faction)
             if not gOutOfScope then
                 anyKept = true
                 if gClass and not gRaces and not gClassExclude and not gUnhandled then
-                    if not seen[gClass] then
-                        seen[gClass] = true
+                    if not seenClasses[gClass] then
+                        seenClasses[gClass] = true
                         table.insert(classes, gClass)
                     end
                 else
                     allMergeable = false
+                end
+                -- Same idea, in parallel, for a pure race-OR ("Dwarf/Gnome",
+                -- or a negated "!Dwarf !Gnome" branch that ClassifyTokens
+                -- already resolved to its faction complement) - confirmed
+                -- live (2026-09-27): Classic-Alliance-1-14_DwarfGnome.lua
+                -- pairs exactly "<< Dwarf/Gnome" with "<< !Dwarf !Gnome" on
+                -- one block. A branch can only feed ONE of the two
+                -- accumulators for THIS parser's purposes (a mixed race+
+                -- class branch, e.g. "Human Warrior", poisons both, same
+                -- "don't guess" doctrine as everywhere else here).
+                if gRaces and not gClass and not gClassExclude and not gUnhandled then
+                    anyRace = true
+                    for _, r in ipairs(gRaces) do
+                        if not seenRaces[r] then
+                            seenRaces[r] = true
+                            table.insert(races, r)
+                        end
+                    end
+                else
+                    allRaceMergeable = false
                 end
             end
         end
@@ -445,6 +503,15 @@ local function EvalCondition(condText, faction)
             -- Every branch was out of scope (e.g. every branch is an SoD
             -- variant) - the whole condition is, too.
             return nil, nil, true, false, nil, nil
+        end
+        if allRaceMergeable and anyRace then
+            -- A condition can't cleanly be BOTH a pure class-OR and a pure
+            -- race-OR at once - each group is classified above as feeding
+            -- at most ONE of the two accumulators (a clean class group
+            -- requires no races, a clean race group requires no class), so
+            -- `allMergeable and #classes > 0` below can never also be true
+            -- here - no ordering dependency between the two branches.
+            return nil, races, false, false, nil, nil
         end
         if allMergeable and #classes > 0 then
             if #classes == 1 then
@@ -557,13 +624,30 @@ function RXPImport:Parse(text)
     -- "Westfall Deed" step, paired "#completewith Level9Grind <<
     -- Warlock/Warrior/Rogue" / "#completewith PrincessC << !Warlock
     -- !Warrior !Rogue").
+    -- `blockOptionalCoveredRaces`: same idea as `blockOptionalCovered`, but
+    -- for a conditioned tag whose condition resolves to a PURE race
+    -- restriction with no class component at all (e.g. "<< Dwarf/Gnome" /
+    -- "<< !Dwarf !Gnome" - `!Dwarf !Gnome` already resolves to the
+    -- faction's complement race list via ClassifyTokens/FACTION_RACES by
+    -- the time it reaches here, same as any other negated-race condition).
+    -- Confirmed live (2026-09-27): Classic-Alliance-1-14_DwarfGnome.lua
+    -- pairs exactly this shape ("#completewith HonorStudents << Dwarf/
+    -- Gnome" + "#completewith ThelsaHS << !Dwarf !Gnome"). Tracked
+    -- SEPARATELY from class coverage rather than merged into one set,
+    -- since a real guide pairs tags within ONE dimension at a time (both
+    -- class-conditioned, or both race-conditioned) - FinishBlock treats
+    -- either dimension independently reaching full coverage as enough,
+    -- rather than attempting full 2D (class x race) reasoning for a mixed
+    -- pairing that's never actually been observed.
     -- `blockOptionalGaveUp`/`blockOptionalGaveUpText`: a conditioned tag
-    -- whose condition this parser can't cleanly resolve to a class set at
-    -- all (a race condition, a classExclude, or a genuinely unhandled
-    -- token) - remembered so FinishBlock can still warn if coverage turns
-    -- out incomplete, without warning for every intermediate tag before
-    -- the rest of the block's own tags are even known.
-    local blockOptionalAll, blockOptionalCovered, blockOptionalGaveUp, blockOptionalGaveUpText
+    -- whose condition this parser can't cleanly resolve to EITHER a class
+    -- set or a race set alone (a mixed class+race condition, a class AND
+    -- classExclude combined, or a genuinely unhandled token) - remembered
+    -- so FinishBlock can still warn if neither dimension's coverage turns
+    -- out complete, without warning for every intermediate tag before the
+    -- rest of the block's own tags are even known.
+    local blockOptionalAll, blockOptionalCovered, blockOptionalCoveredRaces,
+        blockOptionalGaveUp, blockOptionalGaveUpText
 
     -- Every distinct `.target` name seen in the current block, and how
     -- many distinct ones - used by FinishBlock below. `npc` is deliberately
@@ -649,53 +733,83 @@ function RXPImport:Parse(text)
         local applyOptional = false
         if blockOptionalAll then
             applyOptional = true
-        elseif blockOptionalCovered then
-            -- The block's OWN class restriction, as a target list to check
-            -- coverage against - `blockClassExclude` (e.g. "step << !Hunter")
-            -- converts to its ALL_CLASSES complement the same way a tag's
-            -- own classExclude condition already does above, confirmed
-            -- live (2026-09-27, round-4 code review): without this, a tag
-            -- that exactly repeats the block's own exclusion (e.g.
-            -- "#completewith X << !Hunter" on a "step << !Hunter" block)
-            -- looked like it covered 0% of a class set that should have
-            -- been "everyone but Hunter", not ALL_CLASSES.
-            local target
-            if blockClasses then target = blockClasses
-            elseif blockClass then target = { blockClass }
-            elseif blockClassExclude then
-                local excluded = {}
-                for _, c in ipairs(blockClassExclude) do excluded[c] = true end
-                target = {}
-                for _, c in ipairs(ALL_CLASSES) do
-                    if not excluded[c] then table.insert(target, c) end
+        else
+            -- Two independent coverage tracks (class-conditioned tags,
+            -- race-conditioned tags) - confirmed live (2026-09-27): a real
+            -- guide pairs tags within ONE dimension at a time (both class-
+            -- conditioned, or both race-conditioned), never mixing the two
+            -- within one paired set, so either dimension independently
+            -- reaching full coverage is enough to apply - no attempt at
+            -- full 2D (class x race) reasoning for a mixed pairing that's
+            -- never actually been observed.
+            local classesCoverAll = false
+            if blockOptionalCovered then
+                -- The block's OWN class restriction, as a target list to
+                -- check coverage against - `blockClassExclude` (e.g.
+                -- "step << !Hunter") converts to its ALL_CLASSES complement
+                -- the same way a tag's own classExclude condition already
+                -- does above, confirmed live (2026-09-27, round-4 code
+                -- review): without this, a tag that exactly repeats the
+                -- block's own exclusion (e.g. "#completewith X << !Hunter"
+                -- on a "step << !Hunter" block) looked like it covered 0%
+                -- of a class set that should have been "everyone but
+                -- Hunter", not ALL_CLASSES.
+                local target
+                if blockClasses then target = blockClasses
+                elseif blockClass then target = { blockClass }
+                elseif blockClassExclude then
+                    local excluded = {}
+                    for _, c in ipairs(blockClassExclude) do excluded[c] = true end
+                    target = {}
+                    for _, c in ipairs(ALL_CLASSES) do
+                        if not excluded[c] then table.insert(target, c) end
+                    end
+                else target = ALL_CLASSES end
+                classesCoverAll = true
+                for _, c in ipairs(target) do
+                    if not blockOptionalCovered[c] then classesCoverAll = false break end
                 end
-            else target = ALL_CLASSES end
-            local coversAll = true
-            for _, c in ipairs(target) do
-                if not blockOptionalCovered[c] then coversAll = false break end
             end
-            -- `blockOptionalGaveUp` does NOT override a `coversAll` already
-            -- reached by the OTHER tags - confirmed live (2026-09-27,
-            -- round-4 code review): RXPGuides' own GuideWindow.lua ORs every
-            -- `completewith`/`sticky` tag on a step (any ONE matching makes
-            -- it sticky), so a tag this parser can't resolve can only ever
-            -- ADD potential optionality, never take away coverage the
-            -- OTHER tags already established. Matches `blockOptionalAll`'s
-            -- own precedent just above, which already ignores GaveUp.
-            if coversAll then
+
+            local racesCoverAll = false
+            if blockOptionalCoveredRaces then
+                -- The block's own race restriction, or every race in the
+                -- guide's own faction if it has none of its own - mirrors
+                -- the class target logic above. `route.faction` is set
+                -- from the guide's own "<< Alliance"/"<< Horde" line before
+                -- any step is reached, same timing this parser's negated-
+                -- race resolution (ClassifyTokens/FACTION_RACES) already
+                -- relies on.
+                local target = blockRaces or (route.faction and FACTION_RACES[route.faction])
+                if target then
+                    racesCoverAll = true
+                    for _, r in ipairs(target) do
+                        if not blockOptionalCoveredRaces[r] then racesCoverAll = false break end
+                    end
+                end
+                -- else: faction not yet known, can't compute a safe target
+                -- - racesCoverAll stays false, same "don't guess" fallback
+                -- ClassifyTokens' own negated-race handling already uses.
+            end
+
+            -- `blockOptionalGaveUp` does NOT override coverage already
+            -- reached by the OTHER tags in either dimension - confirmed
+            -- live (2026-09-27, round-4 code review): RXPGuides' own
+            -- GuideWindow.lua ORs every `completewith`/`sticky` tag on a
+            -- step (any ONE matching makes it sticky), so a tag this
+            -- parser can't resolve can only ever ADD potential
+            -- optionality, never take away coverage the OTHER tags already
+            -- established. Matches `blockOptionalAll`'s own precedent
+            -- above, which already ignores GaveUp.
+            if classesCoverAll or racesCoverAll then
                 applyOptional = true
-            else
+            elseif blockOptionalCovered or blockOptionalCoveredRaces or blockOptionalGaveUp then
                 table.insert(warnings, ("%s has a class/race condition this parser "
                     .. "can't apply per-class at parse time (its condition(s) don't "
-                    .. "cover every class this step applies to) - kept mandatory (not "
-                    .. "marked optional) rather than risk skipping real content for the "
-                    .. "wrong class/race."):format(blockOptionalGaveUpText or "A '#completewith'/'#sticky'/'#optional' tag"))
+                    .. "cover every class/race this step applies to) - kept mandatory "
+                    .. "(not marked optional) rather than risk skipping real content "
+                    .. "for the wrong class/race."):format(blockOptionalGaveUpText or "A '#completewith'/'#sticky'/'#optional' tag"))
             end
-        elseif blockOptionalGaveUp then
-            table.insert(warnings, ("%s has a class/race condition this parser can't "
-                .. "apply per-class at parse time - kept mandatory (not marked "
-                .. "optional) rather than risk skipping real content for the wrong "
-                .. "class/race."):format(blockOptionalGaveUpText))
         end
         if applyOptional then
             for _, s in ipairs(curBlockSteps) do s._infoOnly = true end
@@ -961,7 +1075,8 @@ function RXPImport:Parse(text)
                 curBlockSteps = {}
                 blockTargetSet, blockTargetCount, blockTargetName = {}, 0, nil
                 blockSkipIfLevel = nil
-                blockOptionalAll, blockOptionalCovered, blockOptionalGaveUp, blockOptionalGaveUpText = nil, nil, nil, nil
+                blockOptionalAll, blockOptionalCovered, blockOptionalCoveredRaces,
+                    blockOptionalGaveUp, blockOptionalGaveUpText = nil, nil, nil, nil, nil
                 sawStep = true
                 local cond = line:match("^step%s*<<%s*(.-)%s*$")
                 local class, races, outOfScope, unhandled, classExclude, classes = EvalCondition(cond, route.faction)
@@ -1043,13 +1158,30 @@ function RXPImport:Parse(text)
                             -- applies exactly as if there were no condition
                             -- at all.
                             blockOptionalAll = true
+                        elseif cRaces and not (cClass or cClasses or cClassExclude or cUnhandled) then
+                            -- A PURE race restriction, no class component
+                            -- at all (e.g. "<< Dwarf/Gnome" or the already-
+                            -- complement-resolved "<< !Dwarf !Gnome") -
+                            -- accumulate into the race-coverage set, same
+                            -- reasoning as the class branch below: a real
+                            -- guide commonly pairs two such tags whose
+                            -- conditions are each other's complement.
+                            blockOptionalCoveredRaces = blockOptionalCoveredRaces or {}
+                            for _, r in ipairs(cRaces) do blockOptionalCoveredRaces[r] = true end
                         elseif cRaces or cUnhandled
                             or ((cClass or cClasses) and cClassExclude) then
-                            -- Can't cleanly resolve this one to a class set
-                            -- at all - remember there's a gap; FinishBlock
-                            -- warns UNLESS a different tag in this same
-                            -- block ends up covering everyone anyway. The
-                            -- last condition (a positive class/classes AND
+                            -- Reaches here only for a MIXED race+class
+                            -- condition (the pure-race case is handled
+                            -- above), a genuinely unhandled token, or an
+                            -- AND-mix of a positive class and a
+                            -- classExclude - none of which this parser can
+                            -- cleanly resolve to EITHER a class set or a
+                            -- race set alone. Remember there's a gap;
+                            -- FinishBlock warns UNLESS a different tag in
+                            -- this same block ends up covering everyone
+                            -- anyway (in either dimension). The class+
+                            -- classExclude condition (a positive class/
+                            -- classes AND
                             -- a classExclude together, e.g. "<< Warrior
                             -- !Hunter" - an AND, "Warrior and not Hunter",
                             -- from ONE token group) is deliberately NOT
