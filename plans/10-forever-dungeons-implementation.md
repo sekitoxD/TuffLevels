@@ -171,10 +171,19 @@ So the default course is **no route cuts**. The lead pays off automatically.
 
 ## Phase 2: Horde coverage gaps ("fully implement for Horde")
 
+**Rows 1-2 done in this pass (2026-09-26).** Both ports the same
+already-decided Ruins of Lordaeron data from `TirisfalStart.lua`/Solo
+Chapter 17b - no new quest names, NPCs, or coordinates were invented, and
+anything still unknown at the source (Wowhead-vs-foreverchanges.pro
+`Crest of Lordaeron` conflict, `A Frightened Request`'s unconfirmed
+turn-in, missing NPC sub-locations) was carried over as the same
+`note`/`ambiguous` flags rather than resolved. Row 3 is untouched - it's
+still blocked on phase 1's in-game measurement, which hasn't happened.
+
 | Change | Impact | Performance | Dev time |
 |---|---|---|---|
-| **Tauren**: `TuFFlvls Tauren (1-60)` (`Routes/Horde/Mulgore.lua`) has no dungeon content. It already takes the zeppelin to Tirisfal/Undercity around 22 ("22-24 Hillsbrad", ~line 1153), which is a natural slot for the Horde Ruins of Lordaeron block, marked as an original addition since it's an RXP-converted file. | `Mulgore.lua` only | Data only | ~45 min |
-| **5-man route**: `ONSLAUGHT 5-Man Horde 1-60` already has "Silverpine into Hillsbrad Lap with a Quick SFK (level 21-24)" (`Dungeon/02-MidBarrensLap.lua:590`). The group already exists there. | `Dungeon/02-MidBarrensLap.lua` only | Data only | ~45 min |
+| **Tauren (done)**: `TuFFlvls Tauren (1-60)` (`Routes/Horde/Mulgore.lua`) had no dungeon content. It reaches Tirisfal Glades/Undercity via the zeppelin at level 22-24, matching Solo Chapter 17b's level (not TirisfalStart's level-16 gate), so the block was copied from 17b's data rather than TirisfalStart's, inserted mid-"22-24 Hillsbrad" right after the existing Undercity steps and before the Silverpine turn-ins, in this file's own coordinate-bearing flat style. Marked as an original addition, not RXP-sourced. | `Mulgore.lua` only, one contiguous ~80-line insertion; no existing steps edited, no `requires` indices in this file to shift. | Data only; `forever = true` drops the whole block on every non-Forever client at `ns.RegisterRoute` time (`Core.lua`) - zero runtime cost added elsewhere. | ~50 min (read both source blocks, adapt field style, insert, `luac -p` syntax check) |
+| **5-man route (done)**: `ONSLAUGHT 5-Man Horde 1-60` already has "Silverpine into Hillsbrad Lap with a Quick SFK (level 21-24)" (`Dungeon/02-MidBarrensLap.lua:590`), reaching Undercity at a matching level with the group already assembled. The same 17b data was inserted before the leg's closing hearth step, in this file's `location`-based (no-coordinate) style. Whole route is already Orc/Troll-only (`Register.lua`), so unlike Solo 17b's own copy, no per-step `races` workaround was needed here. | `Dungeon/02-MidBarrensLap.lua` only, one contiguous ~75-line insertion; no existing steps edited. | Data only, same `forever` gating as above. | ~35 min |
 | Undead 16-vs-23 decision (R-a), from phase 1's numbers | `TirisfalStart.lua` (and 17b's filter) | None | ~15 min |
 
 ## Phase 3: optional, only if phase 1 shows both a lead and a specific time sink

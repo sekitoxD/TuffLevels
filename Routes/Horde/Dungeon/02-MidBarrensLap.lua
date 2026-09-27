@@ -782,6 +782,99 @@ Part(2, {
       type = "turnin", questName = "The Book of Ur", zone = "Undercity",
       location = "Apothocarium", logCount = 10,
     },
+
+    -- Ruins of Lordaeron (Forever only) --------------------------------
+    -- Same Forever-only dungeon block as Chapter 17b in
+    -- Routes/Horde/Solo/SilverpineForest.lua, reused here because this
+    -- leg already reaches Tirisfal Glades/Undercity at a matching level
+    -- (21-24) with the group already assembled for the Silverpine/SFK
+    -- lap above. `forever = true` steps are dropped on every other
+    -- client by ns.RegisterRoute (Core.lua). Quest data has no numeric
+    -- IDs yet (questName only) and is provisional beta data; see
+    -- plans/10-forever-dungeons-implementation.md.
+    {
+      type = "section", name = "Ruins of Lordaeron (Forever dungeon)",
+      levels = { 21, 24 }, zone = "Tirisfal Glades", forever = true,
+    },
+    {
+      type = "note", name = "Mandatory: group up for Ruins of Lordaeron", forever = true,
+      note = "Don't skip this. This leg's group is already assembled for the Silverpine/SFK lap above - stay together for this too. It's a 5-man dungeon for levels 15-20; at 21-24 it goes quickly, and its six quests plus the first-clear bonus are worth several levels.",
+    },
+    {
+      type = "accept", questName = "Light's Justice", zone = "Undercity", npc = "Morbin Lightbane",
+      forever = true, logCount = 12,
+    },
+    {
+      type = "accept", questName = "The New Plague", zone = "Undercity", npc = "Theodore Griffs",
+      forever = true, logCount = 13, note = "Not the same quest as A New Plague in Brill.",
+    },
+    {
+      type = "accept", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+      npc = "Oran Snakewrithe", forever = true, logCount = 14,
+      note = "Wowhead's dungeon-quest guide lists this quest as picked up inside the dungeon rather than from an NPC beforehand, but its rows for this name look scrape-ambiguous (two entries, likely one per faction) against foreverchanges.pro's structured giver name used here. Kept as originally sourced pending in-game verification.",
+    },
+    {
+      type = "accept", questName = "A Frightened Request", zone = "Undercity", npc = "Tabitha Heartweaver",
+      forever = true, logCount = 15,
+      note = "Location corrected from Wowhead's dungeon-quest guide (was guessed as Silverpine Forest; the guide gives Undercity). Unverified in-game.",
+    },
+    {
+      type = "accept", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades", location = "Brill",
+      npc = "Deathguard Kristof", forever = true, logCount = 16,
+      note = "The source only says Tirisfal Glades - Brill, north of the Undercity entrance, is the likely spot.",
+    },
+    {
+      type = "note", name = "Enter Ruins of Lordaeron", zone = "Tirisfal Glades", forever = true,
+      note = "Among the ruins of Lordaeron's capital, above the Undercity. Bosses: The Baron, Witherfang, The Abandoned, Bjork, Rath'mael, Viktor the Vile.",
+    },
+    {
+      type = "complete", questName = "Light's Justice", zone = "Ruins of Lordaeron", forever = true,
+      note = "25 Intact Limbs.",
+    },
+    {
+      type = "complete", questName = "The New Plague", zone = "Ruins of Lordaeron", forever = true,
+      note = "Highly Toxic Strain, from Witherfang.",
+    },
+    { type = "complete", questName = "Crest of Lordaeron", ambiguous = true, zone = "Ruins of Lordaeron", forever = true },
+    {
+      type = "complete", questName = "The Wrath of Rath'mael", zone = "Ruins of Lordaeron", forever = true,
+      note = "Kill Rath'mael.",
+    },
+    {
+      type = "complete", questName = "A Frightened Request", zone = "Ruins of Lordaeron", forever = true,
+      note = "Find out what happened to Edward Heartweaver.",
+    },
+    {
+      type = "accept", questName = "Unending Torment", zone = "Ruins of Lordaeron", forever = true, logCount = 17,
+      note = "Starts from an item you loot in the dungeon (Abominable Head), not from an NPC. The source doesn't say which boss drops it - its rewards match the Alliance quest for the Head of the Baron, so most likely The Baron.",
+    },
+    {
+      type = "turnin", questName = "Unending Torment", zone = "Undercity", location = "The Apothecarium",
+      npc = "Master Apothecary Faranell", forever = true, logCount = 16,
+      note = "The source calls this a multi-step chain inside the Undercity. Follow any follow-up quests it gives you before leaving.",
+    },
+    {
+      type = "turnin", questName = "Light's Justice", zone = "Undercity", npc = "Morbin Lightbane",
+      forever = true, logCount = 15,
+    },
+    {
+      type = "turnin", questName = "The New Plague", zone = "Undercity", npc = "Theodore Griffs",
+      forever = true, logCount = 14,
+    },
+    {
+      type = "turnin", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+      npc = "Oran Snakewrithe", forever = true, logCount = 13,
+    },
+    {
+      type = "turnin", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades", location = "Brill",
+      npc = "Deathguard Kristof", forever = true, logCount = 12,
+    },
+    {
+      type = "turnin", questName = "A Frightened Request", zone = "Undercity", npc = "Tabitha Heartweaver",
+      forever = true, logCount = 11,
+      note = "Same NPC as the accept, per Wowhead's dungeon-quest guide - no extra travel needed. Worth about 7,000 XP. Unverified in-game.",
+    },
+
     {
       type = "hearth", name = "Hearth to Thunder Bluff", zone = "Undercity",
       location = "Magic Quarter", logCount = 10, note = "Use your hearthstone.",

@@ -1167,10 +1167,95 @@ ns.RegisterRoute("TuFFlvls Tauren (1-60)", {
         { type = "travel", name = "Talk to Lexington", note = "Train [Teleport: Undercity]", zone = "Undercity", x = 84.18, y = 15.59, npc = "Lexington Mortaim", class = "MAGE" },
         { type = "travel", name = "Talk to Hannah. Buy one or more [Rune of Teleportation] from her", note = ".collect 17031,1", zone = "Undercity", x = 82.78, y = 15.81, npc = "Hannah Akeley", class = "MAGE" },
         { type = "accept", name = "Talk to Bel'dugur", zone = "Undercity", x = 53.74, y = 54.49, npc = "Keeper Bel'dugur", quest = 1013 },
+
+        -- Ruins of Lordaeron (WoW Forever only) -----------------------------
+        -- Original addition, not from the RXP source guide this file was
+        -- converted from. This route reaches Tirisfal Glades/Undercity via
+        -- the zeppelin at the same level (22-24) as Routes/Horde/Solo/
+        -- SilverpineForest.lua's Chapter 17b, so this block reuses that
+        -- chapter's data (accepted/turned in at level ~23, not the level-16
+        -- gated version at the end of Routes/Horde/TirisfalStart.lua, which
+        -- is for Undead arriving much earlier). `forever = true` steps are
+        -- dropped on every other client by ns.RegisterRoute (Core.lua).
+        -- Quest data is provisional beta data with no numeric quest IDs yet
+        -- (questName only); see plans/10-forever-dungeons-implementation.md.
+        -- Placed before the Scourge-only Silverpine detour below (dead code
+        -- on this Tauren-only route) so a Tauren goes straight from
+        -- Bel'dugur into the dungeon block, not through unrelated steps.
+        { type = "section", name = "Ruins of Lordaeron (Forever dungeon)", levels = { 22, 24 }, zone = "Tirisfal Glades", forever = true },
+        {
+          type = "note", name = "Mandatory: group up for Ruins of Lordaeron", forever = true,
+          note = "Don't skip this. A 5-man dungeon for levels 15-20 - at 22-24 it goes quickly, and a duo may be enough. Its six quests plus the first-clear bonus are worth several levels. Find a group (LFG, Undercity or Brill) before going on.",
+        },
+        { type = "accept", questName = "Light's Justice", zone = "Undercity", npc = "Morbin Lightbane", x = 57.8, y = 89.8, forever = true },
+        {
+          type = "accept", questName = "The New Plague", zone = "Undercity", npc = "Theodore Griffs",
+          x = 47.0, y = 72.6, forever = true, note = "Not the same quest as A New Plague in Brill.",
+        },
+        {
+          type = "accept", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity",
+          npc = "Oran Snakewrithe", forever = true,
+          note = "Wowhead's dungeon-quest guide lists this quest as picked up inside the dungeon rather than from an NPC beforehand, but its rows for this name look scrape-ambiguous (two entries, likely one per faction) against foreverchanges.pro's structured giver name used here. Kept as originally sourced pending in-game verification.",
+        },
+        {
+          type = "accept", questName = "A Frightened Request", zone = "Undercity", npc = "Tabitha Heartweaver",
+          x = 34.0, y = 21.0, forever = true,
+          note = "Location corrected from Wowhead's dungeon-quest guide (was guessed as Silverpine Forest; the guide gives Undercity with this coordinate). Unverified in-game.",
+        },
+        {
+          type = "accept", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades", npc = "Deathguard Kristof",
+          x = 59.4, y = 52.4, approx = true, forever = true,
+          note = "The source only says Tirisfal Glades - Brill, north of the Undercity entrance, is the likely spot.",
+        },
+        {
+          type = "note", name = "Enter Ruins of Lordaeron", zone = "Tirisfal Glades", forever = true,
+          note = "Among the ruins of Lordaeron's capital, above the Undercity. Bosses: The Baron, Witherfang, The Abandoned, Bjork, Rath'mael, Viktor the Vile.",
+        },
+        { type = "complete", questName = "Light's Justice", zone = "Ruins of Lordaeron", forever = true, note = "25 Intact Limbs." },
+        {
+          type = "complete", questName = "The New Plague", zone = "Ruins of Lordaeron", forever = true,
+          note = "Highly Toxic Strain, from Witherfang.",
+        },
+        { type = "complete", questName = "Crest of Lordaeron", ambiguous = true, zone = "Ruins of Lordaeron", forever = true },
+        {
+          type = "complete", questName = "The Wrath of Rath'mael", zone = "Ruins of Lordaeron", forever = true,
+          note = "Kill Rath'mael.",
+        },
+        {
+          type = "complete", questName = "A Frightened Request", zone = "Ruins of Lordaeron", forever = true,
+          note = "Find out what happened to Edward Heartweaver.",
+        },
+        {
+          type = "accept", questName = "Unending Torment", zone = "Ruins of Lordaeron", forever = true,
+          note = "Starts from an item you loot in the dungeon (Abominable Head), not from an NPC. The source doesn't say which boss drops it - its rewards match the Alliance quest for the Head of the Baron, so most likely The Baron.",
+        },
+        {
+          type = "turnin", questName = "Unending Torment", zone = "Undercity", npc = "Master Apothecary Faranell",
+          x = 50.1, y = 68.0, forever = true,
+          note = "The source calls this a multi-step chain inside the Undercity. Follow any follow-up quests it gives you before leaving.",
+        },
+        { type = "turnin", questName = "Light's Justice", zone = "Undercity", npc = "Morbin Lightbane", forever = true },
+        { type = "turnin", questName = "The New Plague", zone = "Undercity", npc = "Theodore Griffs", forever = true },
+        { type = "turnin", questName = "Crest of Lordaeron", ambiguous = true, zone = "Undercity", npc = "Oran Snakewrithe", forever = true },
+        {
+          type = "turnin", questName = "The Wrath of Rath'mael", zone = "Tirisfal Glades", npc = "Deathguard Kristof",
+          x = 59.4, y = 52.4, approx = true, forever = true,
+        },
+        {
+          type = "turnin", questName = "A Frightened Request", zone = "Undercity", npc = "Tabitha Heartweaver",
+          x = 34.0, y = 21.0, forever = true,
+          note = "Same NPC as the accept, per Wowhead's dungeon-quest guide - no extra travel needed. Worth about 7,000 XP. Unverified in-game.",
+        },
+        -- Closes the dungeon block's own section header above, so the
+        -- ~200 steps below (Silverpine/Hillsbrad) don't get miscounted as
+        -- part of "Ruins of Lordaeron" by Core:Sections/Progress/Pace.
+        { type = "section", name = "22-24 Hillsbrad (continued)", levels = { 22, 24 } },
+
         { type = "turnin", name = "Talk to Aelthalyste", note = ".isOnQuest 5644", zone = "Undercity", x = 48.98, y = 18.33, npc = "Aelthalyste", quest = 5644, class = "PRIEST", races = { "Scourge" } },
         { type = "turnin", name = "Talk to Aelthalyste", zone = "Undercity", x = 48.98, y = 18.33, npc = "Aelthalyste", quest = 5679, class = "PRIEST", races = { "Scourge" } },
         { type = "accept", name = "Talk to Michael", note = ".zoneskip Silverpine Forest", zone = "Undercity", x = 63.27, y = 48.55, npc = "Michael Garrett", quest = 6324, races = { "Scourge" } },
         { type = "travel", name = "Talk to Michael", note = "Fly to The Sepulcher - .zoneskip Silverpine Forest", zone = "Undercity", x = 63.27, y = 48.55, npc = "Michael Garrett", races = { "Scourge" } },
+
         { type = "turnin", name = "Talk to Renferrel and Mura", note = ".train 415936,1", zone = "Silverpine Forest", x = 42.91, y = 41.99, npc = "Apothecary Renferrel", quest = 3301, class = "MAGE", path = { { zone = "Silverpine Forest", x = 42.9, y = 40.86 } } },
         { type = "turnin", name = "Talk to Renferrel and Mura", zone = "Silverpine Forest", x = 42.9, y = 41.99, npc = "Apothecary Renferrel", quest = 3301, path = { { zone = "Silverpine Forest", x = 42.9, y = 40.86 } } },
         { type = "turnin", name = "Interact with Yuriv's Tombstone on the ground", note = ".isOnQuest 264", zone = "Silverpine Forest", x = 44.18, y = 42.68, quest = 264 },
