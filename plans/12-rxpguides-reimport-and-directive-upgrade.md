@@ -305,10 +305,89 @@ decision is explicitly deferred, not made by this section.
         "exact-duplicate" like the other four - it was actually two real
         money-threshold variants of the same turn-in. Corrected; no
         functional change (`spellID` is inert on a `turnin` step).
-- [ ] Chapter 2 ("6-10 Durotar"), chapter 3 ("10-12 Durotar" / the
-      "10-12 Tirisfal" branch it leads into for Undead - out of scope for
-      this Orc/Troll route, skip it), then the shared
-      `Classic-Horde-30-60.lua` 36 chapters (Barrens onward).
+- [x] 2026-09-26: Chapter 2 ("6-10 Durotar") parsed via
+      `spec/rxp_harness.lua` (confirmed chapter index 2 by listing all 6
+      RegisterGuide blocks in the source file first, not assumed) and
+      appended to `Routes/Horde/OrcTrollRXP.lua` (245 steps + 1 new section
+      header; route's `levels` extended to `{ 1, 10 }`). Audited against the
+      same bug shapes chapter 1's playtests found, before any in-game test
+      of chapter 2 itself:
+      - Duplicate steps: found and fixed 12 exact-duplicate lines across 6
+        groups (quest 818/837/815/2983/5660 accept/complete/trainer step
+        dupes, plus one whole duplicated "Fizzle Darkstorm -> die -> fight
+        out" quest-806 block covering complete/death/travel together) - same
+        OR-condition-branch root cause chapter 1's dupes had. Left the
+        scattered vendor/spell/item-equip exact duplicates alone, matching
+        chapter 1's own precedent (idempotent, non-blocking, not the bug
+        shape this check targets).
+      - Class-filter consistency: audited every accept/complete/turnin/
+        trainer step's `class` against its same-quest siblings, and every
+        tiered vendor-purchase chain for consistent `class`/`races` across
+        tiers - found none of chapter 1's two bug shapes recurring. Flagged
+        one unresolved oddity instead of guessing at a fix: quest 837 has
+        two differently-classed turn-in steps at two different NPCs, which
+        doesn't cleanly match this bug's "accept vs. complete/turnin"
+        shape - could be the 77000s-style duplicate-ID mixup chapter 1
+        already flagged, needs an in-game check.
+      - Bare `.xp N` directives: none exist in chapter 2's source (only
+        modified forms like `.xp 7+2070`/`.xp <10,1`, which correctly stay
+        unconverted) - confirmed from the harness dump, not assumed.
+      - No in-game testing done yet for chapter 2 - same as chapter 1's own
+        first-parse state before its two playtest rounds.
+- [x] 2026-09-27: Independent code-review audit of chapter 2 (`code-reviewer`
+      agent), requested before any further pushes, same as chapter 1's round.
+      Re-verified every claim above directly against the diff (re-ran the
+      harness itself, re-audited class filters by hand) rather than trusting
+      the report - all confirmed accurate. Found one real bug and resolved
+      the quest-837 question the previous entry left open, plus surfaced a
+      larger pre-existing parser gap:
+      - Fixed: "Talk to Innkeeper Grosk" (quest 2161) had been parsed as a
+        Warrior-only `spell` step because a trailing `.train 284,1 <<
+        Warrior` directive on the same source line overwrote its own
+        `.turnin 2161` - non-Warriors could never complete it. Reverted to a
+        plain `turnin` step (Warrior spell training for 284 is still covered
+        by the very next step, "Talk to Tarshaw").
+      - Resolved (not a bug): quest 837's two differently-classed turn-in
+        steps are both doing real work - one is a genuine Hunter-only early
+        turn-in (`<< Hunter #xprate <1.5` in the source), the other an
+        unfiltered fallback for everyone else that also happens to stand in
+        for a `<< !Hunter` branch the parser drops entirely. Left as-is;
+        changing either filter would strand a class without a turn-in.
+      - New, larger finding not specific to chapter 2: RXPImport.lua keeps
+        only the LAST quest ID when a source step names several quests at
+        once (`step.quest` gets overwritten per directive instead of
+        collecting all of them) - affects 29 of chapter 2's 63 distinct
+        accept/turnin IDs (fewer in chapter 1, same root cause). Not fixed
+        in this pass - it needs a RXPImport.lua parser change (multi-quest
+        steps, or splitting at parse time), which is bigger than a
+        single-chapter fix. Tracked as its own item below, to be resolved
+        before parsing further chapters rather than repeating this gap at
+        larger scale each time.
+      - Also disclosed in the file's own KNOWN OPEN ISSUES rather than
+        fixed: ~20 Season of Discovery rune-training steps survive
+        unfiltered (can't complete on Era/Forever/Classic), both branches of
+        `#xprate`/`#hardcore`/`#softcore` splits survive (duplicate
+        non-optional "Die and release" steps), `<< !Hunter` steps are
+        dropped instead of kept for their intended classes, two Warlock pet
+        -spell steps may never auto-complete, a couple of `travel`-typed
+        grind markers complete on arrival rather than after the actual
+        grind, and a handful of near-duplicate (not byte-identical) steps
+        from OR-condition branches remain unmerged (harmless - self-skips).
+      - Confirmed which RXPGuides source copy was used
+        (`_anniversary_` realm install) and noted in the file header that
+        the `_classic_era_` copy of the same guide differs by 10 lines in
+        this chapter, for reproducibility.
+- [ ] **Before parsing chapter 3 or later**: fix RXPImport.lua's
+      multi-quest-per-step data loss (see above) - it will only get worse at
+      the shared `Classic-Horde-30-60.lua` file's scale. Also worth deciding
+      then whether to teach the parser `#season`/`#xprate`/`#hardcore`-
+      `#softcore`/`<< !X` tokens properly, rather than disclosing each as a
+      per-chapter open issue indefinitely.
+- [ ] Chapter 3 ("10-12 Durotar" / the "10-12 Tirisfal" branch it leads
+      into for Undead - out of scope for this Orc/Troll route, skip it),
+      then the shared `Classic-Horde-30-60.lua` 36 chapters (Barrens
+      onward).
+- [ ] In-game playtest pass of chapter 2 (none done yet).
 - [ ] Continue the chapter-1 playtest past level 5 - two playtest rounds in
       a row have each found a handful of real issues, so a third full pass
       before declaring chapter 1 done is worth it. Recommend a class-
