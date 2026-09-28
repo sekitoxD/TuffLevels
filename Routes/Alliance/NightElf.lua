@@ -94,12 +94,12 @@
 --   step is optional and gets skipped), so the placement works for
 --   everyone. Forever only, unfiltered by class.
 --
--- - Review-round fixes (2026-09-28): quest 6343 accept made mandatory (its
+-- - Review-round fixes (2026-09-28): Redridge Goulash (92) pair before the snout step made optional (it had no item gate); quest 6343 accept made mandatory (its
 --   turn-in is); Dalmond item step now waits on item 4471, not the Small
 --   Egg visibility gate; Woo Ping travel step gated off (a mixed race/class
 --   source condition resolved wrongly to Hunter-only); turn-ins the source
 --   only shows via .isOnQuest/.isQuestComplete (quests 1003, 1138, 2078,
---   968) made optional so they can't stall.
+--   968) made optional so they can't stall (except the final 20-21 quest 1003 hand-in and its bear-kill step, kept mandatory).
 --
 -- KNOWN OPEN ISSUES in the re-parsed chapters (same disclose-don't-guess
 -- spirit as Routes/Horde/OrcTrollRXP.lua's own section)
@@ -1395,8 +1395,8 @@ ns.RegisterRoute("TuFFlvls Alliance Night Elf (1-60)", {
         { type = "turnin", name = "Talk to Dockmaster Baren", zone = "Redridge Mountains", x = 27.72, y = 47.38, npc = "Dockmaster Baren", quest = 127 },
         { type = "accept", name = "Accept Murloc Poachers", zone = "Redridge Mountains", x = 27.72, y = 47.38, npc = "Dockmaster Baren", quest = 150 },
         { type = "turnin", name = "Turn in Murloc Poachers", zone = "Redridge Mountains", x = 27.72, y = 47.38, npc = "Dockmaster Baren", quest = 150 },
-        { type = "accept", name = "Talk to Chef Breanna", zone = "Redridge Mountains", x = 22.67, y = 43.83, npc = "Chef Breanna", quest = 92 },
-        { type = "turnin", name = "Turn in Redridge Goulash", zone = "Redridge Mountains", x = 22.67, y = 43.83, npc = "Chef Breanna", quest = 92 },
+        { type = "accept", name = "Talk to Chef Breanna", zone = "Redridge Mountains", x = 22.67, y = 43.83, npc = "Chef Breanna", quest = 92, optional = true },
+        { type = "turnin", name = "Turn in Redridge Goulash", zone = "Redridge Mountains", x = 22.67, y = 43.83, npc = "Chef Breanna", quest = 92, optional = true },
         { type = "turnin", name = "Talk to Martie Jainrose", zone = "Redridge Mountains", x = 21.86, y = 46.33, npc = "Martie Jainrose", quest = 130 },
         { type = "accept", name = "Accept Delivering Daffodils", zone = "Redridge Mountains", x = 21.86, y = 46.33, npc = "Martie Jainrose", quest = 131 },
         { type = "complete", name = "Kill Black Dragon Whelps. Loot them for their Scales", note = ".mob Black Dragon Whelp", quest = 122, objective = 1, optional = true },
@@ -1450,7 +1450,7 @@ ns.RegisterRoute("TuFFlvls Alliance Night Elf (1-60)", {
         { type = "accept", name = "Click the Beached Sea Creature", map = 1439, x = 32.644, y = 80.711, quest = 4730, optional = true },
         { type = "complete", name = "Make sure you check if Murkdeep is already up in the water (if someone has previously failed the encounter or left the Greymist Hunter in the wave that he spawns with alive)", note = "Kill the Greymist Warriors and Greymist Hunters in the camp - Move to the Bonfire in the center of the camp to start the Murkdeep encounter: - 3 waves will spawn from the water, each after killing the previous wave: Wave 1 has 3 level 12-13 Greymist Coastrunners, Wave 2 has 2 level 15-16 Greymist Warriors, and Wave 3 has a level 19 Murkdeep and a level 16-17 Greymist Hunter. You can move away from the Bonfire to avoid aggroing the next wave - .unitscan Murkdeep - .mob Greymist Warrior - .mob Greymist Hunter - .mob Greymist Coastrunner", zone = "Darkshore", x = 36.64, y = 76.53, quest = 4740, objective = 1, path = { { map = 1439, x = 35.429, y = 76.566 }, { map = 1439, x = 35.429, y = 76.566 } }, optional = true },
         { type = "complete", name = "Kill Encrusted Tide Crawlers and Reef Crawlers. Loot them for their Fine Crab Chunks", note = ".mob Encrusted Tide Crawler - .mob Reef Crawler", map = 1439, x = 35.195, y = 71.864, quest = 1138, objective = 1, path = { { map = 1439, x = 32.674, y = 81.752 }, { map = 1439, x = 36.327, y = 73.408 }, { map = 1439, x = 35.195, y = 71.864 }, { map = 1439, x = 32.674, y = 81.752 }, { map = 1439, x = 33.284, y = 80.33 }, { map = 1439, x = 34.174, y = 80.488 }, { map = 1439, x = 35.432, y = 79.052 }, { map = 1439, x = 36.327, y = 73.408 }, { map = 1439, x = 35.412, y = 73.176 }, { map = 1439, x = 35.033, y = 72.432 } } },
-        { type = "complete", name = "Kill Grizzled Thistle Bears. Loot them for their Scalps", note = "Be careful as they cast [Ravage] an instant attack dealing 20-40 damage and knocking you down for 2s - .isOnQuest 1003 - .mob Grizzled Thistle Bear", zone = "Darkshore", x = 38, y = 83.55, quest = 1003, objective = 1, path = { { zone = "Darkshore", x = 41.44, y = 86.06 }, { zone = "Darkshore", x = 41.77, y = 84.6 }, { zone = "Darkshore", x = 42.94, y = 82.25 }, { zone = "Darkshore", x = 43.59, y = 80.02 }, { zone = "Darkshore", x = 39.74, y = 80.43 } }, optional = true },
+        { type = "complete", name = "Kill Grizzled Thistle Bears. Loot them for their Scalps", note = "Be careful as they cast [Ravage] an instant attack dealing 20-40 damage and knocking you down for 2s - .isOnQuest 1003 - .mob Grizzled Thistle Bear", zone = "Darkshore", x = 38, y = 83.55, quest = 1003, objective = 1, path = { { zone = "Darkshore", x = 41.44, y = 86.06 }, { zone = "Darkshore", x = 41.77, y = 84.6 }, { zone = "Darkshore", x = 42.94, y = 82.25 }, { zone = "Darkshore", x = 43.59, y = 80.02 }, { zone = "Darkshore", x = 39.74, y = 80.43 } } },
         { type = "turnin", name = "Click the Buzzbox 525 on the ground", note = ".isOnQuest 1003", zone = "Darkshore", x = 41.389, y = 80.565, quest = 1003 },
         { type = "turnin", name = "Talk to Onu", note = ".isQuestComplete 951", map = 1439, x = 43.555, y = 76.293, npc = "Onu", quest = 951 },
         { type = "turnin", name = "Talk to Onu", map = 1439, x = 43.555, y = 76.293, npc = "Onu", quest = 950 },
