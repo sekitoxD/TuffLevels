@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.26"
+local CHANGELOG_VERSION = "1.7.27"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Fixed the menu's windows drawing on top of each other: opening Content & Import now closes Display settings (and the Colors window), and the other way around, so only one is visible at a time. Closing the main menu closes any submenu left open, closing Display settings closes Colors, and /tuff colors closes Content & Import. Hiding the whole UI with Alt+Z still keeps your open windows. An independent review found no blockers; other centered windows (Available Guides, Help, Progress and the import windows) can still stack and are a known follow-up.",
     "Fixed the red buttons that ignored your selected color theme: every button in the tracker, menu and windows now uses the theme's own colors instead of the stock red art (the Progress window's Jump / Export / Close buttons were never themed at all). Button text is now always legible - the light presets used to show near-unreadable text when you hovered a button - and error, dimmed and completed-step text is automatically brightened or darkened on any preset or custom palette where it was too faint to read.",
     "Fixed the What's new window: it now shows only the newest entries in a fixed-size scrolling window with a Close button that always stays on screen (it used to grow past the screen with no way to close it), and Escape closes it. Removed the custom color palette text box from the Colors window (the presets are the way to change colors now) - the preset buttons stay, and the Close button no longer overlaps leftover content.",
     "Re-parsed the Night Elf route's \"21-23 Stonetalon/Ashenvale\", \"23-24 Wetlands\" and \"24-27 Duskwood/Redridge\" chapters through the RXPGuides importer, with the Hunter and non-Hunter guide chapters split into class-filtered sections. Group-dungeon content (Wailing Caverns, Shadowfang Keep, Stormwind Stockades) and Bronze Tube quests are now optional so solo players are not forced to click through them. Fixed an RXPGuides importer bug where a maximum-level skip took effect one level too early (which made a Redridge/Duskwood quest chain skip its accept and then stall), made a negative turn-in directive optional, and stopped raw map-ID coordinates from becoming a bogus zone name. Two review rounds found and fixed real stalls before this shipped.",
@@ -253,6 +254,18 @@ local function MakeButton(parent, label, y, onClick)
     return b
 end
 
+-- Content & Import and Display settings share one anchor beside the main
+-- panel, and Colors (a centered window opened from Display settings) lands on
+-- the same column, so any two open at once draw on top of each other.
+-- Opening one closes the others.
+-- Frames not built yet are skipped, so this is safe to call at any time.
+function Panel:CloseSubmenus(except)
+    for _, key in ipairs({ "contentMenu", "displayMenu", "colorPicker" }) do
+        local f = self[key]
+        if f and f ~= except then f:Hide() end
+    end
+end
+
 function Panel:Build()
     if panel then return end
 
@@ -265,6 +278,13 @@ function Panel:Build()
     panel:SetScript("OnDragStart", panel.StartMoving)
     panel:SetScript("OnDragStop", panel.StopMovingOrSizing)
     panel:Hide()
+    -- Submenus are parented to UIParent, not the panel, so they would
+    -- otherwise be left floating when the main menu closes.
+    -- OnHide also fires when UIParent hides (Alt+Z); IsShown stays true
+    -- then, so only an explicit Hide cascades and Alt+Z keeps the submenus.
+    panel:HookScript("OnHide", function()
+        if not panel:IsShown() then Panel:CloseSubmenus() end
+    end)
 
     ns.Theme:Skin(panel)
 
@@ -561,6 +581,7 @@ function Panel:ShowContentMenu()
     f.recBtn:SetText(ns.Recorder and ns.Recorder.active and "Stop recording" or "Start recording")
     f.recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
 
+    self:CloseSubmenus(f)
     f:Show()
 end
 
@@ -634,6 +655,11 @@ function Panel:ShowDisplayMenu()
         close:SetScript("OnClick", function() f:Hide() end)
 
         ns.Theme:SkinChildren(f)
+        -- Colors belongs to this menu; don't leave it orphaned when this
+        -- one closes (its own Close button, or another submenu opening).
+        f:SetScript("OnHide", function()
+            if not f:IsShown() and Panel.colorPicker then Panel.colorPicker:Hide() end
+        end)
         self.displayMenu = f
     end
 
@@ -645,6 +671,7 @@ function Panel:ShowDisplayMenu()
     f.textOnlyBtn:SetText(ns.Arrow and ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
     f.tomtomBtn:SetText(ns.Arrow and ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
 
+    self:CloseSubmenus(f)
     f:Show()
 end
 
@@ -1086,6 +1113,9 @@ end
 -- 08 batch 8 / P1.4; the audit correction over the original finding is
 -- that this one does NOT need a button pool, unlike ShowRoutePicker).
 function Panel:ShowColorPicker()
+    -- Also reachable via /tuff colors with a submenu open; Display settings
+    -- stays (this is opened from it), Content & Import must not.
+    if self.contentMenu then self.contentMenu:Hide() end
     if self.colorPicker then
         self.colorPicker:Show()
         return
