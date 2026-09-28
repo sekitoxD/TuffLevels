@@ -1054,6 +1054,55 @@ function RXPImport:Parse(text)
         return false, nil
     end
 
+    -- `#xprate <N`/`#xprate >N`/`#xprate A-B` gates a step (or block, when
+    -- combined with a trailing "<< Cond") to a specific XP-rate multiplier
+    -- range (Season of Discovery-style faster leveling, or a slower-than-
+    -- normal one). This addon targets a normal 1x Classic Era/Forever/
+    -- Mainline pace, so a range that excludes 1.0 is out of scope - drop
+    -- unconditionally when there's no trailing condition. UNLIKE #season/
+    -- #hardcore (where whether a step is SoD-only can genuinely differ by
+    -- class), the rate verdict itself never depends on class - a trailing
+    -- "<< Cond" only says WHICH classes this specific out-of-scope variant
+    -- covers, so a clean class-only condition resolves directly into
+    -- `classExclude` instead of falling back to "keep unfiltered, warn" -
+    -- see the `#`-tag handler below (search "tag == \"xprate\"") for that
+    -- resolution logic; only a genuine race condition (or anything else
+    -- this parser can't cleanly resolve) still falls back to warning.
+    -- Confirmed live (2026-09-27, code review): without dropping out-of-
+    -- scope xprate content at all, BOTH an `#xprate <1.x` branch and its
+    -- `#xprate >1.x` sibling shipped side by side in one chapter - unlike
+    -- most xprate duplicates (near-identical content that simply self-
+    -- skips once the first copy is done), a fast-XP branch can be a
+    -- GENUINELY DIFFERENT itinerary (different NPCs/trainers/turn-ins
+    -- reaching the same destination a different way) that never self-
+    -- skips at all, so a 1x player got both itineraries' worth of clicks
+    -- back to back; and without resolving a clean class-only trailing
+    -- condition, several real steps (a Paladin/Warrior/Rogue-only fast-XP
+    -- quest chain, a Rogue-only branch, a Paladin-only hearthstone step)
+    -- stayed mandatory for classes the source never intended to route
+    -- through them at 1x.
+    local function XPRateCond(val)
+        local ratePart, cond = val:match("^(%S+)%s*<<%s*(%S.-)%s*$")
+        if not ratePart then ratePart = val end
+        local lo, hi = ratePart:match("^([%d%.]+)%-([%d%.]+)$")
+        if lo and hi then
+            lo, hi = tonumber(lo), tonumber(hi)
+            if lo and hi then
+                return not (lo <= 1.0 and 1.0 <= hi), cond
+            end
+            return false, nil
+        end
+        local op, num = ratePart:match("^([<>])([%d%.]+)$")
+        num = tonumber(num)
+        if op == "<" and num then
+            return not (1.0 < num), cond
+        elseif op == ">" and num then
+            return not (1.0 > num), cond
+        end
+        -- Unrecognized xprate syntax - don't guess, leave in scope (no-op).
+        return false, nil
+    end
+
     for rawLine in (text .. "\n"):gmatch("(.-)\n") do
         local line = rawLine:match("^%s*(.-)%s*$")
 
@@ -1079,6 +1128,21 @@ function RXPImport:Parse(text)
                             .. "ENTIRE content, not just one step - this addon targets "
                             .. "normal Classic Era/Forever/Mainline, not Season of "
                             .. "Discovery/hardcore rulesets. Review before using."):format(tag, val))
+                    end
+                elseif tag == "xprate" then
+                    -- A guide-WIDE xprate tag before the first "step" line
+                    -- (e.g. the "11-12 Voidwalker Quest" chapter's own
+                    -- `#xprate >1.49 << Gnome Warlock`) means the whole
+                    -- guide only applies at that rate - same "can't drop
+                    -- automatically, warn instead" situation as a guide-
+                    -- wide #season/#hardcore just above. Previously silently
+                    -- ignored here (no warning at all), unlike #season.
+                    local outOfScope = XPRateCond(val)
+                    if outOfScope then
+                        table.insert(warnings, ("This guide is tagged '#%s %s' for its "
+                            .. "ENTIRE content, not just one step - this addon targets a "
+                            .. "normal 1x Classic Era/Forever/Mainline pace. Review before "
+                            .. "using."):format(tag, val))
                     end
                 end
 
@@ -1271,6 +1335,95 @@ function RXPImport:Parse(text)
                     end
                 elseif tag == "softcore" then
                     -- The normal (non-permadeath) branch - keep, no-op.
+                elseif tag == "xprate" then
+                    -- See XPRateCond's own header comment for why this
+                    -- exists and why it can't just be disclosed as
+                    -- "harmless, self-skips" the way most xprate
+                    -- duplicates are.
+                    local outOfScope, cond = XPRateCond(val)
+                    if outOfScope then
+                        -- Unlike #season/#hardcore (where whether a step is
+                        -- SoD-only can genuinely differ per class - "SoD-
+                        -- only for Warriors, normal for everyone else"),
+                        -- the RATE comparison here doesn't depend on class
+                        -- at all - 1.0 either satisfies the threshold or it
+                        -- doesn't, regardless of who's asking. A trailing
+                        -- "<< Cond" just says WHICH classes this specific
+                        -- out-of-scope variant covers (real guides pair two
+                        -- differently-thresholded variants for different
+                        -- class groups, e.g. "#xprate >1.49 << !Warrior
+                        -- !Paladin !Rogue" alongside "#xprate >1.59 <<
+                        -- Warrior/Paladin/Rogue") - so a clean class-only
+                        -- condition can be resolved directly: exclude
+                        -- whichever classes this out-of-scope variant would
+                        -- have applied to, same as any other classExclude,
+                        -- rather than keeping the step mandatory for
+                        -- everyone. Confirmed live (2026-09-27, round-4
+                        -- code review): the "warn and keep fully
+                        -- unfiltered" fallback left several real steps
+                        -- (a Paladin/Warrior/Rogue-only fast-XP quest-317
+                        -- turn-in chain, a Rogue-only branch, a Paladin-
+                        -- only hearthstone step) mandatory for classes the
+                        -- source never intended to route through them at
+                        -- 1x.
+                        local excludeSet
+                        if cond then
+                            local cClass, cRaces, cCondOOS, cUnhandled, cClassExclude, cClasses
+                                = EvalCondition(cond, route.faction)
+                            if not cCondOOS and not cUnhandled and not cRaces then
+                                if cClass then
+                                    excludeSet = { cClass }
+                                elseif cClasses then
+                                    excludeSet = cClasses
+                                elseif cClassExclude then
+                                    -- The condition means "applies to
+                                    -- everyone EXCEPT these classes" - since
+                                    -- that whole variant is out of scope,
+                                    -- it's the COMPLEMENT (everyone it
+                                    -- actually applies to) that needs
+                                    -- excluding here.
+                                    local excluded = {}
+                                    for _, c in ipairs(cClassExclude) do excluded[c] = true end
+                                    excludeSet = {}
+                                    for _, c in ipairs(ALL_CLASSES) do
+                                        if not excluded[c] then table.insert(excludeSet, c) end
+                                    end
+                                end
+                            end
+                        end
+                        if not cond then
+                            step._skip = true
+                        elseif excludeSet then
+                            -- Merge into the BLOCK's own classExclude, not
+                            -- directly onto this one step's table -
+                            -- confirmed live (2026-09-27, round-4 code
+                            -- review, second pass): a direct
+                            -- `step.classExclude = ...` assignment here got
+                            -- silently clobbered the moment any later
+                            -- `.accept`/`.turnin`/`.complete`/etc directive
+                            -- in the same block ran, since StepForAction
+                            -- unconditionally overwrites
+                            -- `step.classExclude` from `blockClassExclude`
+                            -- (recomputed via ResolveLineFilter) - the same
+                            -- "mutate block state, not the step directly"
+                            -- pattern every other block-wide condition here
+                            -- already uses. Also retroactively merges onto
+                            -- any step this block already produced (same
+                            -- "#optional placed after a split" concern
+                            -- ApplyToBlock's own header comment documents),
+                            -- since a real guide doesn't always put
+                            -- `#xprate` first in the block.
+                            blockClassExclude = MergeExclude(blockClassExclude, excludeSet)
+                            for _, s in ipairs(curBlockSteps) do
+                                s.classExclude = MergeExclude(s.classExclude, excludeSet)
+                            end
+                        else
+                            table.insert(warnings, ("'#%s %s' has a class/race condition "
+                                .. "this parser can't apply per-class at parse time - kept "
+                                .. "unfiltered by xp-rate rather than risk dropping it for "
+                                .. "every class the step applies to."):format(tag, val))
+                        end
+                    end
                 end
 
             else

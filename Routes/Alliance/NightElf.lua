@@ -69,12 +69,24 @@
 -- KNOWN OPEN ISSUES in the re-parsed chapters (same disclose-don't-guess
 -- spirit as Routes/Horde/OrcTrollRXP.lua's own section)
 --
--- - `#xprate`/`#season`/`#hardcore` branch SELECTION isn't parsed (only
---   `#season N`/`#hardcore` themselves are, to drop SoD/hardcore-only
---   content) - a step gated behind a specific XP-rate threshold (e.g. a
---   2x-rate early turn-in of a quest normally done later) can survive
---   alongside its normal-rate counterpart. Harmless (later copies
---   self-skip once done) but not the exact intended sequence at 1x.
+-- - NOT YET APPLIED HERE (fixed in RXPImport.lua 2026-09-27, while
+--   re-parsing Routes/Alliance/DwarfGnome.lua - these two Night Elf
+--   chapters predate that fix and haven't been re-parsed since):
+--   `#xprate` branch selection wasn't parsed at all - a step gated behind
+--   a specific XP-rate threshold (e.g. a 2x-rate early turn-in of a quest
+--   normally done later) survives alongside its normal-rate counterpart.
+--   Confirmed on Dwarf/Gnome's own re-parse this is NOT always "harmless,
+--   later copies self-skip" the way it first looked - a fast-XP-only
+--   variant can be a genuinely different itinerary (different NPCs/
+--   trainers/quests, not a near-duplicate) that never self-skips, giving
+--   a 1x player both itineraries' worth of clicks back to back. Confirmed
+--   real occurrences in THESE two chapters too (a Hunter-only fast-XP
+--   Ilthalaine 456/457 chain, a Warrior Vorlus Vilehoof 1683 chain, a
+--   "Set your Hearthstone to Darnassus" step, and duplicate Dazalar 6063
+--   chains) - re-parsing chapters 1-2 through the now-fixed importer would
+--   resolve this, same as Dwarf/Gnome's own chapters were.
+-- - `#season`/`#hardcore` branch selection IS parsed (drops SoD/hardcore-
+--   only content) - unaffected by the xprate gap above.
 -- - A handful of steps use RXPGuides' raw ".goto mapID/floor,x,y,flag"
 --   pixel-coordinate form (seen for phased/multi-floor areas, e.g. the
 --   Fel Cone locations for quest 489) instead of the normal zone-name

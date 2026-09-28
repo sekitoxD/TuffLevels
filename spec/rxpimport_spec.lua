@@ -465,6 +465,102 @@ step << Warlock/Hunter/Rogue/Priest/Warrior
         assert.is_true(warned)
     end)
 
+    it("drops a step gated by an out-of-scope '#xprate' (a fast/slow-leveling-only branch)", function()
+        -- Confirmed live (2026-09-27, code review): this addon targets a
+        -- normal 1x Classic Era/Forever/Mainline pace. Unlike most xprate
+        -- duplicates (near-identical content that harmlessly self-skips
+        -- once the first copy is done), a fast-XP branch can be a
+        -- genuinely DIFFERENT itinerary that never self-skips - a 1x
+        -- player got both itineraries' worth of clicks back to back
+        -- before this fix.
+        local route = RXPImport:Parse([[
+step
+    #xprate >1.49
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(0, #route.steps)
+    end)
+
+    it("keeps a step gated by an in-scope '#xprate' (a threshold 1.0 satisfies)", function()
+        local route = RXPImport:Parse([[
+step
+    #xprate <1.5
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        assert.equals(100, route.steps[1].quest)
+    end)
+
+    it("drops a step gated by an out-of-scope '#xprate A-B' range", function()
+        local route = RXPImport:Parse([[
+step
+    #xprate 1.49-1.59
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(0, #route.steps)
+    end)
+
+    it("resolves a clean class-only '#xprate N << Class' condition into classExclude instead of warning", function()
+        -- Unlike #season/#hardcore, whether the xp-rate threshold is
+        -- satisfied doesn't depend on class - a trailing "<< Cond" only
+        -- says WHICH classes this out-of-scope variant covers, so a clean
+        -- class-only condition resolves directly (exclude those classes)
+        -- rather than falling back to "can't apply per-class, keep
+        -- unfiltered". Confirmed live (2026-09-27, round-4 code review):
+        -- real guide text pairs "#xprate >1.49 << !Warrior !Paladin
+        -- !Rogue" with "#xprate >1.59 << Warrior/Paladin/Rogue" on
+        -- sibling steps - both out of scope at 1x, for complementary
+        -- class sets.
+        local route = RXPImport:Parse([[
+step
+    #xprate >1.49 << Warrior
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        assert.same({ "WARRIOR" }, route.steps[1].classExclude)
+    end)
+
+    it("resolves a negated class '#xprate N << !Class' condition to its complement in classExclude", function()
+        -- "<< !Warrior !Paladin !Rogue" means "applies to everyone except
+        -- these three" - since that whole variant is out of scope, it's
+        -- the COMPLEMENT (everyone it actually covers) that needs
+        -- excluding, not Warrior/Paladin/Rogue themselves.
+        local route = RXPImport:Parse([[
+step
+    #xprate >1.49 << !Warrior !Paladin !Rogue
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        local excluded = {}
+        for _, c in ipairs(route.steps[1].classExclude) do excluded[c] = true end
+        assert.is_true(excluded.HUNTER and excluded.PRIEST and excluded.SHAMAN
+            and excluded.MAGE and excluded.WARLOCK and excluded.DRUID)
+        assert.is_true(not excluded.WARRIOR)
+        assert.is_true(not excluded.PALADIN)
+        assert.is_true(not excluded.ROGUE)
+    end)
+
+    it("keeps a step gated by '#xprate N << Race' unfiltered (a race condition can't be resolved) and warns", function()
+        local route, _, warnings = RXPImport:Parse([[
+<< Alliance
+step
+    #xprate >1.49 << Dwarf
+    .goto Durotar,1,1
+    .accept 100
+]])
+        assert.equals(1, #route.steps)
+        local warned = false
+        for _, w in ipairs(warnings) do
+            if w:match("xp%-rate") then warned = true end
+        end
+        assert.is_true(warned)
+    end)
+
     it("gives a '.trainer' line after a real action its own step instead of overwriting the action", function()
         local route = RXPImport:Parse([[
 step
