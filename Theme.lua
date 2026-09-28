@@ -67,7 +67,7 @@ end
 Theme._skinned = setmetatable({}, { __mode = "k" })
 
 --------------------------------------------------------------------------
--- Presets and custom import
+-- Presets and saved palette
 --------------------------------------------------------------------------
 
 -- Each preset is a flat {key = "RRGGBB"} table covering every key in both
@@ -175,20 +175,6 @@ Theme.classPresets = {
     PRIEST  = "Silver",
 }
 
--- Keys ShowColorPicker's free-text custom-palette entry accepts. Kept as an
--- explicit whitelist (rather than trusting ApplyPalette to silently ignore
--- anything it doesn't recognize) because that silent-ignore is exactly the
--- bug this fixes: typing an unrecognized key used to report "Custom colors
--- applied" even though nothing changed. accent/bright are included because
--- ApplyPalette already special-cases them (they mirror orchid/lilac's hex
--- form) even though the in-dialog hint text never mentioned them.
-Theme.validKeys = {
-    void = true, bg = true, panel = true, raised = true,
-    blood = true, ember = true, violet = true, orchid = true, lilac = true,
-    text = true, dim = true, faint = true, done = true, warn = true,
-    accent = true, bright = true,
-}
-
 local function hexToRGB(hex)
     hex = hex:gsub("^|cff", ""):gsub("^#", "")
     if not hex:match("^%x%x%x%x%x%x$") then return nil end
@@ -242,8 +228,8 @@ end
 -- first time they log in after this feature shipped. Runs once per
 -- character (db.classDefaultApplied), and never overwrites a palette the
 -- player already chose for themselves - LoadSaved above always wins if
--- db.customTheme is already set, whether that came from a preset button, a
--- typed-in custom palette, or an earlier run of this same function.
+-- db.customTheme is already set, whether that came from a preset button,
+-- an earlier saved palette, or an earlier run of this same function.
 function Theme:ApplyClassDefault(classToken)
     local Compat = ns.Compat
     if not Compat then return end

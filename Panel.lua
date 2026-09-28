@@ -23,8 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.24"
+local CHANGELOG_VERSION = "1.7.25"
+-- Only the newest entries are shown in the dialog; older ones stay below
+-- as history.
+local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Fixed the What's new window: it now shows only the newest entries in a fixed-size scrolling window with a Close button that always stays on screen (it used to grow past the screen with no way to close it), and Escape closes it. Removed the custom color palette text box from the Colors window (the presets are the way to change colors now) - the preset buttons stay, and the Close button no longer overlaps leftover content.",
     "Re-parsed the Night Elf route's \"21-23 Stonetalon/Ashenvale\", \"23-24 Wetlands\" and \"24-27 Duskwood/Redridge\" chapters through the RXPGuides importer, with the Hunter and non-Hunter guide chapters split into class-filtered sections. Group-dungeon content (Wailing Caverns, Shadowfang Keep, Stormwind Stockades) and Bronze Tube quests are now optional so solo players are not forced to click through them. Fixed an RXPGuides importer bug where a maximum-level skip took effect one level too early (which made a Redridge/Duskwood quest chain skip its accept and then stall), made a negative turn-in directive optional, and stopped raw map-ID coordinates from becoming a bogus zone name. Two review rounds found and fixed real stalls before this shipped.",
     "Merged the Night Elf Hunter-only Ashenvale chapter (\"19-21 Darkshore/Ashenvale\") into the route as its own Hunter-filtered section: Night Elf Hunters now follow the guide's Hunter itinerary instead of the generic Redridge path, and finally get a turn-in for the Absent Minded Prospector quest. Other classes' steps are unchanged. A review round added a Return-to-Auberdine step for Hunters and kept the bear-kill step required.",
     "Follow-up fixes to the Night Elf Darkshore/Redridge re-parse after a second review round: the Redridge Goulash turn-in no longer blocks the route before you have collected the ingredients, and the Grizzled Thistle Bear kill step for the Buzzbox quest is a required step again so the route tells you to kill them before the hand-in.",
@@ -61,7 +65,7 @@ function Panel:ShowChangelogDialog()
 
     if not self.changelogBox then
         local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-        f:SetSize(400, 240)
+        f:SetSize(440, 420)
         f:SetPoint("CENTER")
         f:SetFrameStrata("FULLSCREEN_DIALOG")
         f:EnableMouse(true)
@@ -72,20 +76,72 @@ function Panel:ShowChangelogDialog()
         t:SetText("What's new - " .. CHANGELOG_VERSION)
         t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-        local body = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        body:SetPoint("TOPLEFT", 20, -46)
-        body:SetPoint("TOPRIGHT", -20, -46)
+        -- The text is long, so it scrolls inside a fixed-size dialog: the
+        -- Close button stays reachable however much text there is (the old
+        -- auto-grown dialog ran off the top and bottom of the screen).
+        -- Plain ScrollFrame plus a hand-built slider: UIPanelScrollFrame's
+        -- scrollbar is the secure-template one that throws on Forever (see
+        -- Progress.lua's slider comment).
+        local scroll = CreateFrame("ScrollFrame", nil, f)
+        scroll:SetPoint("TOPLEFT", 18, -40)
+        scroll:SetPoint("BOTTOMRIGHT", -36, 52)
+
+        local content = CreateFrame("Frame", nil, scroll)
+        content:SetSize(380, 10)
+        scroll:SetScrollChild(content)
+
+        local body = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        body:SetPoint("TOPLEFT", 0, 0)
+        body:SetWidth(380)
         body:SetJustifyH("LEFT")
-        body:SetSpacing(6)
+        body:SetSpacing(4)
         body:SetTextColor(unpack(ns.Theme.color.text))
 
         local lines = {}
-        for _, entry in ipairs(CHANGELOG) do
-            table.insert(lines, "- " .. entry)
+        for i = 1, math.min(#CHANGELOG, CHANGELOG_SHOWN) do
+            table.insert(lines, "- " .. CHANGELOG[i])
         end
-        body:SetText(table.concat(lines, "\n"))
+        body:SetText(table.concat(lines, "\n\n"))
+        content:SetHeight(body:GetStringHeight() + 8)
 
-        FitDialogToBody(f, body, 46, 60, 160)
+        local slider = CreateFrame("Slider", nil, f)
+        slider:SetOrientation("VERTICAL")
+        slider:SetPoint("TOPRIGHT", -14, -40)
+        slider:SetPoint("BOTTOMRIGHT", -14, 52)
+        slider:SetWidth(16)
+        slider:EnableMouse(true)
+        local track = slider:CreateTexture(nil, "BACKGROUND")
+        track:SetPoint("TOP", 0, -2)
+        track:SetPoint("BOTTOM", 0, 2)
+        track:SetWidth(4)
+        local thumb = slider:CreateTexture(nil, "OVERLAY")
+        thumb:SetSize(16, 28)
+        slider:SetThumbTexture(thumb)
+        local function paintSlider()
+            track:SetColorTexture(unpack(ns.Theme.color.faint))
+            thumb:SetColorTexture(unpack(ns.Theme.color.violet))
+        end
+        paintSlider()
+        ns.Theme._skinned[slider] = paintSlider
+
+        local function maxScroll()
+            -- viewport = dialog height minus the fixed top (40) and bottom (52) insets;
+            -- constant so it never depends on a layout pass having run
+            return math.max(0, content:GetHeight() - (f:GetHeight() - 92))
+        end
+        slider:SetMinMaxValues(0, maxScroll())
+        slider:SetValue(0)
+        slider:SetScript("OnValueChanged", function(_, value)
+            scroll:SetVerticalScroll(value)
+        end)
+        f:EnableMouseWheel(true)
+        f:SetScript("OnMouseWheel", function(_, delta)
+            slider:SetValue(math.min(maxScroll(), math.max(0, slider:GetValue() - delta * 40)))
+        end)
+        f:SetScript("OnShow", function()
+            slider:SetMinMaxValues(0, maxScroll())
+            slider:SetValue(0)
+        end)
 
         local ok = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
         ok:SetSize(100, 22)
@@ -93,6 +149,11 @@ function Panel:ShowChangelogDialog()
         ok:SetText("Close")
         ok:SetScript("OnClick", function() f:Hide() end)
         ns.Theme:SkinChildren(f)
+
+        -- Escape closes it too (registered by global frame name).
+        local name = "TuFFlevelsChangelogFrame"
+        _G[name] = f
+        table.insert(UISpecialFrames, name)
 
         self.changelogBox = f
     end
@@ -1030,7 +1091,13 @@ function Panel:ShowColorPicker()
     end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    f:SetSize(340, 440)
+    local presetNames = {}
+    for name in pairs(ns.Theme.presets) do table.insert(presetNames, name) end
+    table.sort(presetNames)
+
+    -- Height follows the preset count so the Close button always sits below
+    -- the last preset instead of clipping into leftover content.
+    f:SetSize(280, 42 + 26 * #presetNames + 50)
     f:SetPoint("CENTER")
     f:SetFrameStrata("FULLSCREEN_DIALOG")
     f:EnableMouse(true)
@@ -1040,10 +1107,6 @@ function Panel:ShowColorPicker()
     t:SetPoint("TOP", 0, -14)
     t:SetText("Colors")
     t:SetTextColor(unpack(ns.Theme.color.lilac))
-
-    local presetNames = {}
-    for name in pairs(ns.Theme.presets) do table.insert(presetNames, name) end
-    table.sort(presetNames)
 
     local y = -42
     for _, name in ipairs(presetNames) do
@@ -1060,58 +1123,6 @@ function Panel:ShowColorPicker()
         end)
         y = y - 26
     end
-
-    local hint = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    hint:SetPoint("TOPLEFT", 18, y - 10)
-    hint:SetPoint("TOPRIGHT", -18, y - 10)
-    hint:SetJustifyH("LEFT")
-    hint:SetTextColor(unpack(ns.Theme.color.dim))
-    hint:SetText("You can create your own custom color palette: paste comma-separated\n" ..
-        "key=RRGGBB pairs below (e.g. orchid=3399ff,text=ffffff).\n" ..
-        "Keys: void, bg, panel, raised, blood, ember, violet, orchid, lilac,\n" ..
-        "text, dim, faint, done, warn, accent, bright")
-
-    local eb = CreateFrame("EditBox", nil, f, "InputBoxTemplate")
-    eb:SetSize(280, 24)
-    eb:SetPoint("TOP", hint, "BOTTOM", 0, -28)
-    eb:SetAutoFocus(false)
-    eb:SetScript("OnEnterPressed", function(box)
-        local text = box:GetText()
-        box:ClearFocus()
-        if text == "" then return end
-
-        -- Bug fix: a key not in Theme.validKeys used to be silently dropped
-        -- here - ApplyPalette no-ops on any key it doesn't recognize, so the
-        -- dialog would still print "Custom colors applied" even though
-        -- nothing visibly changed. Validate the key against the same
-        -- whitelist ApplyPalette actually understands, so an unrecognized
-        -- key is rejected up front exactly like a malformed hex value is.
-        local updates, bad = {}, {}
-        for pair in text:gmatch("[^,]+") do
-            local key, hex = pair:match("^%s*(%a+)%s*=%s*(%x%x%x%x%x%x)%s*$")
-            if key and ns.Theme.validKeys[key:lower()] then
-                updates[key:lower()] = hex:lower()
-            else
-                table.insert(bad, pair)
-            end
-        end
-
-        if #bad > 0 then
-            ns.Print("|cffff5555Rejected, malformed entr" ..
-                (#bad == 1 and "y: " or "ies: ") .. table.concat(bad, ", ") .. "|r")
-            return
-        end
-
-        local db = Compat:InitSavedVar("TuFFlevelsDB")
-        db.customTheme = db.customTheme or {}
-        for key, hex in pairs(updates) do
-            db.customTheme[key] = hex
-        end
-        ns.Theme:ApplyPalette(updates)
-        ns.Theme:ReapplyAll()
-        box:SetText("")
-        ns.Print("Custom colors applied.")
-    end)
 
     local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     close:SetSize(100, 22)
