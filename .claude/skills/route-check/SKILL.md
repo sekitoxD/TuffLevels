@@ -80,7 +80,8 @@ For any **new** file under `Routes/` (untracked, or added this session):
   *.toc` — entries use `\` not `/`). A route file that loads on some
   clients but not others is an easy miss.
 - Check load order: it must come after `Core.lua`, and if it lives in a
-  subfolder that uses an `Init.lua` / `Register.lua` pattern, it must be listed
+  subfolder that uses the `Init.lua` / `Register.lua` pattern (see
+  `Routes/Horde/Solo/` or `Routes/Horde/Dungeon/`), it must be listed
   after that folder's `Init.lua` and before its `Register.lua`.
 - If a new file is missing from one or more `.toc`s, report it — don't
   silently edit the `.toc` files unless the user asks you to fix it.

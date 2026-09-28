@@ -763,7 +763,7 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         -- Forever's new 15-20 dungeon sits on Forsaken home turf, right
         -- where this route ends, so Undead run it here at its intended
         -- level instead of at 23 like the Orc/Troll Solo route (whose copy,
-        -- Chapter 17b in the removed ONSLAUGHT Solo route, was filtered
+        -- Chapter 17b in Routes/Horde/Solo/SilverpineForest.lua, is filtered
         -- to Orc/Troll for exactly that reason). `forever = true` steps are
         -- dropped on every other client by ns.RegisterRoute (Core.lua).
         -- Quest data is from foreverchanges.pro's beta pages (2026-09-19),
@@ -893,8 +893,8 @@ ns.RegisterRoute("Tirisfal Start (Undead) 1-14", {
         },
         {
           type = "section",
-          name = "End of the Undead opening route",
-          note = "There is no Undead route past this point yet. Use Menu > Where to go next for the leveling zone guide, or keep questing on your own.",
+          name = "From here, switch to \"ONSLAUGHT Solo Horde 1-60 (Orc/Troll)\" via /tuff route",
+          note = "Its Valley of Trials leg and first Silverpine Forest leg are race-gated to Orc/Troll and will auto-skip for you - you don't need to manually skip past them. You'll land in The Barrens with a small number of stray turn-in/complete steps for quests you never accepted (e.g. \"The Demon Seed\", \"Return to the Crossroads\") - those can't auto-complete since you never had the quest; just click Next past them like any other step that doesn't apply to you.",
         },
     },
 })

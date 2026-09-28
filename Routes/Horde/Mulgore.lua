@@ -16,7 +16,7 @@
 -- Horde 1-60 leveling path, converging with the general Horde path
 -- through The Barrens from level ~12 onward. This is a SEPARATE,
 -- self-contained route from the existing Orc/Troll ONSLAUGHT-sourced
--- (removed) ONSLAUGHT Solo set - it did not share that system's Leg()
+-- Routes/Horde/Solo/*.lua set - it does not share that system's Leg()
 -- plumbing (which is Orc/Troll-specific by design, see Solo/Init.lua's
 -- header), so it carries zero risk to that route. Added because there
 -- was previously no Tauren-starting route in this addon at all.

@@ -10,9 +10,9 @@
 -- Before trusting any of it, run:  /tuff verify
 -- ###################################################################
 --
--- WHY THIS FILE EXISTS (history)
+-- WHY THIS FILE EXISTS ALONGSIDE Routes/Horde/Solo/*.lua
 --
--- The ONSLAUGHT Orc/Troll 1-60 route (Routes/Horde/Solo, since removed)
+-- Routes/Horde/Solo/*.lua is the shipped ONSLAUGHT Orc/Troll 1-60 route
 -- (spreadsheet-derived, hand-verified over many commits - see
 -- plans/04-sheet-audit.md). This file is a SEPARATE, parallel attempt at
 -- an Orc/Troll leveling route built the same way Routes/Horde/Mulgore.lua

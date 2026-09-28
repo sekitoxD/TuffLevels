@@ -489,7 +489,7 @@ def validate_file(path, db, errors_only):
     except lua.LuaParseError as e:
         # This parser only understands literal table data, not real Lua
         # (no variables, loops, function calls). A file like
-        # a generated route file can legitimately build `steps` from
+        # Routes/Horde/Solo/Register.lua legitimately builds `steps` from
         # a loop over other files' contributions - WoW's actual Lua
         # interpreter runs that fine, only this offline tool's simplified
         # parser can't. Unbalanced braces mean the file is actually

@@ -54,3 +54,10 @@ work from. A merged route still needs the same `/tuff verify` /
   they were pulled from a database rather than played and recorded, that's
   a real problem, not a style nitpick.
 
+## Multi-file routes
+
+Some zones are big enough to record in legs and stitch together — see
+`Routes/Horde/Solo/*.lua` and its `Register.lua` for the pattern (each zone
+file contributes to `ns.SoloLegs`, one `Register.lua` sorts and concatenates
+them into a single route at the end). Follow that structure if you're
+recording a large route yourself rather than inventing a new one.
