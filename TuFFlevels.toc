@@ -2,7 +2,7 @@
 ## Title: TuFFlevels
 ## Notes: Step-by-step leveling routes. Forever / Retail / Classic Era.
 ## Author: sekitoxD
-## Version: 1.7.28
+## Version: 1.7.29
 ## SavedVariablesPerCharacter: TuFFlevelsCharDB
 ## SavedVariables: TuFFlevelsDB
 ## OptionalDeps: QuestieDB, Questie, TomTom
@@ -22,24 +22,19 @@ Panel.lua
 Progress.lua
 Import.lua
 Zones.lua
-GuideImport.lua
 RXPImport.lua
 CompactGuide.lua
-SheetImport.lua
 Rogue.lua
 
-# -- existing seeded / skeleton routes ------------------------------------
-# Durotar.lua no longer loaded here - superseded by the real generated
-# Solo\Durotar.lua leg below (plans/04-sheet-audit.md item 7). Kept on
-# disk only as the schema-doc reference and merge_routes.py CI fixture.
-Routes\Horde\Horde1-60.lua
+# Routes\Horde\Durotar.lua is not loaded: it is kept on disk only as the
+# schema-doc reference and merge_routes.py CI fixture.
 
 # -- Undead opening --------------------------------------------------------
 Routes\Horde\TirisfalStart.lua
 
 # -- Tauren 1-60 (converted from RXPGuides Classic guides - CC BY-NC-SA
 # -- 4.0, see the file's Credits & License section; not MIT like the rest
-# -- of this addon). Self-contained, not part of the Solo/ Leg() system. --
+# -- of this addon). Self-contained. --
 Routes\Horde\Mulgore.lua
 Routes\Horde\OrcTrollRXP.lua
 
@@ -50,48 +45,4 @@ Routes\Alliance\Human.lua
 Routes\Alliance\DwarfGnome.lua
 Routes\Alliance\NightElf.lua
 
-# -- solo Orc/Troll 1-60: Init first, zone files, Register last -------------
-Routes\Horde\Solo\Init.lua
-Routes\Horde\Solo\ArathiHighlands.lua
-Routes\Horde\Solo\Ashenvale.lua
-Routes\Horde\Solo\Azshara.lua
-Routes\Horde\Solo\Badlands.lua
-Routes\Horde\Solo\BlastedLands.lua
-Routes\Horde\Solo\BurningSteppes.lua
-Routes\Horde\Solo\Desolace.lua
-Routes\Horde\Solo\Durotar.lua
-Routes\Horde\Solo\DustwallowMarsh.lua
-Routes\Horde\Solo\EasternPlaguelands.lua
-Routes\Horde\Solo\Felwood.lua
-Routes\Horde\Solo\Feralas.lua
-Routes\Horde\Solo\HillsbradFoothills.lua
-Routes\Horde\Solo\SearingGorge.lua
-Routes\Horde\Solo\Silithus.lua
-Routes\Horde\Solo\SilverpineForest.lua
-Routes\Horde\Solo\StonetalonMts.lua
-Routes\Horde\Solo\StranglethornVale.lua
-Routes\Horde\Solo\SwampofSorrows.lua
-Routes\Horde\Solo\Tanaris.lua
-Routes\Horde\Solo\TheBarrens.lua
-Routes\Horde\Solo\TheHinterlands.lua
-Routes\Horde\Solo\ThousandNeedles.lua
-Routes\Horde\Solo\ThunderBluff.lua
-Routes\Horde\Solo\Undercity.lua
-Routes\Horde\Solo\UngoroCrater.lua
-Routes\Horde\Solo\WesternPlaguelands.lua
-Routes\Horde\Solo\Winterspring.lua
-Routes\Horde\Solo\Register.lua
 
-# -- 5-man Orc/Troll 1-60: Init first, parts in order, Register last --------
-Routes\Horde\Dungeon\Init.lua
-Routes\Horde\Dungeon\01-VALLEYOFTRIALS.lua
-Routes\Horde\Dungeon\02-MidBarrensLap.lua
-Routes\Horde\Dungeon\03-AshenvaleLap.lua
-Routes\Horde\Dungeon\04-DesolaceSnoozeFest1.lua
-Routes\Horde\Dungeon\05-Arathithunderdome.lua
-Routes\Horde\Dungeon\06-UldumanBlitz.lua
-Routes\Horde\Dungeon\07-Continued.lua
-Routes\Horde\Dungeon\08-Felwood1.lua
-Routes\Horde\Dungeon\09-BRDPrisonPrepFarm.lua
-Routes\Horde\Dungeon\10-BRDPrisonPrepFarm.lua
-Routes\Horde\Dungeon\Register.lua

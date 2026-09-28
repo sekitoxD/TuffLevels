@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.28"
+local CHANGELOG_VERSION = "1.7.29"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Menu cleanup and removal of superseded content. Removed the Import spreadsheet and Import a guide (Guidelime) buttons and their /tuff sheet and /tuff guide commands (RXPGuides import replaces them), and the Reset arrow position button (/tuff arrow reset still works). Removed the ONSLAUGHT Solo and 5-Man Horde 1-60 routes and the old Horde 1-60 skeleton. Heads up: until the RXPGuides Orc/Troll route is finished (currently levels 1-10, marked TEST), Orc/Troll characters only have that test route, and Undead have their Tirisfal opening route only. The Human, Dwarf/Gnome, Night Elf and Tauren routes are unchanged. Not yet verified in-game.",
     "Menu windows are now one-at-a-time: opening any window from the main menu (Available Guides, Where to go next, Progress, Catch up, Help, Rogue, the import windows, Save this as a route, Progress code) closes the other menu windows and the Content & Import / Display settings submenus, so the menu stays clean. Buttons that have nothing to show yet (no route loaded, nothing recorded) no longer close your open windows. Windows opened by slash commands or automatically are unchanged. Not yet verified in-game.",
     "Fixed the menu's windows drawing on top of each other: opening Content & Import now closes Display settings (and the Colors window), and the other way around, so only one is visible at a time. Closing the main menu closes any submenu left open, closing Display settings closes Colors, and /tuff colors closes Content & Import. Hiding the whole UI with Alt+Z still keeps your open windows. An independent review found no blockers; other centered windows (Available Guides, Help, Progress and the import windows) can still stack and are a known follow-up.",
     "Fixed the red buttons that ignored your selected color theme: every button in the tracker, menu and windows now uses the theme's own colors instead of the stock red art (the Progress window's Jump / Export / Close buttons were never themed at all). Button text is now always legible - the light presets used to show near-unreadable text when you hovered a button - and error, dimmed and completed-step text is automatically brightened or darkened on any preset or custom palette where it was too faint to read.",
@@ -273,7 +274,6 @@ end
 -- resume prompt, recording note prompt) are deliberately left alone.
 local MENU_WINDOW_GLOBALS = {
     "TuFFlevelsZones", "TuFFlevelsProgress", "TuFFlevelsRogue",
-    "TuFFlevelsSheetImport", "TuFFlevelsSheetFile", "TuFFlevelsGuideImport",
     "TuFFlevelsRXPImport", "TuFFlevelsCompactGuide", "TuFFlevelsImport",
     "TuFFlevelsExport",
 }
@@ -292,10 +292,7 @@ function Panel:OpenMenuWindow(keep, open, canOpen)
     end
     for _, name in ipairs(MENU_WINDOW_GLOBALS) do
         local f = _G[name]
-        -- SheetFile is SheetImport's own child window: it stays with it.
-        local own = name == keep
-            or (name == "TuFFlevelsSheetFile" and keep == "TuFFlevelsSheetImport")
-        if f and not own then f:Hide() end
+        if f and name ~= keep then f:Hide() end
     end
     for _, key in ipairs(MENU_WINDOW_FIELDS) do
         local f = self[key]
@@ -551,7 +548,7 @@ end
 function Panel:ShowContentMenu()
     if not self.contentMenu then
         local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-        f:SetSize(240, 332)
+        f:SetSize(240, 280)
         f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
         f:SetFrameStrata("DIALOG")
         f:EnableMouse(true)
@@ -562,19 +559,14 @@ function Panel:ShowContentMenu()
         t:SetText("Content & Import")
         t:SetTextColor(unpack(ns.Theme.color.lilac))
 
-        MakeButton(f, "Import spreadsheet", -42, function()
-            Panel:OpenMenuWindow("TuFFlevelsSheetImport", function() ns.SheetImport:Show() end)
-        end)
-        MakeButton(f, "Import a guide", -68, function()
-            Panel:OpenMenuWindow("TuFFlevelsGuideImport", function() ns.GuideImport:Show() end)
-        end)
-        MakeButton(f, "Import RXPGuides guide", -94, function()
+        -- Spreadsheet and Guidelime importers were removed
+        MakeButton(f, "Import RXPGuides guide", -42, function()
             Panel:OpenMenuWindow("TuFFlevelsRXPImport", function() ns.RXPImport:Show() end)
         end)
-        MakeButton(f, "Write a route (text)", -120, function()
+        MakeButton(f, "Write a route (text)", -68, function()
             Panel:OpenMenuWindow("TuFFlevelsCompactGuide", function() ns.CompactGuide:Show() end)
         end)
-        MakeButton(f, "Recover past quests", -146, function()
+        MakeButton(f, "Recover past quests", -94, function()
             Panel:OpenMenuWindow("TuFFlevelsImport", function() ns.Import:Show() end)
         end)
 
@@ -587,7 +579,7 @@ function Panel:ShowContentMenu()
         -- directly, the same pattern ShowDisplayMenu's mobBtn already uses;
         -- both are also refreshed on every reopen below.
         local recBtn
-        recBtn = MakeButton(f, "Start recording", -172, function()
+        recBtn = MakeButton(f, "Start recording", -120, function()
             if ns.Recorder.active then ns.Recorder:Stop() else ns.Recorder:Start() end
             recBtn:SetText(ns.Recorder.active and "Stop recording" or "Start recording")
             f.recStatus:SetText(("%d steps recorded"):format(ns.Recorder and #ns.Recorder.log or 0))
@@ -596,15 +588,15 @@ function Panel:ShowContentMenu()
         f.recBtn = recBtn
 
         local recStatus = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        recStatus:SetPoint("TOP", 0, -192)
+        recStatus:SetPoint("TOP", 0, -140)
         recStatus:SetTextColor(unpack(ns.Theme.color.dim))
         f.recStatus = recStatus
 
-        MakeButton(f, "Save this as a route", -218, function()
+        MakeButton(f, "Save this as a route", -166, function()
             Panel:OpenMenuWindow("TuFFlevelsExport", function() ns.Recorder:ShowExport() end,
                 function() return #ns.Recorder.log > 0 end)
         end)
-        MakeButton(f, "Progress code", -244, function()
+        MakeButton(f, "Progress code", -192, function()
             Panel:OpenMenuWindow("codeBox", function() Panel:ShowProgressCode() end,
                 function() return ns.Core:GetProgressCode() end)
         end)
@@ -638,7 +630,7 @@ end
 function Panel:ShowDisplayMenu()
     if not self.displayMenu then
         local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-        f:SetSize(240, 320)
+        f:SetSize(240, 268)
         f:SetPoint("TOPLEFT", panel, "TOPRIGHT", 8, 0)
         f:SetFrameStrata("DIALOG")
         f:EnableMouse(true)
@@ -671,21 +663,18 @@ function Panel:ShowDisplayMenu()
             Panel:ShowColorPicker()
         end)
 
-        MakeButton(f, "Reset arrow position", -120, function()
-            ns.Arrow:ResetPosition()
-        end)
-
-        f.cbBtn = MakeButton(f, "Arrow colorblind colors", -146, function()
+        -- No reset-position button: /tuff arrow reset does the same.
+        f.cbBtn = MakeButton(f, "Arrow colorblind colors", -120, function()
             ns.Arrow:ToggleColorblind()
             f.cbBtn:SetText(ns.Arrow.colorblind and "Arrow colorblind colors: on" or "Arrow colorblind colors: off")
         end)
 
-        f.textOnlyBtn = MakeButton(f, "Arrow text-only mode", -172, function()
+        f.textOnlyBtn = MakeButton(f, "Arrow text-only mode", -146, function()
             ns.Arrow:ToggleTextOnly()
             f.textOnlyBtn:SetText(ns.Arrow.textOnly and "Arrow text-only mode: on" or "Arrow text-only mode: off")
         end)
 
-        f.tomtomBtn = MakeButton(f, "Defer arrow to TomTom", -198, function()
+        f.tomtomBtn = MakeButton(f, "Defer arrow to TomTom", -172, function()
             ns.Arrow:ToggleDeferToTomTom()
             f.tomtomBtn:SetText(ns.Arrow.deferToTomTom and "Defer arrow to TomTom: on" or "Defer arrow to TomTom: off")
         end)

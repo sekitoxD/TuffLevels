@@ -72,7 +72,6 @@ Under **Menu**:
 | **Arrow** | The big pointer. Purple when you're facing right, red when not |
 | **Objective mobs** | Purple diamonds over things your quests need dead |
 | **Where to go next** | Zone guide for your level — where to be now, what's next |
-| **Import a guide** | Convert a community guide in Guidelime format into a route |
 | **Save this as a route** | Opens a window with your route written out |
 | **Add a note here** | Type advice that gets attached to your last step |
 | **Mark this spot** | Drops a travel waypoint exactly where you stand |
@@ -135,28 +134,6 @@ over spawns.
 
 ---
 
-## 4e. Using community guides
-
-There's a large body of free leveling guides written in a format called
-**Guidelime**. Freezy3's Horde 1-44 is a well-known one, free on CurseForge,
-routed by CauthonLuck.
-
-**Menu > Import a guide.** Paste a guide in that format, click Convert, and
-you get a TuFFlevels route.
-
-The addon ships none of these guides and copies none of them. It only knows
-how to *read* the format — the same arrangement it has with the quest
-database. You install what you want, from whoever published it.
-
-**If you publish a route you built from someone else's guide, credit them and
-check their terms.** Being able to read a format isn't permission to
-redistribute what's written in it.
-
-Imported routes live in memory for that session. Use **Save this as a route**
-to keep one.
-
----
-
 ## 4f. Markers and the arrow
 
 You shouldn't have to look anything up. Two things handle that:
@@ -196,56 +173,6 @@ stealth means you pick your pulls, and humanoids pay twice because you can
 pickpocket them.
 
 You also get a chat prompt at milestone levels so a trainer visit doesn't slide.
-
----
-
-## Importing your spreadsheet
-
-**Menu > Import spreadsheet.**
-
-In Google Sheets: **File > Download > Comma-separated values**. Open the
-downloaded file in Notepad, select all, copy. Paste into the box, name the
-route, click **Import**. Or just select the cells in the browser and paste
-directly — tab-separated works too.
-
-It reads the columns by their headers rather than by position, so adding or
-moving columns won't break it. It understands ACCEPT, TURN IN, COMPLETE,
-PROGRESS, NOTE, TRAINER, SPIRIT REZ, SET HEARTH, HEARTHSTONE and ITEM ACCEPT.
-
-**Chapter rows become section boundaries.** The "Chapter N End: Quest log
-audit" rows are what split the route into sections, and the quest-log count on
-them gets shown as a check — if your log doesn't match, something was missed.
-
-**Quest names resolve to IDs automatically.** The sheet has names, not IDs.
-The addon looks up the ID the moment the quest enters your log and caches it
-permanently, so tracking works from then on. Steps it hasn't resolved yet
-still display, you just advance them yourself.
-
-**Import and save as file** does the same thing and then hands you a route
-file to paste into your Routes folder, so it survives a reload.
-
-Do each tab separately — they're separate routes.
-
----
-
-## The 1-60 skeleton
-
-**Menu > Available Guides > Horde 1-60 (Orc/Troll).**
-
-25 sections covering every zone from the Valley of Trials to 60, with level
-bands, which hub to base in, and where quest density drops off enough that
-grinding wins.
-
-It contains **no quest IDs**, on purpose. I don't have a quest database for
-Forever, and inventing IDs would give you an addon that looks finished and
-quietly lies. What's in there is factual — zone bands, hub names, where
-Kalimdor runs thin.
-
-To fill it in: load the skeleton, turn recording on, and play it. Read
-whatever guide you like on a second monitor. Every quest you accept and turn
-in gets recorded with its real ID and coordinates, filed into whichever
-section you were in. Export and you have a complete route — structure from
-the skeleton, data from your own client, judgement from you.
 
 ---
 

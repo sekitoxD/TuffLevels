@@ -37,7 +37,7 @@ jobs:
         run: |
           python tools/merge_routes.py Routes/Horde/Durotar.lua Routes/Horde/Durotar.lua -o /tmp/self_merge.lua
           python tools/validate_route.py --no-db /tmp/self_merge.lua
-          python tools/merge_routes.py Routes/Horde/Durotar.lua Routes/Horde/Horde1-60.lua -o /tmp/cross_merge.lua
+          python tools/merge_routes.py Routes/Horde/Durotar.lua Routes/Horde/Mulgore.lua -o /tmp/cross_merge.lua
           python tools/validate_route.py --no-db /tmp/cross_merge.lua
 
   busted:

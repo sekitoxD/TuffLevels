@@ -5,9 +5,9 @@
 -- per step reads a lot easier than a Lua table literal. The step table
 -- stays the source of truth; this is a convenience layer on top of it,
 -- not a new engine concept. Original syntax, built for this addon - not
--- Guidelime's (see GuideImport.lua) and not RestedXP's.
+-- Guidelime's and not RestedXP's.
 --
--- Structurally mirrors GuideImport.lua: Parse(text) -> route, name,
+-- Parse(text) returns route, name,
 -- warnings, plus a paste-box Show()/DoConvert() dialog.
 --
 -- LINE FORMAT

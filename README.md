@@ -67,7 +67,6 @@ Three beta bugs the addon handles:
 | `/tuff load <name>` | Switch route |
 | `/tuff verify` | Validate the active route against the database |
 | `/tuff capture` | Dump your quest log as pasteable route steps |
-| `/tuff guide` | Import a community guide (Guidelime format) |
 | `/tuff rxp` | Import an RXPGuides (RestedXP) guide |
 | `/tuff write` | Author a route in the compact line-based syntax |
 | `/tuff where` | Print current step number |
@@ -96,7 +95,7 @@ This is the actual work. The engine is done; the route is not.
 
 `capture` exists because hand-looking-up 800 quest IDs is the thing that kills projects like this. Let the client tell you the IDs.
 
-Two ways to skip hand-writing Lua tables: `/tuff write` opens an in-addon compact text editor (one line per step — `CompactGuide.lua`'s header has the format), or import an existing spreadsheet/community guide via the menu. Outside the game, `python tools/validate_route.py Routes/` runs the same structural checks as `/tuff verify` plus offline quest-DB checks (race/class/level/prerequisite order) against a local cmangos database — the CI workflow runs it in `--no-db` (structure-only) mode on every push.
+Two ways to skip hand-writing Lua tables: `/tuff write` opens an in-addon compact text editor (one line per step — `CompactGuide.lua`'s header has the format), or import an RXPGuides guide via the menu. Outside the game, `python tools/validate_route.py Routes/` runs the same structural checks as `/tuff verify` plus offline quest-DB checks (race/class/level/prerequisite order) against a local cmangos database — the CI workflow runs it in `--no-db` (structure-only) mode on every push.
 
 **Crowd-sourcing a route from more than one recording.** Two people recording the same zone will disagree here and there. `python tools/merge_routes.py A.lua B.lua -o Merged.lua` groups their steps by quest ID, takes the median of the coordinates, keeps whichever order was most common, and prints a conflict report — it's a merging aid, not an authority; see `CONTRIBUTING.md` for the full workflow (record → export → merge if needed → verify → PR) and what still needs a human read-through afterward.
 
@@ -143,7 +142,7 @@ QuestieDB is **GPL-3.0**. RXPGuides (RestedXP) guide text is **CC BY-NC-SA 4.0**
 - Reading it at runtime as an optional dependency — you license TuFFlevels however you want.
 - Bundling or copying its data into your addon — TuFFlevels must relicense to match (GPL-3.0 for QuestieDB, CC BY-NC-SA 4.0 for RXPGuides, which is also incompatible with MIT redistribution anyway).
 
-This addon does the former deliberately. Don't copy data files in — `RXPImport.lua` ships a parser for RXPGuides' guide-text format, never any of RXPGuides' actual guide content; you paste in text from a copy of RXPGuides you already have installed, same arrangement as `GuideImport.lua` for Guidelime guides.
+This addon does the former deliberately. Don't copy data files in — `RXPImport.lua` ships a parser for RXPGuides' guide-text format, never any of RXPGuides' actual guide content; you paste in text from a copy of RXPGuides you already have installed.
 
 ---
 

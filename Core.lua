@@ -920,9 +920,6 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "zone" or cmd == "zones" then
         ns.Zones:Show()
 
-    elseif cmd == "guide" then
-        ns.GuideImport:Show()
-
     elseif cmd == "rxp" then
         ns.RXPImport:Show()
 
@@ -931,9 +928,6 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
 
     elseif cmd == "rogue" then
         ns.Rogue:Show()
-
-    elseif cmd == "sheet" then
-        ns.SheetImport:Show()
 
     elseif cmd == "arrow" and arg:lower() == "reset" then
         ns.Arrow:ResetPosition()

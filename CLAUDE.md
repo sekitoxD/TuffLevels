@@ -51,10 +51,8 @@ Panel.lua       -- button menu wrapping the slash commands, first-run setup
 Progress.lua    -- checklist view of the whole route
 Import.lua      -- rebuilds a route skeleton from already-completed quests (quest flags)
 Zones.lua       -- "where to go next" leveling zone guide
-GuideImport.lua -- converts community Guidelime-format guides into routes
 RXPImport.lua   -- converts RXPGuides (RestedXP) guide-text into routes; parses only, ships no RXPGuides content (CC BY-NC-SA 4.0 vs this addon's MIT) -- see the file header
 CompactGuide.lua -- original line-based syntax that compiles to step tables
-SheetImport.lua -- converts a CSV/TSV spreadsheet export into a route
 Rogue.lua       -- rogue-only tab (training milestones, weapon upgrades, grind advice)
 Routes\*.lua    -- data files, loaded last, call ns.RegisterRoute(...)
 ```

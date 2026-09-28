@@ -12,7 +12,7 @@
 -- RXPGuides' guide text is Creative Commons BY-NC-SA 4.0. TuFFlevels is
 -- MIT. Baking someone else's CC BY-NC-SA content into an MIT-licensed
 -- repo would violate ShareAlike, so this module ships NONE of RXPGuides'
--- actual guide text - same arrangement as GuideImport.lua (Guidelime) and
+-- actual guide text - same arrangement as
 -- Data.lua (QuestieDB): the data stays with whoever published it, this
 -- addon only knows how to read the format. You paste in text from a copy
 -- of RXPGuides you already have installed; nothing here reads its files
