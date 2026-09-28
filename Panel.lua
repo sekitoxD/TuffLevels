@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.27"
+local CHANGELOG_VERSION = "1.7.28"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Menu windows are now one-at-a-time: opening any window from the main menu (Available Guides, Where to go next, Progress, Catch up, Help, Rogue, the import windows, Save this as a route, Progress code) closes the other menu windows and the Content & Import / Display settings submenus, so the menu stays clean. Buttons that have nothing to show yet (no route loaded, nothing recorded) no longer close your open windows. Windows opened by slash commands or automatically are unchanged. Not yet verified in-game.",
     "Fixed the menu's windows drawing on top of each other: opening Content & Import now closes Display settings (and the Colors window), and the other way around, so only one is visible at a time. Closing the main menu closes any submenu left open, closing Display settings closes Colors, and /tuff colors closes Content & Import. Hiding the whole UI with Alt+Z still keeps your open windows. An independent review found no blockers; other centered windows (Available Guides, Help, Progress and the import windows) can still stack and are a known follow-up.",
     "Fixed the red buttons that ignored your selected color theme: every button in the tracker, menu and windows now uses the theme's own colors instead of the stock red art (the Progress window's Jump / Export / Close buttons were never themed at all). Button text is now always legible - the light presets used to show near-unreadable text when you hovered a button - and error, dimmed and completed-step text is automatically brightened or darkened on any preset or custom palette where it was too faint to read.",
     "Fixed the What's new window: it now shows only the newest entries in a fixed-size scrolling window with a Close button that always stays on screen (it used to grow past the screen with no way to close it), and Escape closes it. Removed the custom color palette text box from the Colors window (the presets are the way to change colors now) - the preset buttons stay, and the Close button no longer overlaps leftover content.",
@@ -266,6 +267,44 @@ function Panel:CloseSubmenus(except)
     end
 end
 
+-- Windows a menu button can open. Only these are managed: opening one from
+-- the menu closes the others (and the submenus) so the menu stays clean.
+-- Windows opened by slash commands or automatically (welcome, changelog,
+-- resume prompt, recording note prompt) are deliberately left alone.
+local MENU_WINDOW_GLOBALS = {
+    "TuFFlevelsZones", "TuFFlevelsProgress", "TuFFlevelsRogue",
+    "TuFFlevelsSheetImport", "TuFFlevelsSheetFile", "TuFFlevelsGuideImport",
+    "TuFFlevelsRXPImport", "TuFFlevelsCompactGuide", "TuFFlevelsImport",
+    "TuFFlevelsExport",
+}
+local MENU_WINDOW_FIELDS = { "picker", "catchUpBox", "codeBox", "helpBox" }
+
+-- keep: the global name or Panel field name of the window about to open, so
+-- a Toggle-style opener still closes its own window on a second click.
+-- canOpen (optional): openers that can bail out early with only a chat
+-- message ("No route loaded") must not close the user's windows for nothing;
+-- when it returns false, open() still runs to print that message but
+-- nothing is closed.
+function Panel:OpenMenuWindow(keep, open, canOpen)
+    if canOpen and not canOpen() then
+        open()
+        return
+    end
+    for _, name in ipairs(MENU_WINDOW_GLOBALS) do
+        local f = _G[name]
+        -- SheetFile is SheetImport's own child window: it stays with it.
+        local own = name == keep
+            or (name == "TuFFlevelsSheetFile" and keep == "TuFFlevelsSheetImport")
+        if f and not own then f:Hide() end
+    end
+    for _, key in ipairs(MENU_WINDOW_FIELDS) do
+        local f = self[key]
+        if f and key ~= keep then f:Hide() end
+    end
+    self:CloseSubmenus()
+    open()
+end
+
 function Panel:Build()
     if panel then return end
 
@@ -294,19 +333,20 @@ function Panel:Build()
 
     -- Guides / routes
     panel.routeBtn = MakeButton(panel, "Available Guides", -40, function()
-        Panel:ShowRoutePicker()
+        Panel:OpenMenuWindow("picker", function() Panel:ShowRoutePicker() end)
     end)
 
     MakeButton(panel, "Where to go next", -66, function()
-        ns.Zones:Show()
+        Panel:OpenMenuWindow("TuFFlevelsZones", function() ns.Zones:Show() end)
     end)
 
     MakeButton(panel, "Progress / completed", -92, function()
-        ns.Progress:Toggle()
+        Panel:OpenMenuWindow("TuFFlevelsProgress", function() ns.Progress:Toggle() end)
     end)
 
     MakeButton(panel, "Catch up on quests", -118, function()
-        Panel:ShowCatchUpDialog()
+        Panel:OpenMenuWindow("catchUpBox", function() Panel:ShowCatchUpDialog() end,
+            function() return ns.Core.active end)
     end)
 
     panel.autoBtn = MakeButton(panel, "Auto accept/turn-in", -144, function()
@@ -357,13 +397,13 @@ function Panel:Build()
     local _, playerClass = UnitClass("player")
     if playerClass == "ROGUE" then
         MakeButton(panel, "Rogue", y, function()
-            ns.Rogue:Show()
+            Panel:OpenMenuWindow("TuFFlevelsRogue", function() ns.Rogue:Show() end)
         end)
         y = y - 26
     end
 
     MakeButton(panel, "Help / About", y, function()
-        Panel:ShowHelpDialog()
+        Panel:OpenMenuWindow("helpBox", function() Panel:ShowHelpDialog() end)
     end)
     y = y - 32
 
@@ -523,19 +563,19 @@ function Panel:ShowContentMenu()
         t:SetTextColor(unpack(ns.Theme.color.lilac))
 
         MakeButton(f, "Import spreadsheet", -42, function()
-            ns.SheetImport:Show()
+            Panel:OpenMenuWindow("TuFFlevelsSheetImport", function() ns.SheetImport:Show() end)
         end)
         MakeButton(f, "Import a guide", -68, function()
-            ns.GuideImport:Show()
+            Panel:OpenMenuWindow("TuFFlevelsGuideImport", function() ns.GuideImport:Show() end)
         end)
         MakeButton(f, "Import RXPGuides guide", -94, function()
-            ns.RXPImport:Show()
+            Panel:OpenMenuWindow("TuFFlevelsRXPImport", function() ns.RXPImport:Show() end)
         end)
         MakeButton(f, "Write a route (text)", -120, function()
-            ns.CompactGuide:Show()
+            Panel:OpenMenuWindow("TuFFlevelsCompactGuide", function() ns.CompactGuide:Show() end)
         end)
         MakeButton(f, "Recover past quests", -146, function()
-            ns.Import:Show()
+            Panel:OpenMenuWindow("TuFFlevelsImport", function() ns.Import:Show() end)
         end)
 
         -- Recording moved here from the main panel (2026-09-20): a
@@ -561,10 +601,12 @@ function Panel:ShowContentMenu()
         f.recStatus = recStatus
 
         MakeButton(f, "Save this as a route", -218, function()
-            ns.Recorder:ShowExport()
+            Panel:OpenMenuWindow("TuFFlevelsExport", function() ns.Recorder:ShowExport() end,
+                function() return #ns.Recorder.log > 0 end)
         end)
         MakeButton(f, "Progress code", -244, function()
-            Panel:ShowProgressCode()
+            Panel:OpenMenuWindow("codeBox", function() Panel:ShowProgressCode() end,
+                function() return ns.Core:GetProgressCode() end)
         end)
 
         local close = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
