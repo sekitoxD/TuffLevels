@@ -82,7 +82,7 @@ step
     .accept 747
     .maxlevel 27
 ]])
-        assert.equals(27, route.steps[1].skipIfLevel)
+        assert.equals(28, route.steps[1].skipIfLevel)
     end)
 
     it("parses a bare '.xp N' into a real auto-detecting xp step", function()
@@ -782,8 +782,8 @@ step
     .accept 200
 ]])
         assert.equals(2, #route.steps)
-        assert.equals(27, route.steps[1].skipIfLevel)
-        assert.equals(27, route.steps[2].skipIfLevel)
+        assert.equals(28, route.steps[1].skipIfLevel)
+        assert.equals(28, route.steps[2].skipIfLevel)
     end)
 
     it("fills npc onto every step in a block that named exactly one NPC, even via a trailing '.target'", function()
@@ -838,6 +838,35 @@ step
         assert.is_nil(route.steps[1].zone)
         assert.is_nil(route.steps[1].x)
         assert.is_nil(route.steps[1].y)
+    end)
+
+    it("drops a raw mapID/floor '.goto' whose x is negative instead of building a bogus zone", function()
+        local route = RXPImport:Parse([[
+step
+    .goto 1440/1,-2395.500,2032.800,6
+    .complete 489,1
+    .isOnQuest 489
+]])
+        assert.equals(1, #route.steps)
+        assert.is_nil(route.steps[1].zone)
+        assert.is_nil(route.steps[1].map)
+        assert.is_nil(route.steps[1].x)
+        assert.is_nil(route.steps[1].y)
+    end)
+
+    it("makes a negative '.turnin -N' optional but keeps a plain '.turnin N' mandatory", function()
+        local route = RXPImport:Parse([[
+step
+    .goto Durotar,1,1
+    .turnin -226
+step
+    .goto Durotar,2,2
+    .turnin 227
+]])
+        assert.equals(226, route.steps[1].quest)
+        assert.is_true(route.steps[1].optional)
+        assert.equals(227, route.steps[2].quest)
+        assert.is_nil(route.steps[2].optional)
     end)
 
     it("doesn't let a dropped mapID/floor annotation steal the step's name from its real task text", function()

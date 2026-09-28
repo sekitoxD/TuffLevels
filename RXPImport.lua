@@ -1469,9 +1469,15 @@ function RXPImport:Parse(text)
 
                         if cmd == "goto" then
                             local zone, x, y = argText:match("^(.-),%s*([%d%.]+)%s*,%s*([%d%.]+)")
-                            if zone then
-                                zone = zone:match("^%s*(.-)%s*$")
-                                if zone:match("^%d+/%d+$") then
+                            -- The raw form's coordinates can be negative
+                            -- (".goto 1440/1,-2395.5,2032.8"), which the
+                            -- [%d%.]+ capture above can't match - it would
+                            -- fold "1440/1,-2395.500" into a bogus zone name
+                            -- - so detect the form by its prefix instead.
+                            local rawForm = argText:match("^%s*%d+/%d+%s*,") ~= nil
+                            if zone or rawForm then
+                                zone = zone and zone:match("^%s*(.-)%s*$") or ""
+                                if rawForm or zone:match("^%d+/%d+$") then
                                     -- RXPGuides' alternate ".goto mapID/floor,x,y,flag"
                                     -- form (raw continent pixel coords, seen for
                                     -- phased/multi-floor areas) - not the normal
@@ -1549,10 +1555,14 @@ function RXPImport:Parse(text)
                         elseif cmd == "accept" or cmd == "turnin" then
                             local id = tonumber(argText:match("^(%-?%d+)"))
                             if id then
+                                -- A negative ".turnin -N" means "turn in only if
+                                -- you happen to be on the quest" - optional.
+                                local negTurnin = (cmd == "turnin" and id < 0)
                                 id = math.abs(id)
                                 step = StepForAction(cmd, id, nil, effClass, effClassExclude, effRaces, effClasses)
                                 step.type = cmd
                                 step.quest = id
+                                if negTurnin then step.optional = true end
                                 step.name = step.name or annotation
                             end
 
@@ -1658,8 +1668,13 @@ function RXPImport:Parse(text)
                         elseif cmd == "maxlevel" then
                             local lvl = tonumber(argText:match("^(%d+)"))
                             if lvl then
-                                ApplyToBlock("skipIfLevel", lvl, true)
-                                blockSkipIfLevel = lvl
+                                -- RXPGuides hides the step when the player's
+                                -- level is strictly ABOVE the .maxlevel value
+                                -- (functions.lua: `level > element.level`),
+                                -- while Core's StepApplies hides at `>=`
+                                -- skipIfLevel - so emit N + 1.
+                                ApplyToBlock("skipIfLevel", lvl + 1, true)
+                                blockSkipIfLevel = lvl + 1
                             end
 
                         elseif cmd == "xp" and argText:match("^%d+$") and not step.type then
