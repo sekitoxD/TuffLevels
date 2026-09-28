@@ -510,6 +510,18 @@ describe("Compat:MapID (P2.5)", function()
         _G.C_Map = savedCMap
     end)
 
+    it("resolves RXPGuides' capital-city '*Classic' zone tokens via ZONE_ALIASES", function()
+        -- Confirmed live (2026-09-27): RXPGuides' own guide text uses
+        -- ".goto StormwindClassic,x,y" (25 occurrences in
+        -- Classic-Alliance-1-14_DwarfGnome.lua alone) - not a real WoW zone
+        -- name on any client, so this silently broke the travel arrow/
+        -- auto-complete for every affected step until the alias was added.
+        local Compat = NewCompat()
+        assert.equals(1453, Compat:MapID("StormwindClassic"))
+        assert.equals(1453, Compat:MapID("stormwindclassic"))
+        assert.equals(1455, Compat:MapID("IronforgeClassic"))
+    end)
+
     it("resolves a zone once ZoneIndex has built", function()
         -- A zone/ID deliberately absent from CLASSIC_MAP_IDS, so this can
         -- only resolve via a genuinely-built ZoneIndex, not the static

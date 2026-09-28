@@ -43,8 +43,18 @@
 -- the same way - combined with the block-level condition (contradictions
 -- drop the line; see ResolveLineFilter). `.goto Zone,x,y` sets travel
 -- coordinates; multiple `.goto`s in one step become a waypoint path, the
--- last one is the final target. `.accept`/`.turnin`/`.complete` (quest ID
--- [,objective]) map directly to TuFFlevels' own step types.
+-- last one is the final target. A purely numeric `Zone` token (e.g.
+-- `.goto 1426,28.2,71.7`) is a real uiMapID in RXPGuides' own grammar, not
+-- a zone name - it lands in the step's numeric `map` field instead of
+-- `zone` (fixed 2026-09-27: storing it as `zone` silently broke the
+-- travel arrow/auto-complete for every affected step, since Compat:MapID
+-- tries to resolve `zone` by NAME and a digit string never matches one).
+-- A `mapID/floor` token (e.g. `.goto 1438/1,x,y,flag`, a DIFFERENT raw-
+-- pixel coordinate space seen for phased/multi-floor areas) still isn't
+-- converted - see the `.goto` handler's own comment for why guessing at
+-- that one is worse than dropping the location. `.accept`/`.turnin`/
+-- `.complete` (quest ID [,objective]) map directly to TuFFlevels' own
+-- step types.
 -- `.trainer`/`.hs`/`.deathskip` map to trainer/hearth/death.
 -- `.itemcount id,n` maps to an `item` step (done once you hold n+ of that
 -- item), `.train spellID` maps to a `spell` step (done once known), and
@@ -671,7 +681,7 @@ function RXPImport:Parse(text)
                 curStep.note = table.concat(curStep._notes, " - ")
             end
             curStep._notes = nil
-            if curStep.type or curStep.zone or curStep.note then
+            if curStep.type or curStep.zone or curStep.map or curStep.note then
                 table.insert(route.steps, curStep)
             end
             -- else: nothing but a scratch table came out of this step
@@ -980,7 +990,17 @@ function RXPImport:Parse(text)
             local carry = {
                 class = blockClass, races = blockRaces, classExclude = blockClassExclude,
                 classes = blockClasses,
-                zone = curStep.zone, x = curStep.x, y = curStep.y,
+                -- `map` (a numeric uiMapID) carries forward to a new split
+                -- step exactly like `zone` does - confirmed live
+                -- (2026-09-27, round-3 code review): a block whose location
+                -- came from a numeric ".goto" (e.g. ".goto 1426,x,y" then
+                -- ".turnin 234" then ".accept 182") left the SPLIT step
+                -- (the .accept) with x/y copied but no map/zone at all,
+                -- since only `zone` was carried here - the split step had
+                -- real coordinates in the wrong "no map" limbo, resolving
+                -- to no arrow at all instead of either a correct or even a
+                -- dead one.
+                zone = curStep.zone, map = curStep.map, x = curStep.x, y = curStep.y,
                 skipIfLevel = blockSkipIfLevel,
             }
             FinishStep()
@@ -1326,18 +1346,48 @@ function RXPImport:Parse(text)
                                         table.insert(step._notes, annotation)
                                     end
                                 else
-                                    if step.zone then
+                                    -- A purely numeric token (e.g. ".goto
+                                    -- 1426,28.2,71.7") is a real uiMapID in
+                                    -- RXPGuides' own grammar, in the SAME
+                                    -- 0-100-percent coordinate space every
+                                    -- other .goto uses (unlike the
+                                    -- "mapID/floor" form above, which is a
+                                    -- different, unresolvable raw-pixel
+                                    -- space) - it belongs in the step
+                                    -- schema's numeric `map` field, resolved
+                                    -- directly with no zone-name lookup
+                                    -- needed, not `zone` (a string Compat:
+                                    -- MapID tries to resolve by NAME and
+                                    -- fails on, since "1426" isn't a zone
+                                    -- name). Confirmed live (2026-09-27,
+                                    -- code review): storing it as `zone`
+                                    -- silently broke the travel-ticker
+                                    -- auto-complete and the arrow for every
+                                    -- affected step, matching what the OLD,
+                                    -- pre-fix importer already got right
+                                    -- for this exact case (it used `map =`
+                                    -- for these tokens).
+                                    local mapNum = zone:match("^%d+$") and tonumber(zone) or nil
+                                    if step.zone or step.map then
                                         step.path = step.path or {}
-                                        table.insert(step.path, { zone = step.zone, x = step.x, y = step.y })
+                                        if step.zone then
+                                            table.insert(step.path, { zone = step.zone, x = step.x, y = step.y })
+                                        else
+                                            table.insert(step.path, { map = step.map, x = step.x, y = step.y })
+                                        end
                                     end
-                                    step.zone, step.x, step.y = zone, tonumber(x), tonumber(y)
+                                    if mapNum then
+                                        step.zone, step.map, step.x, step.y = nil, mapNum, tonumber(x), tonumber(y)
+                                    else
+                                        step.zone, step.map, step.x, step.y = zone, nil, tonumber(x), tonumber(y)
+                                    end
                                     if annotation and annotation ~= "" then step.name = step.name or annotation end
                                     -- Backfill any earlier split step in this
                                     -- block that has no location of its own yet
                                     -- - see ApplyToBlock's header comment.
                                     for _, s in ipairs(curBlockSteps) do
-                                        if s ~= step and not s.zone then
-                                            s.zone, s.x, s.y = step.zone, step.x, step.y
+                                        if s ~= step and not s.zone and not s.map then
+                                            s.zone, s.map, s.x, s.y = step.zone, step.map, step.x, step.y
                                         end
                                     end
                                 end
@@ -1612,14 +1662,24 @@ function RXPImport:Parse(text)
         -- (_notes -> note concatenation now happens in FinishStep, before
         -- _notes is nil'd, so there's nothing left to fold in here.)
         if not s.type then
-            if s.zone then
+            if s.zone or s.map then
+                -- `map` (a numeric uiMapID) is just as real a location as
+                -- `zone` (a name) - see the ".goto" handler's own comment.
+                -- Confirmed live (2026-09-27, round-3 code review): a
+                -- typeless, map-only step (e.g. a lone numeric ".goto"
+                -- with an annotation and no other directive) was typed
+                -- "note" instead of "travel" here, so it never auto-
+                -- completed on arrival and needed a manual Next click even
+                -- though it has a perfectly good location to walk to.
                 s.type = "travel"
                 -- A travel step can legitimately carry no note text.
                 if not s.name then s.name = s.note or "Guide note" end
             else
-                -- FinishStep only lets a zoneless, typeless step through
-                -- when it has note text, so s.note is always set here -
-                -- no "Guide note" placeholder fallback needed.
+                -- A zoneless, mapless, typeless step only reaches here with
+                -- note text (FinishStep's own keep-check requires type,
+                -- zone, map, or note - see its comment), so s.note is
+                -- always set here - no "Guide note" placeholder fallback
+                -- needed.
                 s.type = "note"
                 if not s.name then s.name = s.note end
             end
@@ -1669,14 +1729,25 @@ function RXPImport:Parse(text)
             if s.path then
                 local parts = {}
                 for _, wp in ipairs(s.path) do
-                    table.insert(parts, ("%s,%s,%s"):format(tostring(wp.zone), tostring(wp.x), tostring(wp.y)))
+                    -- `wp.map` too, not just `wp.zone` - without it, two
+                    -- waypoints that differ only in numeric map ID both
+                    -- stringify their (nil) zone the same way ("nil"),
+                    -- same bug shape the step-level `s.map` addition below
+                    -- fixes.
+                    table.insert(parts, ("%s,%s,%s,%s"):format(tostring(wp.zone), tostring(wp.map), tostring(wp.x), tostring(wp.y)))
                 end
                 pathKey = table.concat(parts, ";")
             end
             return table.concat({
                 tostring(s.type), tostring(s.quest), tostring(s.itemID), tostring(s.spellID),
                 tostring(s.class), exKey, racesKey, classesKey, tostring(s.name), tostring(s.note),
-                tostring(s.zone), tostring(s.x), tostring(s.y), tostring(s.npc),
+                -- `s.map` alongside `s.zone` - confirmed live (2026-09-27,
+                -- round-3 code review): two adjacent steps whose only
+                -- difference is a numeric map ID (both `zone = nil`)
+                -- previously stringified identically and could silently
+                -- collapse into one, the same bug shape `races`/`classes`
+                -- were already fixed for above.
+                tostring(s.zone), tostring(s.map), tostring(s.x), tostring(s.y), tostring(s.npc),
                 tostring(s.optional), tostring(s.objective), tostring(s.count),
                 tostring(s.skipIfLevel), pathKey,
             }, "|")

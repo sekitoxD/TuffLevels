@@ -374,6 +374,24 @@ step << Druid/Priest
         assert.same({ "DRUID", "PRIEST" }, route.steps[2].classes)
     end)
 
+    it("does not collapse adjacent steps that differ only in numeric 'map' into one", function()
+        -- Same bug shape as the races/classes dedup-key fixes above, for
+        -- the numeric `map` field added 2026-09-27 - two adjacent steps
+        -- whose only difference is which map they're on both stringified
+        -- their (nil) `zone` identically before this fix.
+        local route = RXPImport:Parse([[
+step
+    .goto 1426,1,1
+    .accept 5 >> Accept Foo
+step
+    .goto 1455,1,1
+    .accept 5 >> Accept Foo
+]])
+        assert.equals(2, #route.steps)
+        assert.equals(1426, route.steps[1].map)
+        assert.equals(1455, route.steps[2].map)
+    end)
+
     it("intersects a block-level class-OR with a narrower line-level class-OR", function()
         -- The exact real shape that stranded Night Elf Rogues: a block-level
         -- OR narrowed further by a line's own OR condition.
@@ -750,6 +768,105 @@ step
 ]])
         assert.equals("Teldrassil", route.steps[1].zone)
         assert.equals(60.4, route.steps[1].x)
+    end)
+
+    it("converts a purely numeric '.goto mapID,x,y' token into the numeric 'map' field, not 'zone'", function()
+        -- Confirmed live (2026-09-27, code review): a raw uiMapID like
+        -- ".goto 1426,28.2,71.7" (Dun Morogh) is a real, resolvable map ID
+        -- in RXPGuides' own grammar, in the SAME 0-100-percent coordinate
+        -- space every other .goto uses (unlike the "mapID/floor" form
+        -- above) - storing it as `zone = "1426"` (a string Compat:MapID
+        -- tries to resolve by NAME and fails on) silently broke the
+        -- travel-ticker auto-complete and the arrow for every affected
+        -- step (150 steps / 491 path points in one real chapter alone).
+        -- The OLD, pre-fix importer already got this right via `map =`.
+        local route = RXPImport:Parse([[
+step
+    .goto 1426,28.239,71.707
+    .accept 100
+]])
+        assert.is_nil(route.steps[1].zone)
+        assert.equals(1426, route.steps[1].map)
+        assert.equals(28.239, route.steps[1].x)
+    end)
+
+    it("pushes the right field (zone or map) onto path when switching goto forms mid-block", function()
+        local route = RXPImport:Parse([[
+step
+    .goto Dun Morogh,10,10
+    .goto 1426,20,20
+    .accept 100
+]])
+        assert.equals(1426, route.steps[1].map)
+        assert.is_nil(route.steps[1].zone)
+        assert.equals(1, #route.steps[1].path)
+        assert.equals("Dun Morogh", route.steps[1].path[1].zone)
+        assert.equals(10, route.steps[1].path[1].x)
+    end)
+
+    it("backfills a numeric 'map' (not just 'zone') onto an earlier split step with no location yet", function()
+        local route = RXPImport:Parse([[
+step
+    .accept 100
+    .accept 200
+    .goto 1426,5,5
+]])
+        assert.equals(2, #route.steps)
+        assert.equals(1426, route.steps[1].map)
+        assert.is_nil(route.steps[1].zone)
+        assert.equals(1426, route.steps[2].map)
+    end)
+
+    it("keeps a step whose ONLY content is a numeric '.goto' - doesn't silently drop it", function()
+        -- Confirmed live (2026-09-27, round-3 code review): FinishStep's
+        -- keep-check only looked at `type`/`zone`/`note`, not `map` - a
+        -- block like ".goto 1426,x,y >>Enter Anvilmar" with nothing else
+        -- in it set `map` (no `zone`, no `note`, no `type` yet) and was
+        -- silently discarded as if it were content-free, losing 23 real
+        -- steps across one real chapter alone (e.g. "Enter Anvilmar",
+        -- "Enter the Thunderbrew Distillery").
+        local route = RXPImport:Parse([[
+step
+    .goto 1426,25.07,75.71 >>Enter Anvilmar
+]])
+        assert.equals(1, #route.steps)
+        assert.equals("travel", route.steps[1].type)
+        assert.equals(1426, route.steps[1].map)
+        assert.equals("Enter Anvilmar", route.steps[1].name)
+    end)
+
+    it("types a typeless map-only step 'travel' (auto-completing), not 'note' (manual click)", function()
+        -- Confirmed live: the travel/note fallback only checked `s.zone`,
+        -- so a typeless step with only `map` set (no `zone`) was typed
+        -- "note" instead of "travel" - it never auto-completed on arrival
+        -- even though it has a perfectly good location to walk to. 47 real
+        -- steps in one chapter had this shape, 20 of them mandatory.
+        local route = RXPImport:Parse([[
+step
+    .goto 1426,25.07,75.71 >>Some waypoint
+]])
+        assert.equals("travel", route.steps[1].type)
+    end)
+
+    it("keeps a split step's numeric 'map' after the block's location came from a numeric '.goto'", function()
+        -- Confirmed live (2026-09-27, round-3 code review): StepForAction's
+        -- `carry` table only copied `zone` (plus x/y) to a new split step,
+        -- not `map` - a block like ".goto 1426,x,y" / ".turnin 234" /
+        -- ".accept 182" left the SPLIT step (.accept) with real x/y but no
+        -- map AND no zone at all, worse than either a resolvable or even a
+        -- consistently-dead location. 17 real steps had this shape, 10 of
+        -- them mandatory (e.g. the Paladin "Tome of Divinity" chain).
+        local route = RXPImport:Parse([[
+step
+    .goto 1426,25.07,75.71
+    .turnin 234
+    .accept 182
+]])
+        assert.equals(2, #route.steps)
+        assert.equals(1426, route.steps[1].map)
+        assert.equals(25.07, route.steps[1].x)
+        assert.equals(1426, route.steps[2].map)
+        assert.equals(25.07, route.steps[2].x)
     end)
 
     it("applies a trailing '#completewith next' (_infoOnly) to every split step in the block", function()

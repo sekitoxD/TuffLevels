@@ -49,7 +49,7 @@ end
 -- rather than needing reformatting by hand. Field order is fixed (not
 -- pairs()'s unspecified order) purely for readability/diffability.
 local FIELD_ORDER = {
-    "type", "name", "note", "zone", "x", "y", "npc", "quest", "questName",
+    "type", "name", "note", "zone", "map", "x", "y", "npc", "quest", "questName",
     "objective", "spellID", "itemID", "count", "path", "class", "classes",
     "classExclude", "races", "minLevel", "skipIfLevel", "optional",
     "requires", "approx", "xp",
@@ -63,7 +63,17 @@ end
 local function DumpPath(path)
     local parts = {}
     for _, wp in ipairs(path) do
-        table.insert(parts, ("{ zone = %q, x = %s, y = %s }"):format(wp.zone, tostring(wp.x), tostring(wp.y)))
+        -- A waypoint can carry a numeric `map` (uiMapID) instead of a
+        -- `zone` name, same as a step's own location field - see
+        -- RXPImport.lua's ".goto" handler for why (a purely numeric
+        -- source token is a real uiMapID, not a zone name to resolve).
+        -- `%q` on a nil `wp.zone` would be a hard Lua error, not just
+        -- wrong output.
+        if wp.zone then
+            table.insert(parts, ("{ zone = %q, x = %s, y = %s }"):format(wp.zone, tostring(wp.x), tostring(wp.y)))
+        else
+            table.insert(parts, ("{ map = %s, x = %s, y = %s }"):format(tostring(wp.map), tostring(wp.x), tostring(wp.y)))
+        end
     end
     return "{ " .. table.concat(parts, ", ") .. " }"
 end

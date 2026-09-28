@@ -561,6 +561,22 @@ local ZONE_ALIASES = {
     ["easternplaguelands"]    = "eastern plaguelands",
     ["barrens"]               = "the barrens",
     ["northern barrens"]      = "the barrens",
+    -- RXPGuides suffixes a capital city's zone token with "Classic" in its
+    -- own guide text (confirmed live 2026-09-27: ".goto StormwindClassic,
+    -- x,y" - 25 occurrences in Classic-Alliance-1-14_DwarfGnome.lua alone),
+    -- presumably to disambiguate from a differently-phased version of the
+    -- same city on other expansions RXPGuides also ships guides for. Not a
+    -- real WoW zone name on any client, so Compat:MapID couldn't resolve it
+    -- and every affected step silently lost its travel arrow/auto-complete
+    -- - added for every capital, not just the one confirmed occurrence, per
+    -- the same "own token, cheap fix, don't guess at scope by only fixing
+    -- what happened to break this one guide" reasoning used elsewhere.
+    ["stormwindclassic"]      = "stormwind city",
+    ["ironforgeclassic"]      = "ironforge",
+    ["orgrimmarclassic"]      = "orgrimmar",
+    ["darnassusclassic"]      = "darnassus",
+    ["undercityclassic"]      = "undercity",
+    ["thunderbluffclassic"]   = "thunder bluff",
 }
 
 local zoneIndex
