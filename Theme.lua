@@ -183,6 +183,21 @@ local function hexToRGB(hex)
            tonumber(hex:sub(5, 6), 16) / 255
 end
 
+-- WCAG-style relative luminance / contrast, so text stays legible on any
+-- palette (including the light presets and user-picked custom colors).
+local function luminance(c)
+    local function ch(x)
+        return x <= 0.03928 and x / 12.92 or ((x + 0.055) / 1.055) ^ 2.4
+    end
+    return 0.2126 * ch(c[1]) + 0.7152 * ch(c[2]) + 0.0722 * ch(c[3])
+end
+
+local function contrast(a, b)
+    local la, lb = luminance(a), luminance(b)
+    if lb > la then la, lb = lb, la end
+    return (la + 0.05) / (lb + 0.05)
+end
+
 -- Overwrites the existing color/hex tables' keys IN PLACE (never replaces
 -- the table objects) so any code holding a reference to one of the inner
 -- {r,g,b} triplets still sees the update.
@@ -209,6 +224,44 @@ function Theme:ApplyPalette(flat)
     end
     if flat.lilac and not flat.bright then
         self.hex.bright = ("|cff%s"):format(flat.lilac:gsub("^|cff", ""):gsub("^#", ""))
+    end
+
+    self:EnsureTextLegible()
+end
+
+-- Minimum contrast (vs. the window background) for each inline-text color.
+-- Only the hex strings are adjusted, never Theme.color, because color.ember /
+-- color.faint also paint non-text elements (slider tracks, arrow art) where
+-- the raw palette value is right. faint is deliberately de-emphasized text,
+-- so it gets a lower floor than the rest.
+local TEXT_FLOORS = { ember = 4.5, faint = 3.5, dim = 4.5, accent = 4.5, bright = 4.5, done = 4.5, warn = 4.5 }
+
+-- Nudges any inline-text hex below its floor toward the palette's own text
+-- color until it clears it. Presets and custom palettes that already read
+-- fine are left exactly as authored.
+function Theme:EnsureTextLegible()
+    local bg, text = self.color.bg, self.color.text
+    for key, floor in pairs(TEXT_FLOORS) do
+        local hex = self.hex[key]
+        local r, g, b
+        if hex then r, g, b = hexToRGB(hex) end
+        if r and contrast({ r, g, b }, bg) < floor then
+            for step = 1, 20 do
+                local t = step / 20
+                local c = {
+                    r + (text[1] - r) * t,
+                    g + (text[2] - g) * t,
+                    b + (text[3] - b) * t,
+                }
+                if t == 1 or contrast(c, bg) >= floor then
+                    self.hex[key] = ("|cff%02x%02x%02x"):format(
+                        math.floor(c[1] * 255 + 0.5),
+                        math.floor(c[2] * 255 + 0.5),
+                        math.floor(c[3] * 255 + 0.5))
+                    break
+                end
+            end
+        end
     end
 end
 
@@ -267,7 +320,7 @@ function Theme:ReapplyAll()
             if obj._bg then obj._bg:SetColorTexture(unpackc(self.color.raised, 0.95)) end
             if obj._edge then obj._edge:SetColorTexture(unpackc(self.color.violet, 0.7)) end
             local fs = obj.GetFontString and obj:GetFontString()
-            if fs then fs:SetTextColor(unpackc(self.color.text)) end
+            if fs then fs:SetTextColor(unpackc(self:ButtonTextColor(false))) end
         else
             if obj._bgTex then
                 obj._bgTex:SetColorTexture(unpackc(self.color.bg, 0.96))
@@ -342,19 +395,61 @@ end
 -- Buttons
 --------------------------------------------------------------------------
 
+-- Returns the first candidate color that reaches 4.5:1 against bg, else
+-- whichever of the candidates plus pure white/black contrasts best.
+function Theme:ReadableOn(bg, ...)
+    local best, bestRatio
+    for _, c in ipairs({ ... }) do
+        local r = contrast(c, bg)
+        if r >= 4.5 then return c end
+        if not bestRatio or r > bestRatio then best, bestRatio = c, r end
+    end
+    for _, c in ipairs({ { 1, 1, 1 }, { 0, 0, 0 } }) do
+        local r = contrast(c, bg)
+        if r > bestRatio then best, bestRatio = c, r end
+    end
+    return best
+end
+
+function Theme:ButtonTextColor(hover)
+    if hover then
+        return self:ReadableOn(self.color.blood, self.color.lilac, self.color.text)
+    end
+    return self:ReadableOn(self.color.raised, self.color.text)
+end
+
+-- Stock button art on the modern (Retail/Forever) template is atlas-based, so
+-- a texture-path match can't find it. Instead, blank every texture the button
+-- owns before we add our own: regions (Left/Middle/Right/Center) plus the
+-- state textures. SetAlpha(0) rather than Hide() so the template's own
+-- state-swap code can re-set an atlas without bringing the red art back.
+local function StripStockArt(button)
+    for _, region in ipairs({ button:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:SetAlpha(0)
+        end
+    end
+    for _, getter in ipairs({ "GetNormalTexture", "GetPushedTexture", "GetDisabledTexture", "GetHighlightTexture" }) do
+        local fn = button[getter]
+        local tex = fn and fn(button)
+        if tex then tex:SetAlpha(0) end
+    end
+    for _, child in ipairs({ button:GetChildren() }) do
+        if child.GetObjectType and child:GetObjectType() ~= "Button" then
+            for _, region in ipairs({ child:GetRegions() }) do
+                if region.GetObjectType and region:GetObjectType() == "Texture" then
+                    region:SetAlpha(0)
+                end
+            end
+        end
+    end
+end
+
 function Theme:SkinButton(button)
     if not button or button._themed then return button end
     button._themed = true
 
-    -- strip the stock art
-    for _, region in ipairs({ button:GetRegions() }) do
-        if region:GetObjectType() == "Texture" then
-            local tex = region:GetTexture()
-            if tex and type(tex) == "string" and tex:find("UI%-Panel%-Button") then
-                region:SetTexture(nil)
-            end
-        end
-    end
+    StripStockArt(button)
 
     local bg = button:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
@@ -369,17 +464,17 @@ function Theme:SkinButton(button)
     button._edge = edge
 
     local fs = button:GetFontString()
-    if fs then fs:SetTextColor(unpackc(self.color.text)) end
+    if fs then fs:SetTextColor(unpackc(self:ButtonTextColor(false))) end
 
     button:HookScript("OnEnter", function(self)
         if self._bg then self._bg:SetColorTexture(unpackc(Theme.color.blood, 0.95)) end
         local t = self:GetFontString()
-        if t then t:SetTextColor(unpackc(Theme.color.lilac)) end
+        if t then t:SetTextColor(unpackc(Theme:ButtonTextColor(true))) end
     end)
     button:HookScript("OnLeave", function(self)
         if self._bg then self._bg:SetColorTexture(unpackc(Theme.color.raised, 0.95)) end
         local t = self:GetFontString()
-        if t then t:SetTextColor(unpackc(Theme.color.text)) end
+        if t then t:SetTextColor(unpackc(Theme:ButtonTextColor(false))) end
     end)
 
     self._skinned[button] = "button"
@@ -390,7 +485,9 @@ end
 function Theme:SkinChildren(frame)
     if not frame then return end
     for _, child in ipairs({ frame:GetChildren() }) do
-        if child.GetFontString and child:GetObjectType() == "Button" then
+        -- a button with no font string is a custom-drawn control (e.g. a
+        -- pooled list row or resize grip), not a template button
+        if child.GetFontString and child:GetObjectType() == "Button" and child:GetFontString() then
             self:SkinButton(child)
         end
     end
@@ -404,3 +501,7 @@ function Theme:Accent(s)  return self.hex.accent .. tostring(s) .. "|r" end
 function Theme:Bright(s)  return self.hex.bright .. tostring(s) .. "|r" end
 function Theme:Dim(s)     return self.hex.dim    .. tostring(s) .. "|r" end
 function Theme:Ember(s)   return self.hex.ember  .. tostring(s) .. "|r" end
+
+-- The built-in default palette's own hex values need the same legibility
+-- pass a loaded preset gets (ApplyPalette only runs once one is chosen).
+Theme:EnsureTextLegible()

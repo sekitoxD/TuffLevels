@@ -349,6 +349,11 @@ function Progress:Build()
     close:SetText("Close")
     close:SetScript("OnClick", function() win:Hide() end)
 
+    -- created after the SkinChildren pass above, so skin them directly
+    ns.Theme:SkinButton(jump)
+    ns.Theme:SkinButton(export)
+    ns.Theme:SkinButton(close)
+
     -- resize grip, hanging just outside the corner so it doesn't overlap
     -- the "Close" button sitting at the window's own bottom-right edge
     local grip = CreateFrame("Button", nil, win)

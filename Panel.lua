@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.25"
+local CHANGELOG_VERSION = "1.7.26"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Fixed the red buttons that ignored your selected color theme: every button in the tracker, menu and windows now uses the theme's own colors instead of the stock red art (the Progress window's Jump / Export / Close buttons were never themed at all). Button text is now always legible - the light presets used to show near-unreadable text when you hovered a button - and error, dimmed and completed-step text is automatically brightened or darkened on any preset or custom palette where it was too faint to read.",
     "Fixed the What's new window: it now shows only the newest entries in a fixed-size scrolling window with a Close button that always stays on screen (it used to grow past the screen with no way to close it), and Escape closes it. Removed the custom color palette text box from the Colors window (the presets are the way to change colors now) - the preset buttons stay, and the Close button no longer overlaps leftover content.",
     "Re-parsed the Night Elf route's \"21-23 Stonetalon/Ashenvale\", \"23-24 Wetlands\" and \"24-27 Duskwood/Redridge\" chapters through the RXPGuides importer, with the Hunter and non-Hunter guide chapters split into class-filtered sections. Group-dungeon content (Wailing Caverns, Shadowfang Keep, Stormwind Stockades) and Bronze Tube quests are now optional so solo players are not forced to click through them. Fixed an RXPGuides importer bug where a maximum-level skip took effect one level too early (which made a Redridge/Duskwood quest chain skip its accept and then stall), made a negative turn-in directive optional, and stopped raw map-ID coordinates from becoming a bogus zone name. Two review rounds found and fixed real stalls before this shipped.",
     "Merged the Night Elf Hunter-only Ashenvale chapter (\"19-21 Darkshore/Ashenvale\") into the route as its own Hunter-filtered section: Night Elf Hunters now follow the guide's Hunter itinerary instead of the generic Redridge path, and finally get a turn-in for the Absent Minded Prospector quest. Other classes' steps are unchanged. A review round added a Return-to-Auberdine step for Hunters and kept the bear-kill step required.",
