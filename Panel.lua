@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.29"
+local CHANGELOG_VERSION = "1.7.30"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Arrow fixes. When a step has no coordinates and no later step does either, or the map or your position cannot be read, the arrow now stays up as a dim \"No target\" placeholder instead of vanishing. Compat's shared error budget now recovers after about 5 quiet minutes instead of blinding every API call (including the arrow's map lookup) for the rest of the session, the real-distance calculation no longer throws on restricted (secret) position values, and the new /tuff debugarrow prints exactly why the arrow is hidden or showing No target. Tested in-game for the No target state; the other fixes are not yet verified in-game.",
     "Menu cleanup. Removed the Import spreadsheet and Import a guide (Guidelime) buttons and their /tuff sheet and /tuff guide commands (RXPGuides import replaces them), the Reset arrow position button (/tuff arrow reset still works), and the unused Horde 1-60 skeleton route. The ONSLAUGHT Solo and 5-Man routes stay, and ONSLAUGHT Solo is the default route for Orc and Troll characters; the RXPGuides Orc/Troll route remains an optional test route in Available Guides. Not yet verified in-game.",
     "Menu windows are now one-at-a-time: opening any window from the main menu (Available Guides, Where to go next, Progress, Catch up, Help, Rogue, the import windows, Save this as a route, Progress code) closes the other menu windows and the Content & Import / Display settings submenus, so the menu stays clean. Buttons that have nothing to show yet (no route loaded, nothing recorded) no longer close your open windows. Windows opened by slash commands or automatically are unchanged. Not yet verified in-game.",
     "Fixed the menu's windows drawing on top of each other: opening Content & Import now closes Display settings (and the Colors window), and the other way around, so only one is visible at a time. Closing the main menu closes any submenu left open, closing Display settings closes Colors, and /tuff colors closes Content & Import. Hiding the whole UI with Alt+Z still keeps your open windows. An independent review found no blockers; other centered windows (Available Guides, Help, Progress and the import windows) can still stack and are a known follow-up.",

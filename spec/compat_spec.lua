@@ -140,6 +140,28 @@ describe("Compat:Wrap decay (P2.2)", function()
         _G.GetTime = savedGetTime
     end)
 
+    it("gives Guard its budget back after a quiet period while ErrorCount keeps rising", function()
+        local fakeNow = 1000
+        _G.GetTime = function() return fakeNow end
+        local Compat = NewCompat()
+
+        local calls = 0
+        local function boom() calls = calls + 1 error("boom") end
+        for _ = 1, 25 do Compat:Guard(boom) end
+        assert.equals(20, calls)
+        assert.is_true(Compat:ErrorBudgetExhausted())
+
+        fakeNow = fakeNow + 299
+        Compat:Guard(boom)
+        assert.equals(20, calls)
+
+        fakeNow = fakeNow + 2
+        assert.is_false(Compat:ErrorBudgetExhausted())
+        Compat:Guard(boom)
+        assert.equals(21, calls)
+        assert.equals(21, Compat:ErrorCount())
+    end)
+
     it("gives a tripped module its budget back after a quiet period, and actually untrips it", function()
         local fakeNow = 1000
         _G.GetTime = function() return fakeNow end

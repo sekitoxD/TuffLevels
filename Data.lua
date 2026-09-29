@@ -346,6 +346,16 @@ function Data:RealDistanceToStep(mapID, point)
     if not (worldPos and worldPos.GetXY) then return nil end
 
     local wx, wy = worldPos:GetXY()
+
+    -- Secret values (Midnight/Forever restricted content) throw on
+    -- arithmetic, and this runs at 20 Hz - screen them out and fall back
+    -- to the caller's coarser estimate instead.
+    if Compat:IsSecretValue(wx) or Compat:IsSecretValue(wy)
+       or Compat:IsSecretValue(x1) or Compat:IsSecretValue(y1) then
+        return nil
+    end
+    if not (wx and wy) then return nil end
+
     local dx, dy = wx - x1, wy - y1
     return math.sqrt(dx * dx + dy * dy)
 end

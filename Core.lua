@@ -929,6 +929,9 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
     elseif cmd == "rogue" then
         ns.Rogue:Show()
 
+    elseif cmd == "debugarrow" then
+        if ns.Arrow then ns.Arrow:DebugDump() end
+
     elseif cmd == "arrow" and arg:lower() == "reset" then
         ns.Arrow:ResetPosition()
 
@@ -1138,7 +1141,7 @@ SlashCmdList["TUFFLEVELS"] = Compat:Wrap("Slash", function(msg)
         Print("          verify | capture | client | errors | reset | help | code [<code>] | pace | write")
         Print("Recording: /tuff rec start | stop | status | export | clear")
         Print("          /tuff note <text> | /tuff mark <text>")
-        Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc | /tuff debugmarker")
+        Print("Markers: /tuff marker | /tuff plates [off] | /tuff npc | /tuff debugmarker | /tuff debugarrow")
         Print("Automation: /tuff auto | /tuff debugauto")
         Print("(/tuff, /tufflevels and /sl all work the same)")
     end

@@ -758,8 +758,27 @@ end
 -- Forever stops delivering Lua errors after 100 in a session. If this addon
 -- is spewing, it will mask every other addon's real errors. Self-limit.
 
-local errorCount = 0
+local errorCount = 0          -- lifetime total, never decays (ErrorCount, /tuff errors)
+local budgetUsed = 0          -- the part of the budget Guard actually spends; decays
+local budgetNotified = false  -- the "budget reached" message prints once per session (it recovers silently)
+local lastGuardError = nil    -- GetTime() of the last Guard failure
 local ERROR_BUDGET = 20
+local GUARD_DECAY_SECONDS = 300   -- same ~5 quiet minutes Compat:Wrap gives a module
+
+-- Guard used to go dead for the whole session once the budget was spent,
+-- which silently blinds every caller (Arrow's map lookup returning nil
+-- hides the arrow for good). Once spent, Guard stops calling fn, so
+-- lastGuardError can't move: recovery is a fixed cooldown of
+-- GUARD_DECAY_SECONDS after the last failure. A genuinely broken API just
+-- burns the budget again (20 pcall'd failures, never reaching the client's
+-- own error handler), so the 100-error cap is not at risk.
+local function DecayGuardBudget()
+    if budgetUsed >= ERROR_BUDGET and lastGuardError
+       and GetTime() - lastGuardError > GUARD_DECAY_SECONDS then
+        budgetUsed = 0
+        budgetNotified = false
+    end
+end
 
 -- P2.1: tail-call helper for Guard (Wrap gets its own below, finishWrap,
 -- since its failure path needs different per-module accounting) so neither
@@ -773,8 +792,11 @@ local ERROR_BUDGET = 20
 local function finish(ok, ...)
     if not ok then
         errorCount = errorCount + 1
-        if errorCount == ERROR_BUDGET then
-            print("|cffff5555TuFFlevels|r: error budget reached, suppressing further errors. /tuff errors")
+        budgetUsed = budgetUsed + 1
+        lastGuardError = GetTime()
+        if budgetUsed >= ERROR_BUDGET and not budgetNotified then
+            budgetNotified = true
+            print("|cffff5555TuFFlevels|r: error budget reached, suppressing further API errors for about 5 minutes. /tuff errors")
         end
         Compat.lastError = ...
         return nil
@@ -783,7 +805,8 @@ local function finish(ok, ...)
 end
 
 function Compat:Guard(fn, ...)
-    if errorCount >= ERROR_BUDGET then return end
+    DecayGuardBudget()
+    if budgetUsed >= ERROR_BUDGET then return end
     return finish(pcall(fn, ...))
 end
 
@@ -796,7 +819,14 @@ end
 -- (rather than its return value, since some wrapped APIs are void on
 -- success) need this to tell "skipped" apart from "ran and succeeded".
 function Compat:ErrorBudgetExhausted()
-    return errorCount >= ERROR_BUDGET
+    DecayGuardBudget()
+    return budgetUsed >= ERROR_BUDGET
+end
+
+-- For /tuff debugarrow: how much of the (decaying) Guard budget is spent.
+function Compat:GuardBudgetInfo()
+    DecayGuardBudget()
+    return budgetUsed, ERROR_BUDGET
 end
 
 --------------------------------------------------------------------------

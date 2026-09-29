@@ -62,7 +62,7 @@ local function Bearing(step, mapID)
     local pos = Compat:Guard(C_Map.GetPlayerMapPosition, mapID, "player")
     if not pos or not pos.GetXY then return nil end
     local px, py = pos:GetXY()
-    if not px then return nil end
+    if not px or Compat:IsSecretValue(px) or Compat:IsSecretValue(py) then return nil end
 
     local dx = (tx / 100) - px
     local dy = (ty / 100) - py
@@ -246,7 +246,27 @@ function Arrow:Update()
         return
     end
 
-    if not angle then frame:Hide() return end
+    -- No bearing (no step from here on has coordinates, the map is unknown,
+    -- or the player's position can't be read right now). Show a dim
+    -- placeholder rather than hiding, so this reads as "nothing to point
+    -- at" instead of looking identical to a broken or disabled arrow.
+    if not angle then
+        -- Instances never expose the player's map position, so there is
+        -- nothing to say there; stay hidden like the markers do.
+        if Compat:IsInInstance() then frame:Hide() return end
+        frame:Show()
+        if self.textOnly then
+            tex:Hide() ; frame.glow:Hide()
+        else
+            tex:Show() ; frame.glow:Hide()
+            tex:SetRotation(0)
+            tex:SetVertexColor(unpack(Theme.color.faint))
+        end
+        distText:SetTextColor(unpack(Theme.color.dim))
+        SetTextCached(distText, "--")
+        SetTextCached(titleText, "No target")
+        return
+    end
 
     frame:Show()
 
@@ -283,6 +303,53 @@ function Arrow:Update()
     if #label > 28 then label = label:sub(1, 26) .. "..." end
     local prefix = usingNext and "Next: " or (not isFinal and "Via: " or "")
     SetTextCached(titleText, prefix .. label)
+end
+
+-- /tuff debugarrow: prints why the arrow is (or isn't) showing, so a hidden
+-- or "No target" arrow can be diagnosed without reading the code.
+function Arrow:DebugDump()
+    local function P(...) ns.Print(("|cffaaaaaa[arrow]|r " .. select(1, ...)):format(select(2, ...))) end
+    P("built=%s shown=%s enabled=%s textOnly=%s deferToTomTom=%s tomtom=%s",
+        tostring(frame ~= nil), tostring(frame and frame:IsShown()), tostring(self.enabled),
+        tostring(self.textOnly), tostring(self.deferToTomTom), tostring(_G.TomTom ~= nil))
+    local used, cap = Compat:GuardBudgetInfo()
+    P("guard budget %d/%d, lifetime Guard errors %d, last: %s",
+        used, cap, Compat:ErrorCount(), tostring(Compat.lastError))
+
+    local step = ns.Core and ns.Core:CurrentStep()
+    if not step then P("no current step") return end
+    P("step %s: type=%s zone=%s x=%s y=%s map=%s path=%s",
+        tostring(ns.Core.index), tostring(step.type), tostring(step.zone),
+        tostring(step.x), tostring(step.y), tostring(step.map),
+        tostring(step.path and #step.path or 0))
+
+    local target, usingNext = step, false
+    if not (step.x and step.y) then
+        for i = ns.Core.index + 1, #ns.Core.active.steps do
+            local s = ns.Core.active.steps[i]
+            if s.x and s.y then target, usingNext = s, true
+                P("falling back to step %d (%s, %s)", i, tostring(s.zone), tostring(s.name or s.questName))
+                break
+            end
+        end
+        if not usingNext then P("no later step has coordinates") return end
+    end
+
+    local mapID = Compat:Guard(C_Map.GetBestMapForUnit, "player")
+    local tMap, tx, ty, isFinal = ns.Data:EffectiveTarget(target)
+    P("player map=%s target map=%s (%s) x=%s y=%s final=%s",
+        tostring(mapID), tostring(tMap), tostring(target.zone), tostring(tx), tostring(ty), tostring(isFinal))
+    if target.zone and not Compat:MapID(target.zone) then
+        P("zone name '%s' does not resolve to a map ID", target.zone)
+    end
+    local pos = mapID and Compat:Guard(C_Map.GetPlayerMapPosition, mapID, "player")
+    local px = pos and pos.GetXY and pos:GetXY()
+    P("player map position: %s", px and not Compat:IsSecretValue(px) and "ok" or "nil/secret (instance/restricted?)")
+    P("in instance: %s", tostring(Compat:IsInInstance()))
+    local sameMap = tMap == nil or tMap == mapID
+    local d = sameMap and mapID and tx and ns.Data:RealDistanceToStep(mapID, { x = tx, y = ty })
+    if not sameMap then P("target is on a different map - arrow shows Travel to <zone>") return end
+    P("real distance: %s", d and ("%d yd"):format(d) or "nil (falls back to ~estimate)")
 end
 
 function Arrow:Toggle()
