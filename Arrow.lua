@@ -232,6 +232,12 @@ function Arrow:Update()
 
     local angle, dist, wrongMap, approx, isFinal, via = Bearing(step, mapID)
 
+    -- An author-flagged `approx` step (a rough or zone-centre guess, not a
+    -- real spot) gets the same "~" distance as the map-fraction fallback
+    -- and names its area instead of implying a precise target. Only the
+    -- step's own final destination counts: `path` waypoints are real.
+    local guess = step.approx and isFinal
+
     if wrongMap then
         frame:Show()
         if self.textOnly then
@@ -281,7 +287,7 @@ function Arrow:Update()
     if self.textOnly then
         tex:Hide() ; frame.glow:Hide()
         distText:SetTextColor(unpack(onTarget and onColor or offColor))
-        SetTextCached(distText, ("%s%s  %d"):format(approx and "~" or "",
+        SetTextCached(distText, ("%s%s  %d"):format((approx or guess) and "~" or "",
             CompassLabel(angle), dist))
     else
         tex:Show() ; frame.glow:Show()
@@ -296,12 +302,20 @@ function Arrow:Update()
             frame.glow:SetVertexColor(offGlow[1], offGlow[2], offGlow[3], 0.35)
         end
         distText:SetTextColor(unpack(Theme.color.lilac))
-        SetTextCached(distText, ("%s%d"):format(approx and "~" or "", dist))
+        SetTextCached(distText, ("%s%d"):format((approx or guess) and "~" or "", dist))
     end
 
     local label = (not isFinal and via) or step.npc or step.name or ""
     if #label > 28 then label = label:sub(1, 26) .. "..." end
     local prefix = usingNext and "Next: " or (not isFinal and "Via: " or "")
+    -- A named NPC is what the player needs once they arrive, so it stays as
+    -- the title; only nameless steps (mob kills, objectives) swap to the area.
+    local area = step.location ~= "" and step.location or step.zone
+    if guess and not step.npc and area then
+        label = area
+        if #label > 28 then label = label:sub(1, 26) .. "..." end
+        prefix = usingNext and "Next, near: " or "Near: "
+    end
     SetTextCached(titleText, prefix .. label)
 end
 
