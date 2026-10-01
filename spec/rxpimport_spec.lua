@@ -95,9 +95,9 @@ step
         assert.equals(4, route.steps[1].xp.level)
         assert.equals(0, route.steps[1].xp.pct)
         assert.equals("Grind to level 4", route.steps[1].name)
-        -- The sibling .mob line (an unrecognized dot-command) still folds
-        -- into note text as before - only step.type/step.xp changed.
-        assert.equals(".mob Mottled Boar", route.steps[1].note)
+        -- The sibling .mob line is a bare machine directive: it must NOT
+        -- leak into the note as raw ".mob ..." text.
+        assert.is_nil(route.steps[1].note)
     end)
 
     it("leaves a modified '.xp N+M' form as plain note text, not an xp step", function()
@@ -113,13 +113,25 @@ step
         assert.is_nil(route.steps[1].xp)
     end)
 
-    it("leaves a '.xp <N,1' gate form as plain note text, not an xp step", function()
+    it("never turns a '.xp <N,1' gate form into an xp step or raw note text", function()
         local route = RXPImport:Parse([[
 step
     .xp <4,1
 ]])
-        assert.equals("note", route.steps[1].type)
-        assert.is_nil(route.steps[1].xp)
+        -- A gate directive with no text of its own yields no step at all.
+        assert.equals(0, #route.steps)
+    end)
+
+    it("words a bare '.xp N-M' checkpoint and a bare '.abandon' instead of dropping them", function()
+        local route = RXPImport:Parse([[
+step
+    .xp 10-750
+step
+    .abandon 3504,6421
+]])
+        assert.equals(2, #route.steps)
+        assert.equals("Grind until you are 750xp from finishing level 10", route.steps[1].note)
+        assert.equals("Abandon quest(s): 3504,6421", route.steps[2].note)
     end)
 
     it("keeps '<< !Hunter' as a classExclude filter instead of dropping the step", function()
@@ -740,7 +752,9 @@ step
         assert.equals(1, #route.steps)
         assert.equals("turnin", route.steps[1].type)
         assert.equals(489, route.steps[1].quest)
-        assert.is_true(route.steps[1].note ~= nil and route.steps[1].note:find("3418", 1, true) ~= nil)
+        -- The count is informational only; the raw directive text must not
+        -- leak into the note.
+        assert.is_nil(route.steps[1].note)
     end)
 
     it("still splits a '.itemcount' trailing a '.complete' into its own item step (a real, satisfiable objective)", function()

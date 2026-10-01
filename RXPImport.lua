@@ -1608,7 +1608,11 @@ function RXPImport:Parse(text)
                                 -- see the "#optional propagates to a split
                                 -- step" spec below for why that shape must
                                 -- keep splitting.
-                                table.insert(step._notes, StripColorTokens(body))
+                                -- (Raw ".itemcount N,M" text is dropped; only
+                                -- a human annotation would be kept.)
+                                if annotation and annotation ~= "" then
+                                    table.insert(step._notes, annotation)
+                                end
                             elseif id then
                                 step = StepForAction("item", id, nil, effClass, effClassExclude, effRaces, effClasses)
                                 step.type = "item"
@@ -1690,8 +1694,8 @@ function RXPImport:Parse(text)
                             -- step of its own) would need Classic's per-level
                             -- XP table to convert an absolute XP amount into
                             -- TuFFlevels' 0-100 xp.pct - not attempted here,
-                            -- so those still fall through to the plain-note
-                            -- branch below exactly as before (confirmed live,
+                            -- so those still fall through to the generic
+                            -- dot-command branch below, which words them as a note (confirmed live,
                             -- 2026-09-26: a bare ".xp N" step never auto-
                             -- advanced even after the player was already past
                             -- level N, since a plain `note` step has no
@@ -1803,10 +1807,31 @@ function RXPImport:Parse(text)
 
                         else
                             -- Unrecognized dot-command (e.g. .repair, .mail,
-                            -- .use, .click): keep it as a note rather than
-                            -- silently losing whatever it was telling the
-                            -- player to do.
-                            table.insert(step._notes, StripColorTokens(body))
+                            -- .use, .click): keep only its human annotation
+                            -- (text after ">>") so nothing the player was
+                            -- told to do is lost. The raw directive itself
+                            -- (".mob X", ".zoneskip Y", ".money <1",
+                            -- ".isOnQuest 7") is machine syntax - dumping it
+                            -- into the note showed up in the tracker as
+                            -- "NOTE: .mob Yarrog Baneshadow" and made every
+                            -- note repeat the same condition text.
+                            if annotation and annotation ~= "" then
+                                table.insert(step._notes, annotation)
+                            elseif cmd == "abandon" and argText ~= "" then
+                                -- A bare ".abandon IDs" is a real instruction
+                                -- with no >> text; say it in words.
+                                table.insert(step._notes, "Abandon quest(s): " .. argText)
+                            elseif cmd == "xp" then
+                                -- Modified XP checkpoints: ".xp 10-750" (750xp
+                                -- left in level 10) / ".xp 3+325" (325xp into
+                                -- level 3). Gate forms (".xp <4,1") stay empty.
+                                local lv, sign, amt = argText:match("^(%d+)([-+])(%d+)")
+                                if lv then
+                                    table.insert(step._notes, sign == "-"
+                                        and ("Grind until you are %dxp from finishing level %d"):format(amt, lv)
+                                        or ("Grind until you have %dxp into level %d"):format(amt, lv))
+                                end
+                            end
                         end
 
                     elseif body:sub(1, 2) == ">>" then

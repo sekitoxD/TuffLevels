@@ -124,6 +124,7 @@ local specFiles = {
     "spec/core_spec.lua",
     "spec/data_spec.lua",
     "spec/rxpimport_spec.lua",
+    "spec/route_notes_spec.lua",
 }
 for _, path in ipairs(specFiles) do
     print("-- " .. path)
