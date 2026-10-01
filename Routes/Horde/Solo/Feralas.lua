@@ -24,7 +24,7 @@ Leg(28, "Feralas", {
       location = "Camp Mojache", atLevel = 44, logCount = 10, x = 74.9, y = 42.5,
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: The Mark of Quality",
       note = "Do not pick up yet - the route comes back for The Mark of Quality on a later pass.",
       zone = "Feralas", location = "Camp Mojache", atLevel = 44, x = 74.4, y = 42.9,
     },
@@ -64,7 +64,7 @@ Leg(28, "Feralas", {
       logCount = 11, note = "Several spots around here - check the whole area.",
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Shadowshard Fragments",
       note = "The route deliberately skips Shadowshard Fragments. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Valley of Spirits", atLevel = 44, x = 39.2, y = 86.3,
     },
@@ -78,7 +78,7 @@ Leg(28, "Feralas", {
       -- this one quest. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Maraudon bundle",
       zone = "Orgrimmar", location = "The Valley of Spirits", atLevel = 44,
-      note = "7 quests (The Pariah's Instructions/Mark of the Chosen, Corruption of Earth and Seed, Vyletongue Corruption, Twisted Evils, Shadowshard Fragments, Legends of Maraudon, The Scepter of Celebras), level 39-52, if you have a group. See plans/13.",
+      note = "7 quests (The Pariah's Instructions/Mark of the Chosen, Corruption of Earth and Seed, Vyletongue Corruption, Twisted Evils, Shadowshard Fragments, Legends of Maraudon, The Scepter of Celebras), level 39-52, if you have a group.",
     },
     {
       type = "accept", questName = "Horde Trauma", zone = "Orgrimmar",
@@ -89,7 +89,7 @@ Leg(28, "Feralas", {
       location = "The Valley of Honor", atLevel = 44, logCount = 13, x = 75.2, y = 34.2,
     },
     {
-      type = "note", optional = true, name = "Skip for now: B",
+      type = "note", optional = true, name = "Skip for now: Betrayed #1",
       note = "Do not pick up yet - the route comes back for Betrayed #1 on a later pass.",
       zone = "Orgrimmar", location = "The Valley of Honor", atLevel = 44, x = 75.2, y = 34.2,
     },
@@ -129,7 +129,7 @@ Leg(28, "Feralas", {
       x = 59.6, y = 36.9,
     },
     {
-      type = "note", optional = true, name = "Skip: N",
+      type = "note", optional = true, name = "Skip: Necklace Recovery",
       note = "The route deliberately skips Necklace Recovery. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Drag", atLevel = 44, x = 59.5, y = 36.6,
     },
@@ -198,7 +198,7 @@ Leg(28, "Feralas", {
       note = "This NPC patrols. Look along the road, not at one point.",
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: The Ogres of Feralas #2",
       note = "Do not pick up yet - the route comes back for The Ogres of Feralas #2 on a later pass.",
       zone = "Feralas", location = "Camp Mojache", atLevel = 45,
     },
@@ -208,7 +208,7 @@ Leg(28, "Feralas", {
       note = "This NPC patrols. Look along the road, not at one point.",
     },
     {
-      type = "note", optional = true, name = "Skip for now: D",
+      type = "note", optional = true, name = "Skip for now: Dark Ceremony",
       note = "Do not pick up yet - the route comes back for Dark Ceremony on a later pass.",
       zone = "Feralas", location = "Camp Mojache", atLevel = 45,
     },
@@ -313,7 +313,7 @@ Leg(31, "Feralas", {
       atLevel = 47, logCount = 14, x = 76.2, y = 43.8,
     },
     {
-      type = "note", optional = true, name = "Skip for now: S",
+      type = "note", optional = true, name = "Skip for now: Strength of Corruption",
       note = "Do not pick up yet - the route comes back for Strength of Corruption on a later pass.",
       zone = "Feralas", location = "Camp Mojache", atLevel = 47, x = 76.2, y = 43.8,
     },
@@ -379,7 +379,7 @@ Leg(31, "Feralas", {
       location = "Feral Scar Vale", atLevel = 47, logCount = 17, x = 53.4, y = 55.7,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Rescue OOX-22/FE!",
       note = "The route deliberately skips Rescue OOX-22/FE!. Low XP for the travel time.",
       zone = "Feralas", location = "Feral Scar Vale", atLevel = 47, x = 53.4, y = 55.7,
     },

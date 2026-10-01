@@ -23,11 +23,12 @@ end
 -- Changelog
 --------------------------------------------------------------------------
 
-local CHANGELOG_VERSION = "1.7.32"
+local CHANGELOG_VERSION = "1.7.33"
 -- Only the newest entries are shown in the dialog; older ones stay below
 -- as history.
 local CHANGELOG_SHOWN = 6
 local CHANGELOG = {
+    "Tracker readability pass for the ONSLAUGHT Orc/Troll route. About 180 skip-notes whose headline was cut to one letter (\"Skip: T\") now name the real quest (\"Skip: The Real Threat\"), and internal plan references no longer show in quest notes. Generic notes show their text instead of \"NOTE: Note\", pace and quest-log count share one dim line, the verb for kill/collect steps reads \"Complete\", long labels no longer cut through a multi-byte character, and long note rows in the Progress window truncate instead of overlapping. Not yet verified in-game.",
     "RXPGuides route notes cleaned up. Raw guide directives such as \".mob Yarrog Baneshadow\", \".zoneskip\", \".money <1\" and \".itemStat ...\" no longer appear in the note line of the tracker for the Human, Dwarf/Gnome, Night Elf, Tauren and Orc/Troll RXPGuides routes (about 12,000 notes). Real instruction text is kept, and bare Abandon and grind-to-XP checkpoints are now worded in plain English. About 26 empty note steps were removed from the Night Elf and Tauren routes, so if you are mid-route on either, or hold a progress code for them, check that your step still matches after updating (Back/Next fixes it). The RXPGuides importer no longer produces the raw text, and a new spec fails if it comes back. Not yet verified in-game.",
     "The arrow no longer presents a rough guess as a precise target. Steps the route author flagged approximate now show a ~ distance, and nameless ones (mob kills, objectives) read \"Near: <area>\" instead of an exact-looking pointer; steps with a named NPC keep the NPC's name. Not yet verified in-game.",
     "Arrow fixes. When a step has no coordinates and no later step does either, or the map or your position cannot be read, the arrow now stays up as a dim \"No target\" placeholder instead of vanishing. Compat's shared error budget now recovers after about 5 quiet minutes instead of blinding every API call (including the arrow's map lookup) for the rest of the session, the real-distance calculation no longer throws on restricted (secret) position values, and the new /tuff debugarrow prints exactly why the arrow is hidden or showing No target. Tested in-game for the No target state; the other fixes are not yet verified in-game.",

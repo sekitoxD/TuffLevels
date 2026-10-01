@@ -87,7 +87,7 @@ Leg(34, "Felwood", {
       location = "Jadenaar", atLevel = 50, logCount = 11, x = 39.0, y = 58.0, approx = true,
     },
     {
-      type = "note", optional = true, name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: Well of Corruption",
       note = "Do not pick up yet - the route comes back for Well of Corruption on a later pass.",
       zone = "Felwood", location = "Bloodvenom Post", atLevel = 50, x = 34.2, y = 52.3,
     },
@@ -286,7 +286,7 @@ Leg(46, "Felwood", {
       location = "Emerald Sanctuary", atLevel = 57, logCount = 15, x = 51.3, y = 81.5,
     },
     {
-      type = "note", optional = true, name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: Aquementas",
       note = "Do not pick up yet - the route comes back for Aquementas on a later pass.",
       zone = "Felwood", location = "Emerald Sanctuary", atLevel = 57, x = 51.3, y = 81.5,
     },

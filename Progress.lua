@@ -153,6 +153,8 @@ local function RowLabel(entry)
         what = "Reach level " .. (s.targetLevel or "?")
     elseif s.type == "xp" and s.xp then
         what = ("Level %s, %s%% XP"):format(s.xp.level or "?", s.xp.pct or 0)
+    elseif s.type == "note" and (not s.name or s.name == "Note" or s.name == s.note) and s.note then
+        what = s.note -- imported notes are named just "Note"; the text is the content
     else
         what = s.name or (s.quest and ("Quest " .. s.quest)) or s.type
     end
@@ -264,6 +266,7 @@ function Progress:Build()
         r.text:SetPoint("LEFT", 22, 0)
         r.text:SetPoint("RIGHT", 0, 0)
         r.text:SetJustifyH("LEFT")
+        r.text:SetWordWrap(false) -- rows are a fixed height; long notes truncate instead of overlapping
 
         r:SetScript("OnClick", function(self)
             if self.stepIndex then

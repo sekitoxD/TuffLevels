@@ -116,7 +116,7 @@ Leg(2, "The Barrens", {
     {
       type = "note", optional = true, name = "Alt: Call of Fire (Shaman)", zone = "The Barrens",
       atLevel = 12, class = "SHAMAN",
-      note = "If the Durotar Call of Fire pickup (Telf Joolam, Chapter 4) was missed, Kranal Fiss here in the Barrens is the alternate starter for the same chain. See plans/13.",
+      note = "If the Durotar Call of Fire pickup (Telf Joolam, Chapter 4) was missed, Kranal Fiss here in the Barrens is the alternate starter for the same chain.",
     },
 })
 
@@ -172,7 +172,7 @@ Leg(4, "The Barrens", {
       location = "Ratchet", atLevel = 15, logCount = 14, x = 62.6, y = 37.5,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: Trouble at the Docks",
       note = "The route deliberately skips Trouble at the Docks. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 15, x = 63.0, y = 37.6,
     },
@@ -408,7 +408,7 @@ Leg(4, "The Barrens", {
       location = "The Crossroads", atLevel = 16, logCount = 19, x = 51.4, y = 30.2,
     },
     {
-      type = "note", optional = true, name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: Apothecary Zamah",
       note = "Do not pick up yet - the route comes back for Apothecary Zamah on a later pass.",
       zone = "The Barrens", location = "The Crossroads", atLevel = 16, x = 51.4, y = 30.2,
     },
@@ -522,7 +522,7 @@ Leg(4, "The Barrens", {
       location = "North Barrens", atLevel = 17, logCount = 17, x = 49.0, y = 11.2,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Rilli Greasygob",
       note = "The route deliberately skips Rilli Greasygob. Low XP for the travel time.",
       zone = "The Barrens", location = "North Barrens", atLevel = 17, x = 49.0, y = 11.2,
     },
@@ -558,7 +558,7 @@ Leg(4, "The Barrens", {
       location = "The Crossroads", atLevel = 18, logCount = 17, x = 51.0, y = 29.6,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Report to Kadrak",
       note = "The route deliberately skips Report to Kadrak. Low XP for the travel time.",
       zone = "The Barrens", location = "The Crossroads", atLevel = 18, x = 51.4, y = 30.8,
     },
@@ -700,7 +700,7 @@ Leg(4, "The Barrens", {
       atLevel = 19,
     },
     {
-      type = "note", optional = true, name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: Weapons of Choice",
       note = "Do not pick up yet - the route comes back for Weapons of Choice on a later pass.",
       zone = "The Barrens", location = "Camp Taurajo", atLevel = 19, x = 45.0, y = 57.6,
     },
@@ -722,7 +722,7 @@ Leg(4, "The Barrens", {
       -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "accept", questName = "Devourer of Souls", zone = "The Barrens",
       location = "Camp Taurajo", atLevel = 20, class = "WARLOCK",
-      note = "Warlock Succubus chain, part 1 - continues with Blind Cazul, News of Dogran x2, Dogran's Captivity (quilboar camp north of Taurajo), then Ken'zigla's Draught at Malaka'jin (Stonetalon, pick up when passing through) and Love's Gift, ending in The Binding (summon fight). Unverified - see plans/13.",
+      note = "Warlock Succubus chain, part 1 - continues with Blind Cazul, News of Dogran x2, Dogran's Captivity (quilboar camp north of Taurajo), then Ken'zigla's Draught at Malaka'jin (Stonetalon, pick up when passing through) and Love's Gift, ending in The Binding (summon fight).",
     },
     {
       type = "travel", name = "Omusa Thunderhorn <Wind Rider Master>", zone = "The Barrens",
@@ -756,7 +756,7 @@ Leg(4, "The Barrens", {
       note = "Make sure you are at least 14500/21300 into level 19.", atLevel = 19,
     },
     {
-      type = "note", optional = true, name = "Skip: F",
+      type = "note", optional = true, name = "Skip: Free From the Hold",
       note = "The route deliberately skips Free From the Hold. Low XP for the travel time.",
       zone = "The Barrens", location = "Northwatch Hold", atLevel = 19, x = 62.0, y = 55.0,
     },
@@ -784,7 +784,7 @@ Leg(4, "The Barrens", {
       atLevel = 19, logCount = 17, x = 62.4, y = 37.6,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Smart Drinks",
       note = "The route deliberately skips Smart Drinks. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 19, x = 62.4, y = 37.6,
     },
@@ -815,7 +815,7 @@ Leg(4, "The Barrens", {
       -- IN-GAME VERIFIED.
       type = "note", optional = true, name = "Detour: Poison chain (Rogue)",
       zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 20, class = "ROGUE",
-      note = "Shenthul, Cleft of Shadow: The Shattered Salute -> Deep Cover -> Mission: Possible But Not Probable (elite kill, may need help) -> Hinott's Assistance (Tarren Mill). Needs 70-85 Lockpicking depending on source. See plans/13.",
+      note = "Shenthul, Cleft of Shadow: The Shattered Salute -> Deep Cover -> Mission: Possible But Not Probable (elite kill, may need help) -> Hinott's Assistance (Tarren Mill). Needs 70-85 Lockpicking depending on source.",
     },
     {
       type = "travel", name = "Orgrimmar to The Crossroads", zone = "Orgrimmar",
@@ -916,7 +916,7 @@ Leg(4, "The Barrens", {
       location = "Malaka'Jin", atLevel = 20, logCount = 12, x = 74.4, y = 97.8,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Report to Kadrak",
       note = "The route deliberately skips Report to Kadrak. Low XP for the travel time.",
       zone = "Stonetalon Mts", location = "Malaka'Jin", atLevel = 20, x = 73.2, y = 94.8,
     },
@@ -1146,7 +1146,7 @@ Leg(14, "The Barrens", {
       location = "The Hunter Rise", atLevel = 31, logCount = 16, x = 61.4, y = 80.6,
     },
     {
-      type = "note", optional = true, name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A Vengeful Fate",
       note = "The route deliberately skips A Vengeful Fate. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "Thunder Bluff", atLevel = 31, x = 36.1, y = 59.9,
     },
@@ -1207,12 +1207,12 @@ Leg(14, "The Barrens", {
       -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "accept", questName = "The Islander", zone = "Orgrimmar", atLevel = 31,
       class = "WARRIOR",
-      note = "Warrior Berserker Stance chain, part 1 of 2 (class trainer). Sends you to Fray Island here in the Barrens for The Affray -> Berserker Stance + Intercept. Bring bandages/potions for the wave fight. Unverified - see plans/13.",
+      note = "Warrior Berserker Stance chain, part 1 of 2 (class trainer). Sends you to Fray Island here in the Barrens for The Affray -> Berserker Stance + Intercept. Bring bandages/potions for the wave fight.",
     },
     {
       type = "accept", questName = "The Affray", zone = "The Barrens", location = "Fray Island",
       atLevel = 31, class = "WARRIOR",
-      note = "Warrior Berserker Stance chain, part 2 of 2. Wave fight ending in Big Will (level 33 elite). Reward: Berserker Stance + Intercept. The Windwatcher (Bath'rah, Alterac) continues this chain later. Unverified - see plans/13.",
+      note = "Warrior Berserker Stance chain, part 2 of 2. Wave fight ending in Big Will (level 33 elite). Reward: Berserker Stance + Intercept. The Windwatcher (Bath'rah, Alterac) continues this chain later.",
     },
     {
       -- Mage class chain (plans/quests/notable_horde_quests.md, "WORTH IT", quest
@@ -1223,10 +1223,10 @@ Leg(14, "The Barrens", {
       -- per plans/13; NOT YET IN-GAME VERIFIED.
       type = "accept", questName = "Journey to the Marsh", zone = "Orgrimmar", atLevel = 31,
       class = "MAGE",
-      note = "Mage's Wand chain, part 1 - continues at Shimmering Flats (Thousand Needles Chapter 27). Rituals of Power needs a Scarlet Monastery Library group. Unverified - see plans/13.",
+      note = "Mage's Wand chain, part 1 - continues at Shimmering Flats (Thousand Needles Chapter 27). Rituals of Power needs a Scarlet Monastery Library group.",
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Rig Wars",
       note = "The route deliberately skips Rig Wars. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Valley of Honor", atLevel = 31, x = 76.0, y = 25.4,
     },
@@ -1264,7 +1264,7 @@ Leg(14, "The Barrens", {
       logCount = 17, x = 62.2, y = 38.4,
     },
     {
-      type = "note", optional = true, name = "Skip: C",
+      type = "note", optional = true, name = "Skip: Chen's Empty Keg #4",
       note = "The route deliberately skips Chen's Empty Keg #4. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 31, x = 62.2, y = 38.4,
     },

@@ -26,7 +26,7 @@ Leg(47, "Eastern Plaguelands", {
       location = "The Bulwark", atLevel = 57, logCount = 9, x = 83.1, y = 68.9,
     },
     {
-      type = "note", optional = true, name = "Skip: A",
+      type = "note", optional = true, name = "Skip: Alas, Andorhal",
       note = "The route deliberately skips Alas, Andorhal. Low XP for the travel time.",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 57, x = 83.1, y = 68.9,
     },
@@ -109,7 +109,7 @@ Leg(47, "Eastern Plaguelands", {
       location = "Light's Hope Chapel", atLevel = 57, logCount = 16, x = 81.4, y = 59.8,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Archivist",
       note = "The route deliberately skips The Archivist. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Light's Hope Chapel", atLevel = 57, x = 81.4,
       y = 59.8,
@@ -190,7 +190,7 @@ Leg(47, "Eastern Plaguelands", {
       logCount = 16, x = 14.5, y = 33.7,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Restless Souls #2",
       note = "The route deliberately skips The Restless Souls #2. Low XP for the travel time.",
       zone = "Eastern Plaguelands", location = "Terrordale", atLevel = 57, x = 14.5, y = 33.7,
     },

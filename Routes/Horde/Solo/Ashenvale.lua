@@ -60,7 +60,7 @@ Leg(9, "Ashenvale", {
       -- 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Blackfathom Deeps bundle",
       zone = "Ashenvale", location = "Zoram Strand", atLevel = 24,
-      note = "~13,500 XP across 5 quests (The Essence of Aku'Mai, Allegiance to the Old Gods, Amongst the Ruins, Baron Aquanis, Blackfathom Villainy), excluding the Trouble in the Deeps prereq (already turned in above), if you have a group. See plans/13.",
+      note = "~13,500 XP across 5 quests (The Essence of Aku'Mai, Allegiance to the Old Gods, Amongst the Ruins, Baron Aquanis, Blackfathom Villainy), excluding the Trouble in the Deeps prereq (already turned in above), if you have a group.",
     },
     {
       type = "complete", questName = "Vorsha the Lasher", zone = "Ashenvale",
@@ -110,7 +110,7 @@ Leg(9, "Ashenvale", {
       location = "Splintertree Outpost", atLevel = 25, logCount = 15, x = 71.2, y = 68.0,
     },
     {
-      type = "note", optional = true, name = "Skip: W",
+      type = "note", optional = true, name = "Skip: Warsong Supplies",
       note = "The route deliberately skips Warsong Supplies. Low XP for the travel time.",
       zone = "Ashenvale", location = "Splintertree Outpost", atLevel = 25, x = 71.4, y = 67.6,
     },
@@ -274,7 +274,7 @@ Leg(9, "Ashenvale", {
       location = "Zoram Strand", atLevel = 26, logCount = 12, x = 11.8, y = 34.6,
     },
     {
-      type = "note", optional = true, name = "Skip: K",
+      type = "note", optional = true, name = "Skip: King of the Foulweald",
       note = "The route deliberately skips King of the Foulweald. Low XP for the travel time.",
       zone = "Ashenvale", location = "Zoram Strand", atLevel = 26, x = 11.8, y = 34.6,
     },

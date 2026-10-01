@@ -19,7 +19,7 @@ Leg(27, "Tanaris", {
       atLevel = 44, logCount = 9, x = 51.6, y = 26.8,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Scarab Shells",
       note = "The route deliberately skips Scarab Shells. Low XP for the travel time.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.6, y = 26.8,
     },
@@ -35,10 +35,10 @@ Leg(27, "Tanaris", {
       -- this is a decision point.
       type = "note", optional = true, name = "If grouped: Zul'Farrak bundle",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44,
-      note = "7 quests (Gahz'rilla, Divino-matic Rod, Tiara of the Deep, The Spider God, Prophecy of Mosh'aru, Scarab Shells, Troll Temper), most handed out right here in Gadgetzan, if you have a group. See plans/13.",
+      note = "7 quests (Gahz'rilla, Divino-matic Rod, Tiara of the Deep, The Spider God, Prophecy of Mosh'aru, Scarab Shells, Troll Temper), most handed out right here in Gadgetzan, if you have a group.",
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: Thistleshrub Valley",
       note = "Do not pick up yet - the route comes back for Thistleshrub Valley on a later pass.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.6, y = 26.8,
     },
@@ -51,7 +51,7 @@ Leg(27, "Tanaris", {
       location = "Gadgetzan", atLevel = 44, logCount = 11, x = 51.8, y = 27.0,
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: The Dunemaul Compound",
       note = "Do not pick up yet - the route comes back for The Dunemaul Compound on a later pass.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 52.8, y = 27.4,
     },
@@ -108,17 +108,17 @@ Leg(27, "Tanaris", {
       location = "Gadgetzan", atLevel = 44, logCount = 13, x = 52.5, y = 28.5,
     },
     {
-      type = "note", optional = true, name = "Skip: D",
+      type = "note", optional = true, name = "Skip: Divino-matic Rod",
       note = "The route deliberately skips Divino-matic Rod. Low XP for the travel time.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 52.5, y = 28.5,
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: The Thirsty Goblin",
       note = "Do not pick up yet - the route comes back for The Thirsty Goblin on a later pass.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.8, y = 28.7,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: Troll Temper",
       note = "The route deliberately skips Troll Temper. Low XP for the travel time.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.4, y = 28.8,
     },
@@ -288,7 +288,7 @@ Leg(27, "Tanaris", {
       location = "Gadgetzan", atLevel = 44, logCount = 10, x = 52.5, y = 28.5,
     },
     {
-      type = "note", optional = true, name = "Skip: A",
+      type = "note", optional = true, name = "Skip: Another Power Source?",
       note = "The route deliberately skips Another Power Source?. Low XP for the travel time.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 52.5, y = 28.5,
     },
@@ -298,7 +298,7 @@ Leg(27, "Tanaris", {
       x = 51.0, y = 27.2,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Safety First #2",
       note = "The route deliberately skips Safety First #2. Low XP for the travel time.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 51.0, y = 27.2,
     },
@@ -320,7 +320,7 @@ Leg(27, "Tanaris", {
       location = "Gadgetzan", atLevel = 44, logCount = 9, x = 50.2, y = 27.4,
     },
     {
-      type = "note", optional = true, name = "Skip for now: N",
+      type = "note", optional = true, name = "Skip for now: Noxious Lair Investigation",
       note = "Do not pick up yet - the route comes back for Noxious Lair Investigation on a later pass.",
       zone = "Tanaris", location = "Gadgetzan", atLevel = 44, x = 50.2, y = 27.4,
     },
@@ -441,7 +441,7 @@ Leg(32, "Tanaris", {
       location = "Steamwheedle Port", atLevel = 49, logCount = 15, x = 67.0, y = 22.4,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Prophecy of Mosh'aru",
       note = "The route deliberately skips The Prophecy of Mosh'aru. Low XP for the travel time.",
       zone = "Tanaris", location = "Steamwheedle Port", atLevel = 49, x = 67.0, y = 22.4,
     },
@@ -492,7 +492,7 @@ Leg(32, "Tanaris", {
       location = "Southbreak Shore", atLevel = 49, logCount = 13, x = 60.2, y = 64.7,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Rescue OOX-17/TN!",
       note = "The route deliberately skips Rescue OOX-17/TN!. Low XP for the travel time.",
       zone = "Tanaris", location = "Southbreak Shore", atLevel = 49, x = 60.2, y = 64.7,
     },

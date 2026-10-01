@@ -19,7 +19,7 @@ local frame
 local VERB = {
     accept   = "Start",
     turnin   = "Turn in",
-    complete = "Do",
+    complete = "Complete",
     grind    = "Grind",
     level    = "Reach",
     xp       = "Reach",
@@ -53,8 +53,30 @@ local VERB_COLOR_KEY = {
     note     = "warn",
 }
 
+-- Cut a label to `max` characters without splitting a multi-byte UTF-8
+-- character (quest names carry the odd accent or curly apostrophe).
+local function Truncate(text, max)
+    if #text <= max then return text end
+    local cut = text:sub(1, max - 2)
+    -- drop a dangling lead/continuation byte left by the byte-wise cut
+    cut = cut:gsub("[\192-\255][\128-\191]*$", function(tail)
+        return #tail < (tail:byte(1) >= 240 and 4 or tail:byte(1) >= 224 and 3 or 2) and "" or tail
+    end)
+    return cut .. "..."
+end
+
+-- Imported note steps are usually named just "Note" - the text lives in
+-- `note`, so the generic name must not stand in for the content.
+local function IsGenericNote(step)
+    return step.type == "note"
+        and (not step.name or step.name == "Note" or step.name == step.note)
+end
+
 -- The quest or task name, preferring the database where we have one.
 local function StepLabel(step)
+    if IsGenericNote(step) and step.note then
+        return step.note
+    end
     if step.type == "grind" or step.type == "level" then
         return "level " .. (step.targetLevel or "?")
     end
@@ -413,10 +435,8 @@ function UI:Refresh()
         frame.previous:SetText(Theme.hex.warn ..
             ("%d steps recorded. Export before you log out.|r"):format(#ns.Recorder.log))
     elseif prevStep then
-        local label = StepLabel(prevStep)
-        if #label > 42 then label = label:sub(1, 40) .. "..." end
         frame.previous:SetText(Theme.hex.faint ..
-            (VERB[prevStep.type] or "") .. " " .. label .. "|r")
+            (VERB[prevStep.type] or "") .. " " .. Truncate(StepLabel(prevStep), 42) .. "|r")
     else
         frame.previous:SetText("")
     end
@@ -438,9 +458,15 @@ function UI:Refresh()
     -- current step
     local lines = {}
 
-    if step.type == "note" then
+    local noteShown = false
+    if IsGenericNote(step) then
         table.insert(lines, Theme.hex.warn .. "NOTE:|r " ..
-            Theme.hex.text .. (step.name or "") .. "|r")
+            Theme.hex.text .. (step.note or "") .. "|r")
+        noteShown = true
+    elseif step.type == "note" then
+        -- a named note ("Skip: Trouble at the Docks"): name is the headline,
+        -- the note text is the reason and follows below without a label
+        table.insert(lines, Theme.hex.warn .. (step.name or "") .. "|r")
     else
         local verb = VERB[step.type] or step.type
         local colour = Theme.hex[VERB_COLOR_KEY[step.type]] or Theme.hex.text
@@ -460,35 +486,39 @@ function UI:Refresh()
         table.insert(lines, line)
     end
 
-    if step.logCount then
-        table.insert(lines, Theme.hex.faint ..
-            ("   quest log should be at %d|r"):format(step.logCount))
-    end
-
     -- The level the route expects you to be at here. Deliberately NOT
     -- minLevel: minLevel hides a step, so tagging every step with the route's
     -- pacing would make an under-levelled character silently skip the route.
+    -- Pace and expected quest-log size share one faint line; only a real
+    -- level gap gets its own (warning) line.
+    local meta = {}
     if step.atLevel and ns.Data then
         local level = ns.Data:PlayerLevel()
         if level < step.atLevel then
             table.insert(lines, Theme.hex.warn ..
                 ("   route expects level %d, you're %d - grind the gap|r"):format(step.atLevel, level))
         else
-            table.insert(lines, Theme.hex.faint ..
-                ("   route pace: level %d|r"):format(step.atLevel))
+            table.insert(meta, ("pace: level %d"):format(step.atLevel))
         end
     end
+    if step.logCount then
+        table.insert(meta, ("quest log: %d"):format(step.logCount))
+    end
+    if #meta > 0 then
+        table.insert(lines, Theme.hex.faint .. "   " .. table.concat(meta, "  -  ") .. "|r")
+    end
 
-    -- A `note`-type step already prints step.name as its own "NOTE: ..."
-    -- headline above (the type == "note" branch a few lines up) - when an
-    -- importer had no distinct headline text and fell back to name = note
-    -- (RXPImport.lua does this), step.note duplicates that line exactly.
-    -- Skip the second copy rather than printing the same "NOTE:" text
-    -- twice in a row - confirmed live in-game, 2026-09-26.
-    if step.note and step.note ~= step.name then
+    -- A generic note step already printed step.note as its headline above
+    -- (and an importer that fell back to name = note would duplicate it),
+    -- so only print the text when it hasn't been shown and isn't the name.
+    if step.note and not noteShown and step.note ~= step.name then
         table.insert(lines, "")
-        table.insert(lines, Theme.hex.warn .. "NOTE: |r" ..
-            Theme.hex.dim .. step.note .. "|r")
+        if step.type == "note" then
+            table.insert(lines, Theme.hex.dim .. step.note .. "|r")
+        else
+            table.insert(lines, Theme.hex.warn .. "NOTE: |r" ..
+                Theme.hex.dim .. step.note .. "|r")
+        end
     end
 
     frame.current:SetText(table.concat(lines, "\n"))
@@ -502,10 +532,8 @@ function UI:Refresh()
             if s.type == "section" then
                 table.insert(nextLines, Theme.hex.accent .. "> " .. (s.name or "") .. "|r")
             else
-                local label = StepLabel(s)
-                if #label > 36 then label = label:sub(1, 34) .. "..." end
                 table.insert(nextLines, Theme.hex.faint ..
-                    (VERB[s.type] or "") .. " " .. label .. "|r")
+                    (VERB[s.type] or "") .. " " .. Truncate(StepLabel(s), 36) .. "|r")
             end
             shown = shown + 1
         end

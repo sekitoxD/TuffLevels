@@ -56,7 +56,7 @@ Leg(13, "Thousand Needles", {
       atLevel = 30, logCount = 7, x = 36.4, y = 30.8,
     },
     {
-      type = "note", optional = true, name = "Skip for now: T",
+      type = "note", optional = true, name = "Skip for now: The Black Shield #3",
       note = "Do not pick up yet - the route comes back for The Black Shield #3 on a later pass.",
       zone = "Dustwallow Marsh", location = "Brackenwall Village", atLevel = 30, x = 36.4,
       y = 30.8,
@@ -97,7 +97,7 @@ Leg(13, "Thousand Needles", {
       type = "accept", questName = "Call of Air (Shaman)", quest = 1531,
       npc = "Prate Cloudseer", zone = "Thousand Needles", location = "Freewind Post",
       atLevel = 30, class = "SHAMAN",
-      note = "Quick Shaman totem pickup, no detour needed. Unverified coordinates - see plans/13.",
+      note = "Quick Shaman totem pickup, no detour needed.",
     },
     {
       type = "accept", questName = "Alien Egg", zone = "Thousand Needles",
@@ -324,7 +324,7 @@ Leg(15, "Thousand Needles", {
       type = "accept", questName = "Hidden Secrets", zone = "Thousand Needles",
       location = "Shimmering Flats", atLevel = 31, x = 76.0, y = 57.0, approx = true,
       class = "MAGE",
-      note = "Mage's Wand chain, part 2 (Magus Tirth). Continues with Get the Scoop (/beckon Plucky Johnson), then Rituals of Power (SM Library, group), Items of Power, Mage's Wand. Unverified - see plans/13.",
+      note = "Mage's Wand chain, part 2 (Magus Tirth). Continues with Get the Scoop (/beckon Plucky Johnson), then Rituals of Power (SM Library, group), Items of Power, Mage's Wand.",
     },
     {
       type = "complete", questName = "Rocket Car Parts", zone = "Thousand Needles",
@@ -430,7 +430,7 @@ Leg(15, "Thousand Needles", {
       location = "Mirage Raceway", atLevel = 32, logCount = 11, x = 78.0, y = 77.0,
     },
     {
-      type = "note", optional = true, name = "Skip: E",
+      type = "note", optional = true, name = "Skip: Encrusted Tail Fins",
       note = "The route deliberately skips Encrusted Tail Fins. Low XP for the travel time.",
       zone = "Thousand Needles", location = "Mirage Raceway", atLevel = 32, x = 78.0, y = 77.0,
     },

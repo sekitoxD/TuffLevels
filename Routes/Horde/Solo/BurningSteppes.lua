@@ -30,7 +30,7 @@ Leg(36, "Burning Steppes", {
       -- plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Blackrock Depths bundle",
       zone = "Badlands", location = "Kargath", atLevel = 52,
-      note = "7 quests (Dark Iron Legacy, A Taste of Flame, Incendius!, Disharmony of Fire, The Princess Saved?, Operation: Death to Angerforge, Attunement to the Core), level 52-60, if you have a group. See plans/13.",
+      note = "7 quests (Dark Iron Legacy, A Taste of Flame, Incendius!, Disharmony of Fire, The Princess Saved?, Operation: Death to Angerforge, Attunement to the Core), level 52-60, if you have a group.",
     },
     {
       -- Optional group content (plans/quests/notable_horde_quests.md, "Dungeon quest
@@ -46,7 +46,7 @@ Leg(36, "Burning Steppes", {
       -- 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: LBRS/UBRS bundle",
       zone = "Burning Steppes", location = "Flame Crest", atLevel = 52,
-      note = "5 quests (Warlord's Command, Seal of Ascension, Kibler's Exotic Pets, Urok Doomhowl, UBRS: For The Horde!), level 55-60, if you have a group. Warlord's Command starts the Onyxia attunement. See plans/13.",
+      note = "5 quests (Warlord's Command, Seal of Ascension, Kibler's Exotic Pets, Urok Doomhowl, UBRS: For The Horde!), level 55-60, if you have a group. Warlord's Command starts the Onyxia attunement.",
     },
     {
       type = "accept", questName = "Dreadmaul Rock", zone = "Badlands", location = "Kargath",
@@ -72,7 +72,7 @@ Leg(36, "Burning Steppes", {
       location = "Flame Crest", atLevel = 52, logCount = 16, x = 65.2, y = 23.9,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Heart of the Mountain",
       note = "The route deliberately skips The Heart of the Mountain. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Flame Crest", atLevel = 52, x = 65.2, y = 23.9,
     },
@@ -81,7 +81,7 @@ Leg(36, "Burning Steppes", {
       location = "Flame Crest", atLevel = 52, logCount = 15, x = 66.1, y = 22.0,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Ribbly Screwspigot",
       note = "The route deliberately skips Ribbly Screwspigot. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Flame Crest", atLevel = 52, x = 66.1, y = 22.0,
     },
@@ -100,7 +100,7 @@ Leg(36, "Burning Steppes", {
       atLevel = 52, logCount = 15, x = 81.0, y = 29.0, approx = true,
     },
     {
-      type = "note", optional = true, name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A Taste of Flame #1",
       note = "The route deliberately skips A Taste of Flame #1. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Slither Rock", atLevel = 52, x = 95.1, y = 31.6,
     },
@@ -116,7 +116,7 @@ Leg(36, "Burning Steppes", {
       logCount = 15, x = 95.1, y = 31.6,
     },
     {
-      type = "note", optional = true, name = "Skip: A",
+      type = "note", optional = true, name = "Skip: A Taste of Flame #2",
       note = "The route deliberately skips A Taste of Flame #2. Low XP for the travel time.",
       zone = "Burning Steppes", location = "Slither Rock", atLevel = 52, x = 95.1, y = 31.6,
     },
@@ -174,7 +174,7 @@ Leg(36, "Burning Steppes", {
       location = "The Dustbowl", atLevel = 52, logCount = 12, x = 25.9, y = 44.9,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Rise of the Machines #3",
       note = "The route deliberately skips The Rise of the Machines #3. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 52, x = 25.9, y = 44.9,
     },

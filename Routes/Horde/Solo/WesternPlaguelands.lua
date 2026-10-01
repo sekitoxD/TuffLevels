@@ -44,7 +44,7 @@ Leg(41, "Western Plaguelands", {
       location = "The Bulwark", atLevel = 54, logCount = 13, x = 83.1, y = 68.9,
     },
     {
-      type = "note", optional = true, name = "Skip: B",
+      type = "note", optional = true, name = "Skip: Barov Family Fortune",
       note = "The route deliberately skips Barov Family Fortune. Low XP for the travel time.",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54, x = 83.1, y = 71.6,
     },
@@ -62,10 +62,10 @@ Leg(41, "Western Plaguelands", {
       -- Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Scholomance bundle",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54,
-      note = "This route already has part of the key chain (Scarlet Diversions, All Along the Watchtowers, Skeletal Fragments) but is missing Mold Rhymes With..., Fire Plume Forged, Araj's Scarab and The Key to Scholomance itself - those aren't in this route yet. The dungeon (Krastinov quests, Kirtonos, The Lich, Barov Family Fortune) needs a group. See plans/13.",
+      note = "This route already has part of the key chain (Scarlet Diversions, All Along the Watchtowers, Skeletal Fragments) but is missing Mold Rhymes With..., Fire Plume Forged, Araj's Scarab and The Key to Scholomance itself - those aren't in this route yet. The dungeon (Krastinov quests, Kirtonos, The Lich, Barov Family Fortune) needs a group.",
     },
     {
-      type = "note", optional = true, name = "Skip for now: A",
+      type = "note", optional = true, name = "Skip for now: A Plague Upon Thee #1",
       note = "Do not pick up yet - the route comes back for A Plague Upon Thee #1 on a later pass.",
       zone = "Tirisfal Glades", location = "The Bulwark", atLevel = 54, x = 83.3, y = 72.3,
     },
@@ -287,7 +287,7 @@ Leg(41, "Western Plaguelands", {
       atLevel = 55, logCount = 18, x = 39.5, y = 66.8,
     },
     {
-      type = "note", optional = true, name = "Skip: C",
+      type = "note", optional = true, name = "Skip: Counting Out Time #2",
       note = "The route deliberately skips Counting Out Time #2. Low XP for the travel time.",
       zone = "Western Plaguelands", location = "Ruins of Andorhal", atLevel = 55, x = 39.5,
       y = 66.8,
@@ -460,7 +460,7 @@ Leg(48, "Western Plaguelands", {
       location = "Northridge Lumber Camp", atLevel = 58, logCount = 8, x = 51.9, y = 28.1,
     },
     {
-      type = "note", optional = true, name = "Skip: U",
+      type = "note", optional = true, name = "Skip: Unfinished Business #3",
       note = "The route deliberately skips Unfinished Business #3. Low XP for the travel time.",
       zone = "Western Plaguelands", location = "Northridge Lumber Camp", atLevel = 58,
       x = 51.9, y = 28.1,
@@ -513,7 +513,7 @@ Leg(48, "Western Plaguelands", {
       logCount = 5, x = 65.8, y = 75.4,
     },
     {
-      type = "note", optional = true, name = "Skip: O",
+      type = "note", optional = true, name = "Skip: Of Love and Family #2",
       note = "The route deliberately skips Of Love and Family #2. Low XP for the travel time.",
       zone = "Western Plaguelands", location = "Caer Darrow", atLevel = 58, x = 65.8, y = 75.4,
     },

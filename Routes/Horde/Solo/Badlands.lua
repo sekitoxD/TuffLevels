@@ -34,7 +34,7 @@ Leg(22, "Badlands", {
       -- normally. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "Detour: Summon Felsteed (Warlock)",
       zone = "Badlands", atLevel = 40, class = "WARLOCK",
-      note = "Strahad Farsan's tower over Ratchet (Barrens) - a dedicated trip from here, not a passing detour, since the route hasn't been back to the Barrens since level 31. Free mount + Apprentice Riding if you make the trip. See plans/13.",
+      note = "Strahad Farsan's tower over Ratchet (Barrens) - a dedicated trip from here, not a passing detour, since the route hasn't been back to the Barrens since level 31. Free mount + Apprentice Riding if you make the trip.",
     },
     {
       type = "accept", questName = "Barbecued Buzzard Wings", zone = "Badlands",
@@ -177,7 +177,7 @@ Leg(22, "Badlands", {
       location = "Agmond's End", atLevel = 40, logCount = 18, x = 51.4, y = 76.8,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Summoning the Princess",
       note = "The route deliberately skips Summoning the Princess. Low XP for the travel time.",
       zone = "Badlands", location = "Agmond's End", atLevel = 40, x = 51.4, y = 76.8,
     },
@@ -221,7 +221,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 17, x = 25.8, y = 44.4,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: This Is Going to Be Hard #2",
       note = "The route deliberately skips This Is Going to Be Hard #2. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 25.8, y = 44.4,
     },
@@ -237,7 +237,7 @@ Leg(22, "Badlands", {
       location = "The Dustbowl", atLevel = 40, logCount = 17, x = 26.0, y = 44.8,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: This Is Going to Be Hard #3",
       note = "The route deliberately skips This Is Going to Be Hard #3. Low XP for the travel time.",
       zone = "Badlands", location = "The Dustbowl", atLevel = 40, x = 26.0, y = 44.8,
     },
@@ -272,7 +272,7 @@ Leg(22, "Badlands", {
       location = "Kargath", atLevel = 40, logCount = 15, x = 2.4, y = 46.1,
     },
     {
-      type = "note", optional = true, name = "Skip: U",
+      type = "note", optional = true, name = "Skip: Uldaman Reagent Run",
       note = "The route deliberately skips Uldaman Reagent Run. Low XP for the travel time.",
       zone = "Badlands", location = "Kargath", atLevel = 40, x = 2.4, y = 46.1,
     },
@@ -282,7 +282,7 @@ Leg(22, "Badlands", {
       x = 2.9, y = 45.6,
     },
     {
-      type = "note", optional = true, name = "Skip: B",
+      type = "note", optional = true, name = "Skip: Broken Alliances #2",
       note = "The route deliberately skips Broken Alliances #2. Low XP for the travel time.",
       zone = "Badlands", location = "Kargath", atLevel = 40, x = 2.9, y = 45.6,
     },
@@ -327,7 +327,7 @@ Leg(22, "Badlands", {
       location = "Agmond's End", atLevel = 40, logCount = 14, x = 51.4, y = 76.8,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: To the Undercity for Yagyin's Digest",
       note = "The route deliberately skips To the Undercity for Yagyin's Digest. Low XP for the travel time.",
       zone = "Badlands", location = "Agmond's End", atLevel = 40, x = 51.4, y = 76.8,
     },

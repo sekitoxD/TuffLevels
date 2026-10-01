@@ -153,7 +153,7 @@ Leg(1, "Durotar", {
       type = "accept", name = "Call of Earth (Shaman)", quest = 1516,
       npc = "Canaga Earthcaller", zone = "Durotar", location = "Valley of Trials",
       atLevel = 4, class = "SHAMAN",
-      note = "3-quest totem chain (Earthbind/Strength of Earth), ~15-20 min. Unverified coordinates - see plans/13.",
+      note = "3-quest totem chain (Earthbind/Strength of Earth), ~15-20 min.",
     },
     {
       type = "complete", questName = "Galgar's Cactus Apple Surprise", zone = "Durotar",
@@ -434,7 +434,7 @@ Leg(1, "Durotar", {
       -- NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "Detour: Tame Beast (Hunter)", zone = "Durotar",
       location = "Valley of Trials", atLevel = 10, class = "HUNTER",
-      note = "Worth a short backtrack to Thotar in the Valley of Trials for the Hunter pet-taming chain (Hunter's Path, Taming the Beast x3, Training the Beast) - every Hunter leveling guide treats this as mandatory despite the detour. Unverified coordinates - see plans/13.",
+      note = "Worth a short backtrack to Thotar in the Valley of Trials for the Hunter pet-taming chain (Hunter's Path, Taming the Beast x3, Training the Beast) - every Hunter leveling guide treats this as mandatory despite the detour.",
     },
     {
       type = "turnin", questName = "From The Wreckage...", zone = "Durotar",
@@ -517,7 +517,7 @@ Leg(1, "Durotar", {
       -- location in Durotar unknown, capture with /tuff capture.
       type = "accept", name = "Call of Fire (Shaman)", quest = 1522,
       npc = "Telf Joolam", zone = "Durotar", atLevel = 10, class = "SHAMAN",
-      note = "3-quest totem chain (Searing/Magma Totem), ~30-45 min. Unverified location - see plans/13. Kranal Fiss (Barrens) is the alternate starter if missed here.",
+      note = "3-quest totem chain (Searing/Magma Totem), ~30-45 min. Kranal Fiss (Barrens) is the alternate starter if missed here.",
     },
     {
       -- Warlock class chain (plans/quests/notable_horde_quests.md, "TOP", quest 1506,
@@ -527,7 +527,7 @@ Leg(1, "Durotar", {
       -- 5). Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "accept", questName = "Gan'rul's Summons", zone = "Orgrimmar",
       atLevel = 10, class = "WARLOCK",
-      note = "Warlock Voidwalker chain, part 1 of 3 - continues at Skull Rock and Neeru Fireblade in Chapter 5. Unverified coordinates - see plans/13.",
+      note = "Warlock Voidwalker chain, part 1 of 3 - continues at Skull Rock and Neeru Fireblade in Chapter 5.",
     },
     {
       type = "turnin", name = "The Admiral's Orders (part 2)",
@@ -544,7 +544,7 @@ Leg(1, "Durotar", {
       location = "The Cleft of Shadow", atLevel = 10, logCount = 6, x = 47.2, y = 53.6,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Slaying the Beast",
       note = "The route deliberately skips Slaying the Beast. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 10, x = 49.5, y = 50.6,
     },
@@ -560,7 +560,7 @@ Leg(1, "Durotar", {
       -- IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Ragefire Chasm bundle",
       zone = "Orgrimmar", location = "The Cleft of Shadow", atLevel = 10,
-      note = "~7,130 XP across 6 quests (Testing an Enemy's Strength, Searching for the Lost Satchel, Returning the Lost Satchel, Slaying the Beast, The Power to Destroy..., Hidden Enemies' final leg), right beneath Orgrimmar, if you have a group. See plans/13.",
+      note = "~7,130 XP across 6 quests (Testing an Enemy's Strength, Searching for the Lost Satchel, Returning the Lost Satchel, Slaying the Beast, The Power to Destroy..., Hidden Enemies' final leg), right beneath Orgrimmar, if you have a group.",
     },
     {
       type = "death", name = "Ragefire Chasm to Jaggedswine Farm", zone = "Durotar",
@@ -621,7 +621,7 @@ Leg(1, "Durotar", {
     {
       type = "note", name = "Voidwalker chain: Tablet of Verga", zone = "Durotar",
       location = "Skull Rock", atLevel = 11, x = 52.0, y = 9.0, approx = true, class = "WARLOCK",
-      note = "Warlock Voidwalker chain, part 2 of 3 - pick up the Tablet of Verga while here (item pickup or quest objective, unconfirmed which). Unverified - see plans/13.",
+      note = "Warlock Voidwalker chain, part 2 of 3 - pick up the Tablet of Verga while here (item pickup or quest objective, unconfirmed which).",
     },
     {
       type = "accept", questName = "Burning Shadows", zone = "Durotar",
@@ -644,7 +644,7 @@ Leg(1, "Durotar", {
     {
       type = "accept", questName = "The Binding", zone = "Durotar",
       location = "Eastern Durotar", atLevel = 11, x = 56.4, y = 20.0, class = "WARLOCK",
-      note = "Warlock Voidwalker chain, part 3 of 3 (beside Neeru Fireblade). Turn in for the Voidwalker. Only one 'The Binding' step exists in this route (other Warlock pet chains that share this quest title aren't in ONSLAUGHT), so this doesn't need ambiguous resolution. Unverified - see plans/13.",
+      note = "Warlock Voidwalker chain, part 3 of 3 (beside Neeru Fireblade). Turn in for the Voidwalker. Only one 'The Binding' step exists in this route (other Warlock pet chains that share this quest title aren't in ONSLAUGHT), so this doesn't need ambiguous resolution.",
     },
     {
       type = "death", name = "Eastern Durotar to Jaggedswine Farm", zone = "Durotar",
@@ -688,7 +688,7 @@ Leg(1, "Durotar", {
       logCount = 4, x = 31.8, y = 37.8,
     },
     {
-      type = "note", optional = true, name = "Skip: H",
+      type = "note", optional = true, name = "Skip: Hidden Enemies #3",
       note = "The route deliberately skips Hidden Enemies #3. Low XP for the travel time.",
       zone = "Orgrimmar", location = "The Valley of Wisdom", atLevel = 11, x = 31.8, y = 37.8,
     },

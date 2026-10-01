@@ -56,7 +56,7 @@ Leg(6, "Thunder Bluff", {
       location = "Camp Taurajo", atLevel = 21, logCount = 16, x = 44.6, y = 59.2,
     },
     {
-      type = "note", optional = true, name = "Skip for now: B",
+      type = "note", optional = true, name = "Skip for now: Betrayal from Within #1",
       note = "Do not pick up yet - the route comes back for Betrayal from Within #1 on a later pass.",
       zone = "The Barrens", location = "Camp Taurajo", atLevel = 21, x = 44.6, y = 59.2,
     },
@@ -74,7 +74,7 @@ Leg(6, "Thunder Bluff", {
       location = "Camp Taurajo", atLevel = 21, logCount = 16, note = "Take the flight path.",
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Ashenvale Hunt #1",
       note = "The route deliberately skips The Ashenvale Hunt #1. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "Thunder Bluff", atLevel = 21,
     },
@@ -112,7 +112,7 @@ Leg(6, "Thunder Bluff", {
       location = "The Elder Rise", atLevel = 21, logCount = 16, x = 75.6, y = 31.2,
     },
     {
-      type = "note", optional = true, name = "Skip: L",
+      type = "note", optional = true, name = "Skip: Leaders of the Fang",
       note = "The route deliberately skips Leaders of the Fang. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "The Elder Rise", atLevel = 21, x = 75.6, y = 31.2,
     },
@@ -129,7 +129,7 @@ Leg(6, "Thunder Bluff", {
       -- a decision point, not a mandatory step - it's `optional` for a reason.
       type = "note", optional = true, name = "If grouped: Wailing Caverns bundle",
       zone = "The Barrens", location = "Wailing Caverns", atLevel = 21,
-      note = "~12,900 XP across 7 quests (Deviate Hides, Smart Drinks, Trouble at the Docks, Serpentbloom, Deviate Eradication, The Glowing Shard, Leaders of the Fang) if you have a group. See plans/13.",
+      note = "~12,900 XP across 7 quests (Deviate Hides, Smart Drinks, Trouble at the Docks, Serpentbloom, Deviate Eradication, The Glowing Shard, Leaders of the Fang) if you have a group.",
     },
     {
       type = "trainer", name = "Class Trainer", zone = "Thunder Bluff", atLevel = 21,
@@ -144,7 +144,7 @@ Leg(6, "Thunder Bluff", {
       location = "The Spirit Rise", atLevel = 21, logCount = 14, x = 23.0, y = 21.0,
     },
     {
-      type = "note", optional = true, name = "Skip: S",
+      type = "note", optional = true, name = "Skip: Serpentbloom",
       note = "The route deliberately skips Serpentbloom. Low XP for the travel time.",
       zone = "Thunder Bluff", location = "The Spirit Rise", atLevel = 21, x = 23.0, y = 21.0,
     },
@@ -180,7 +180,7 @@ Leg(6, "Thunder Bluff", {
       location = "Ratchet", atLevel = 21, logCount = 15, x = 62.4, y = 37.6,
     },
     {
-      type = "note", optional = true, name = "Skip: B",
+      type = "note", optional = true, name = "Skip: Blueleaf Tubers",
       note = "The route deliberately skips Blueleaf Tubers. Low XP for the travel time.",
       zone = "The Barrens", location = "Ratchet", atLevel = 21, x = 62.4, y = 37.6,
     },
@@ -195,7 +195,7 @@ Leg(6, "Thunder Bluff", {
       -- YET IN-GAME VERIFIED - flagged optional, this is a decision point.
       type = "note", optional = true, name = "If grouped: Razorfen Kraul bundle",
       zone = "The Barrens", location = "Razorfen Kraul", atLevel = 30,
-      note = "~15,300 XP across 5 quests (A Vengeful Fate, An Unholy Alliance, Going Going Guano!, Blueleaf Tubers, Willix the Importer) if you have a group. Going Going Guano! is also the prerequisite for the Scarlet Monastery quest Hearts of Zeal. See plans/13.",
+      note = "~15,300 XP across 5 quests (A Vengeful Fate, An Unholy Alliance, Going Going Guano!, Blueleaf Tubers, Willix the Importer) if you have a group. Going Going Guano! is also the prerequisite for the Scarlet Monastery quest Hearts of Zeal.",
     },
     {
       type = "complete", questName = "Ishamuhale", zone = "The Barrens",

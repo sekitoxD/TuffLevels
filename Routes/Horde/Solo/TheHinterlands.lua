@@ -168,7 +168,7 @@ Leg(29, "The Hinterlands", {
       location = "Agol'watha", atLevel = 45, logCount = 19, x = 49.4, y = 37.7,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Rescue OOX-09/HL!",
       note = "The route deliberately skips Rescue OOX-09/HL!. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Agol'watha", atLevel = 45, x = 49.4, y = 37.7,
     },
@@ -208,7 +208,7 @@ Leg(29, "The Hinterlands", {
       location = "Shadra'alor", atLevel = 45, logCount = 20, x = 33.8, y = 75.2,
     },
     {
-      type = "note", optional = true, name = "Skip: J",
+      type = "note", optional = true, name = "Skip: Jammal'an the Prophet",
       note = "The route deliberately skips Jammal'an the Prophet. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Shadra'alor", atLevel = 45, x = 33.8, y = 75.2,
     },
@@ -492,7 +492,7 @@ Leg(33, "The Hinterlands", {
       location = "Jintha'Alor", atLevel = 49, logCount = 14, x = 59.7, y = 77.8,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Recover the Key!",
       note = "The route deliberately skips Recover the Key!. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Jintha'Alor", atLevel = 49, x = 59.7, y = 77.8,
     },
@@ -515,7 +515,7 @@ Leg(33, "The Hinterlands", {
       location = "Jintha'Alor", atLevel = 49, logCount = 14, x = 59.7, y = 77.8,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Return to Primal Torntusk",
       note = "The route deliberately skips Return to Primal Torntusk. Low XP for the travel time.",
       zone = "The Hinterlands", location = "Jintha'Alor", atLevel = 49, x = 59.7, y = 77.8,
     },

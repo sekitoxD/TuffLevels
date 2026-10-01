@@ -337,7 +337,7 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Grom'gol Base Camp", atLevel = 37, logCount = 14, x = 32.2, y = 27.8,
     },
     {
-      type = "note", optional = true, name = "Skip for now: M",
+      type = "note", optional = true, name = "Skip for now: Marg Speaks",
       note = "Do not pick up yet - the route comes back for Marg Speaks on a later pass.",
       zone = "Stranglethorn Vale", location = "Grom'gol Base Camp", atLevel = 37, x = 32.2,
       y = 27.7,
@@ -367,12 +367,12 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Trade Quarter", atLevel = 37, logCount = 14, x = 64.0, y = 49.4,
     },
     {
-      type = "note", optional = true, name = "Skip: R",
+      type = "note", optional = true, name = "Skip: Reclaimed Treasures",
       note = "The route deliberately skips Reclaimed Treasures. Low XP for the travel time.",
       zone = "Undercity", location = "Trade Quarter", atLevel = 37, x = 62.3, y = 48.6,
     },
     {
-      type = "note", optional = true, name = "Skip: B",
+      type = "note", optional = true, name = "Skip: Bring the End",
       note = "The route deliberately skips Bring the End. Low XP for the travel time.",
       zone = "Undercity", location = "Magic Quarter", atLevel = 37, x = 74.0, y = 33.3,
     },
@@ -385,7 +385,7 @@ Leg(20, "Hillsbrad Foothills", {
       -- VERIFIED.
       type = "note", optional = true, name = "If grouped: Razorfen Downs bundle",
       zone = "Undercity", location = "Magic Quarter", atLevel = 37,
-      note = "3 quests (Bring the End, Extinguishing the Idol, An Unholy Alliance), level 37-42, no XP sum sourced yet, if you have a group. See plans/13.",
+      note = "3 quests (Bring the End, Extinguishing the Idol, An Unholy Alliance), level 37-42, no XP sum sourced yet, if you have a group.",
     },
     {
       type = "note", optional = true, name = "Skip: 2 quests here",
@@ -404,7 +404,7 @@ Leg(20, "Hillsbrad Foothills", {
       -- separate step. Added 2026-09-26 per plans/13; NOT YET IN-GAME VERIFIED.
       type = "note", optional = true, name = "If grouped: Scarlet Monastery bundle",
       zone = "Undercity", location = "Royal Quarter", atLevel = 37,
-      note = "Into The Scarlet Monastery (5,150 XP; needs Loksey/Library, Herod/Armory, Mograine+Whitemane/Cathedral) plus side quests Hearts of Zeal, Vorrel's Revenge, Compendium of the Fallen, Test of Lore, level 33-45, if you have a group. The Library run also covers the Mage chain's Rituals of Power. See plans/13.",
+      note = "Into The Scarlet Monastery (5,150 XP; needs Loksey/Library, Herod/Armory, Mograine+Whitemane/Cathedral) plus side quests Hearts of Zeal, Vorrel's Revenge, Compendium of the Fallen, Test of Lore, level 33-45, if you have a group. The Library run also covers the Mage chain's Rituals of Power.",
     },
     {
       type = "travel", name = "Undercity to Tarren Mill", zone = "Undercity",
@@ -437,7 +437,7 @@ Leg(20, "Hillsbrad Foothills", {
       location = "Tarren Mill", atLevel = 37, logCount = 17, x = 62.3, y = 19.0,
     },
     {
-      type = "note", optional = true, name = "Skip for now: W",
+      type = "note", optional = true, name = "Skip for now: WANTED: Baron Vardus",
       note = "Do not pick up yet - the route comes back for WANTED: Baron Vardus on a later pass.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 37, x = 62.6, y = 20.7,
     },
@@ -453,7 +453,7 @@ Leg(20, "Hillsbrad Foothills", {
       logCount = 17, x = 62.6, y = 20.7,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Crown of Will #2",
       note = "The route deliberately skips The Crown of Will #2. Low XP for the travel time.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 37, x = 62.6, y = 20.7,
     },
@@ -573,7 +573,7 @@ Leg(20, "Hillsbrad Foothills", {
       -- IN-GAME VERIFIED.
       type = "note", optional = true, name = "Detour: Whirlwind Weapon (Warrior)",
       zone = "Alterac Mountains", atLevel = 38, class = "WARRIOR",
-      note = "If you did the Berserker Stance half in the Barrens: Bath'rah the Windwatcher is out here. Needs 8 Liferoot, 30 Bloodscalp Tusk (STV trolls), and 8 each Thundering/Burning/Cresting Charm (Arathi Highlands level 38-39 elites, or buy them) before the Cyclonian fight (level 40 elite). Sources disagree on whether it's worth the detour at this level - see plans/13.",
+      note = "If you did the Berserker Stance half in the Barrens: Bath'rah the Windwatcher is out here. Needs 8 Liferoot, 30 Bloodscalp Tusk (STV trolls), and 8 each Thundering/Burning/Cresting Charm (Arathi Highlands level 38-39 elites, or buy them) before the Cyclonian fight (level 40 elite). Sources disagree on whether it's worth the detour at this level.",
     },
     {
       type = "complete", questName = "Bracers of Binding", zone = "Alterac Mountains",
@@ -614,7 +614,7 @@ Leg(20, "Hillsbrad Foothills", {
       logCount = 17, x = 62.6, y = 20.7,
     },
     {
-      type = "note", optional = true, name = "Skip: T",
+      type = "note", optional = true, name = "Skip: The Crown of Will #3",
       note = "The route deliberately skips The Crown of Will #3. Low XP for the travel time.",
       zone = "Hillsbrad Foothills", location = "Tarren Mill", atLevel = 38, x = 62.6, y = 20.7,
     },
